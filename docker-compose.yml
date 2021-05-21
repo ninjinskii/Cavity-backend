@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  node:
+    image: cavity-node:latest
+    container_name: cavity.local.io
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cavity.rule=Host(`cavity.local.io`)
+    networks:
+      - proxy
+    volumes:
+      - .:/app
+
+networks:
+  proxy:
+    external: true

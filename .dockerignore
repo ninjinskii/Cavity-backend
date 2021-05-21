@@ -1,0 +1,15 @@
+# Node
+node_modules
+npm-debug.log
+
+# Nuxt
+.nuxt
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Git
+.git
+README.md
