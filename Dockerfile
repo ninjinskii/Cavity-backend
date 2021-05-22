@@ -2,7 +2,6 @@ FROM node:16.2.0-buster-slim as development
 
 ENV NODE_ENV=development
 ENV PATH=/app/node_modules/.bin:$PATH
-
 ENV HOST 0.0.0.0
 
 RUN set -ex \
@@ -14,7 +13,7 @@ RUN set -ex \
     ca-certificates \
     curl \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app
 EXPOSE 3000
