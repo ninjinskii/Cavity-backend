@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  app:
+    build: .
+    container_name: cavity.local.qks.io
+    volumes:
+      - .:/app
+    init: true
