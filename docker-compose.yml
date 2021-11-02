@@ -6,4 +6,16 @@ services:
     container_name: cavity.local.qks.io
     volumes:
       - .:/app
+    depends_on:
+      - db
     init: true
+
+  db:
+    image: postgres:alpine
+    container_name: cavity.db.qks.io
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
