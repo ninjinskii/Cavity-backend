@@ -9,7 +9,7 @@ services:
     ports:
       - 5000:5000
     environment:
-      - FLASK_APP=src/__init__.py
+      - FLASK_APP=project/__init__.py
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://postgres:plout@db/cavity
     depends_on:

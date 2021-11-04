@@ -8,8 +8,8 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc
 
-RUN pip install --upgrade pip && \
-    pip install flake8==3.9.1
+RUN pip install --upgrade pip 
+    # pip install flake8==3.9.1
 
 COPY . .
 

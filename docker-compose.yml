@@ -13,10 +13,11 @@ services:
     #   - proxy
     volumes:
       - ./:/app
+      - ./home/ninjinski/.local/site-packages:/home/flask/.local/bin
     ports:
       - 5000:5000
     environment:
-      - FLASK_APP=src/__init__.py
+      - FLASK_APP=project/__init__.py
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://postgres:plout@db/cavity
     depends_on:
@@ -34,4 +35,4 @@ services:
     environment:
       - POSTGRES_DB=cavity
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=plout

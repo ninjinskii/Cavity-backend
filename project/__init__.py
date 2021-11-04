@@ -1,15 +1,13 @@
 from flask import Flask, request, jsonify
-from model import User, db, Wine
 from operator import itemgetter
-from util import *
-
+from .model import db, User, Wine
+from .util import table_exists
 
 app = Flask(__name__)
-app.config.from_object("src.config.Config")
+app.config.from_object("project.config.Config")
 
 db.init_app(app)
 db.create_all(app=app)
-
 
 @app.route('/')
 def hello_world():
