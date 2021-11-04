@@ -5,10 +5,7 @@ from util import *
 
 
 app = Flask(__name__)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:plout@db/cavity'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.secret_key = 'secret string'
+app.config.from_object("src.config.Config")
 
 db.init_app(app)
 db.create_all(app=app)
@@ -75,7 +72,3 @@ def get_request_parameters(request, *parameters):
             result += (request.args.get(arg),)
 
         return result
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
-

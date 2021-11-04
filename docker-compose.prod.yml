@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; gunicorn --bind 0.0.0.0:5000 manage:app'
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_APP=src/__init__.py
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:plout@db/cavity
+    depends_on:
+      - db
+  db:
+    image: postgres:alpine
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=plout
+      - POSTGRES_DB=cavity
