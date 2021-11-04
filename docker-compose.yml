@@ -3,19 +3,36 @@ version: "3.7"
 services:
   web:
     build: .
-    container_name: cavity.local.qks.io
+    container_name: cavity.local.cvt.io
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cavity.rule=Host(`cavity.local.cvt.io`)
+      - traefik.http.services.web.loadbalancer.server.port=5000
+    networks:
+      - proxy
     volumes:
-      - .:/app
+      - ./:/app
+    ports:
+      - 5000:5000
     depends_on:
       - db
     init: true
 
   db:
     image: postgres:alpine
-    container_name: cavity.db.qks.io
+    container_name: db.local.cvt.io
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.db.rule=Host(`db.local.cvt.io`)
+    networks:
+      - proxy
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+networks:
+  proxy:
+    external: true

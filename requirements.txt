@@ -1,1 +1,4 @@
 Flask==2.0.2
+Psycopg2-binary==2.9.1
+Flask-SQLAlchemy==2.5.1
+Flask-Migrate==3.1.0
