@@ -7,5 +7,6 @@
 #     elif request.method == 'GET':
 #         return request.args.get(arg)
 
+
 def table_exists(db, table):
     return db.inspect(db.engine).has_table(table)
