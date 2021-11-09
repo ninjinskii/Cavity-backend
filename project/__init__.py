@@ -48,10 +48,21 @@ def get_wines():
 
 @app.post("/wines")
 def post_wines():
-    bruh, name = get_request_parameters(request, "bruh", "name")
-    print("______________________________")
-    print(bruh, name)
-    return "POST request accepted"
+    # bruh, name = get_request_parameters(request, "bruh", "name")
+    user_id = 1 # Use jwt to find correct user
+    wines = get_request_parameters(request, "wines")
+
+    if not table_exists(db, "wine"):
+        User.__table__.create(db.engine)
+    else:
+        old_user_wines = Wine.query.filter_by(user_id = user_id).all()
+        db.session.delete(old_user_wines)
+
+    db.session.add(wines)
+    db.session.commit()
+        
+
+    return "", 204
 
 
 @app.get("/purge")
