@@ -1,21 +1,33 @@
-from operator import itemgetter
+from operator import imod, itemgetter
 
 from flask import Flask, json, jsonify, request
+from .database import Database
 
-from ..model.model import User, Wine, db
+from .model.user import User
+from .model.wine import Wine
 from .util import table_exists
 from .auth import AuthException, authenticate, generate_auth_token
 
 app = Flask(__name__)
 app.config.from_object("api.config.Config")
 
+db = Database.get_instance()
 db.init_app(app)
 db.create_all(app=app)
 
 
 @app.route("/")
 def hello_world():
-    return "Hey, we have Flask in a Docker container!"
+    users = User.query.all()
+    print(users)
+    html = "<ul>"
+
+    for user in users:
+        html += "<li>" + user.email + "</li>"
+    
+    html += "</ul>"
+
+    return html
 
 
 @app.post("/register")

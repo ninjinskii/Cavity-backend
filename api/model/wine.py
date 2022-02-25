@@ -1,21 +1,8 @@
 from dataclasses import dataclass
-
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from database import Database
 
 
-@dataclass
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    token = db.Column(db.String, unique=True)
-
-    def __init__(self, email, password) -> None:
-        self.email = email
-        self.password = password
-
+db = Database.get_instance()
 
 @dataclass
 class Wine(db.Model):
