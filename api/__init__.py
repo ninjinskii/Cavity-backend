@@ -2,7 +2,7 @@ from operator import itemgetter
 
 from flask import Flask, json, jsonify, request
 
-from .model import User, Wine, db
+from ..model.model import User, Wine, db
 from .util import table_exists
 from .auth import AuthException, authenticate, generate_auth_token
 

@@ -1,5 +1,5 @@
 # CLI
-```
+```bash
 docker-compose run --rm web python manage.py reset_db
 ```
 
@@ -37,3 +37,8 @@ docker-compose up
 ```
 
 The first time, an error might occure since you need to pull images, just ```docker-compose up``` again.
+
+# Interact programatically
+```bash
+curl -d '{"email":"user@bruh.com", "password":"passwd"}' -H "Content-Type: application/json" -X POST http://172.25.0.3:5000/auth/login
+```
