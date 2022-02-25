@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt .
 
 RUN adduser --system --group flask && \
   mkdir -p /home/flask/.local/bin
@@ -18,4 +18,6 @@ USER flask
 
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY ./api ./api
+
+CMD ["python", "./api/manage.py", "run", "-h", "0.0.0.0"]

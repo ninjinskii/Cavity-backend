@@ -4,7 +4,6 @@ services:
   web:
     build: .
     container_name: cavity.local.cvt.io
-    command: python manage.py run -h 0.0.0.0
     # labels:
     #   - traefik.enable=true
     #   - traefik.http.routers.cavity.rule=Host(`cavity.local.cvt.io`)
@@ -13,11 +12,11 @@ services:
     #   - proxy
     volumes:
       - ./:/app
-      - ./home/ninjinski/.local/site-packages:/home/flask/.local/bin
+      # - ./home/ninjinski/.local/site-packages:/home/flask/.local/bin
     ports:
       - 5000:5000
     environment:
-      - FLASK_APP=project/__init__.py
+      - FLASK_APP=api/__init__.py
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://postgres:plout@db/cavity
     depends_on:
@@ -27,9 +26,9 @@ services:
   db:
     image: postgres:alpine
     container_name: db.local.cvt.io
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.db.rule=Host(`db.local.cvt.io`)
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.db.rule=Host(`db.local.cvt.io`)
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:

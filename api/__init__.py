@@ -7,7 +7,7 @@ from .util import table_exists
 from .auth import AuthException, authenticate, generate_auth_token
 
 app = Flask(__name__)
-app.config.from_object("project.config.Config")
+app.config.from_object("api.config.Config")
 
 db.init_app(app)
 db.create_all(app=app)

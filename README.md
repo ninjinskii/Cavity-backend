@@ -24,6 +24,13 @@ pipenv install black isort flake8 --dev
 
 Configure your vs code to format files on save with black formatter OR use your format command.
 
+Then, install your local depedencies:
+```bash
+python3 -m venv venv
+. venv/bin/activate
+```
+
+
 Finally, run the project with:
 ```bash
 docker-compose up
