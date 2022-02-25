@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from enum import unique
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -21,8 +20,8 @@ class User(db.Model):
 @dataclass
 class Wine(db.Model):
     _id = db.Column(db.Integer, primary_key=True)
-    id = db.Column(db.Integer, unique=True, nullable=False)
     user_id = db.Column(db.Integer, unique=False, nullable=False)
+    id = db.Column(db.Integer, unique=True, nullable=False)
     name = db.Column(db.String, unique=False, nullable=False)
     naming = db.Column(db.String, unique=False, nullable=False)
     color = db.Column(db.String, nullable=False)
@@ -32,8 +31,9 @@ class Wine(db.Model):
     county_id = db.Column(db.Integer, nullable=False)
 
     def __init__(
-        self, id, name, naming, color, cuvee, is_organic, img_path, county_id
+        self, user_id, id, name, naming, color, cuvee, is_organic, img_path, county_id
     ) -> None:
+        self.user_id = user_id
         self.id = id
         self.name = name
         self.naming = naming
@@ -42,3 +42,16 @@ class Wine(db.Model):
         self.is_organic = is_organic
         self.img_path = img_path
         self.county_id = county_id
+
+    def from_json(wine, user_id):
+        Wine(
+            user_id,
+            wine.id,
+            wine.name,
+            wine.naming,
+            wine.color,
+            wine.cuvee,
+            wine.is_organic,
+            wine.img_path,
+            wine.county_id,
+        ) 

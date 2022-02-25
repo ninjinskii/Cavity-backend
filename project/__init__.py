@@ -1,9 +1,10 @@
 from operator import itemgetter
 
-from flask import Flask, jsonify, request
+from flask import Flask, json, jsonify, request
 
 from .model import User, Wine, db
 from .util import table_exists
+from .auth import AuthException, authenticate, generate_auth_token
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
@@ -49,20 +50,41 @@ def get_wines():
 @app.post("/wines")
 def post_wines():
     # bruh, name = get_request_parameters(request, "bruh", "name")
-    user_id = 1 # Use jwt to find correct user
+    user_id = -1
+
+    try:
+        user_id = authenticate(app, request)
+    except AuthException as e:
+        return jsonify({"message": str(e)}), 401
+
     wines = get_request_parameters(request, "wines")
 
     if not table_exists(db, "wine"):
         User.__table__.create(db.engine)
     else:
-        old_user_wines = Wine.query.filter_by(user_id = user_id).all()
+        old_user_wines = Wine.query.filter_by(user_id=user_id).all()
         db.session.delete(old_user_wines)
 
-    db.session.add(wines)
+    user_wines = map(lambda wine: Wine.from_json(wine), wines)
+
+    db.session.add(user_wines)
     db.session.commit()
-        
 
     return "", 204
+
+
+@app.post("/auth/login")
+def login():
+    email, password = get_request_parameters(request, "email", "password")
+    user = User.query.filter_by(email=email, password=password).first()
+
+    if user:
+        token = generate_auth_token(user.id, app)
+        user.token = token
+        db.session.commit()
+        return jsonify({"token": token})
+    else:
+        return "", 404  # TODO: true handle
 
 
 @app.get("/purge")

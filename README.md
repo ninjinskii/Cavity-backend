@@ -1,3 +1,8 @@
+# CLI
+```
+docker-compose run --rm web python manage.py reset_db
+```
+
 # Run project locally
 This project is Dockerized, but some package will be required on host to provide goog coding experience.
 
