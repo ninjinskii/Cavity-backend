@@ -1,6 +1,6 @@
 # CLI
 ```bash
-docker-compose run --rm web python manage.py reset_db
+docker-compose run --rm web python ./api/manage.py reset_db
 ```
 
 # Run project locally

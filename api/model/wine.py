@@ -4,11 +4,12 @@ from database import Database
 
 db = Database.get_instance()
 
+
 @dataclass
 class Wine(db.Model):
     _id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, unique=False, nullable=False)
-    id = db.Column(db.Integer, unique=True, nullable=False)
+    id = db.Column(db.Integer, unique=False, nullable=False)
     name = db.Column(db.String, unique=False, nullable=False)
     naming = db.Column(db.String, unique=False, nullable=False)
     color = db.Column(db.String, nullable=False)
@@ -31,14 +32,14 @@ class Wine(db.Model):
         self.county_id = county_id
 
     def from_json(wine, user_id):
-        Wine(
+        return Wine(
             user_id,
-            wine.id,
-            wine.name,
-            wine.naming,
-            wine.color,
-            wine.cuvee,
-            wine.is_organic,
-            wine.img_path,
-            wine.county_id,
-        ) 
+            wine["id"],
+            wine["name"],
+            wine["naming"],
+            wine["color"],
+            wine["cuvee"],
+            wine["is_organic"],
+            wine["img_path"],
+            wine["county_id"],
+        )

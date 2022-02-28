@@ -1,6 +1,7 @@
 from operator import imod, itemgetter
 
 from flask import Flask, json, jsonify, request
+from sqlalchemy import delete
 from .database import Database
 
 from .model.user import User
@@ -24,7 +25,36 @@ def hello_world():
 
     for user in users:
         html += "<li>" + user.email + "</li>"
-    
+
+    html += "</ul>"
+
+    return html
+
+
+@app.route("/showwines")
+def show_wines():
+    wines = Wine.query.all()
+    print(wines)
+
+    html = "<ul>"
+
+    for wine in wines:
+        html += (
+            "<li>"
+            + str(wine._id)
+            + "/"
+            + str(wine.user_id)
+            + "/"
+            + str(wine.id)
+            + "/"
+            + wine.name
+            + "/"
+            + wine.naming
+            + "/"
+            + wine.color
+            + "</li>"
+        )
+
     html += "</ul>"
 
     return html
@@ -61,25 +91,24 @@ def get_wines():
 
 @app.post("/wines")
 def post_wines():
-    # bruh, name = get_request_parameters(request, "bruh", "name")
     user_id = -1
 
-    try:
-        user_id = authenticate(app, request)
-    except AuthException as e:
-        return jsonify({"message": str(e)}), 401
+    # try:
+    #     user_id = authenticate(app, request)
+    # except AuthException as e:
+    #     return jsonify({"message": str(e)}), 401
 
     wines = get_request_parameters(request, "wines")
 
     if not table_exists(db, "wine"):
         User.__table__.create(db.engine)
     else:
-        old_user_wines = Wine.query.filter_by(user_id=user_id).all()
-        db.session.delete(old_user_wines)
+        query = delete(Wine).where(Wine.user_id == 1)
+        db.session.execute(query)
 
-    user_wines = map(lambda wine: Wine.from_json(wine), wines)
+    user_wines = list(map(lambda wine: Wine.from_json(wine, 1), wines))
 
-    db.session.add(user_wines)
+    db.session.add_all(user_wines)
     db.session.commit()
 
     return "", 204

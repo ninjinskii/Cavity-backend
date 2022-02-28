@@ -2,11 +2,13 @@ import jwt
 
 
 def generate_auth_token(user_id, app) -> str:
+    # TODO: set expiration
     payload = {"expiration": None, "user_id": user_id}
     return jwt.encode(payload, app.config.get("SECRET_KEY"), algorithm="HS256")
 
 
 def authenticate(app, request) -> int:
+    # TODO: check token expiration
     auth_header = request.headers.get("Authorization")
 
     if auth_header:
