@@ -20,11 +20,16 @@ db.create_all(app=app)
 @app.route("/")
 def hello_world():
     users = User.query.all()
-    print(users)
     html = "<ul>"
 
     for user in users:
-        html += "<li>" + user.email + "</li>"
+        html += (
+            "<li>"
+            + user.email
+            + " registered ? : "
+            + str(user.confirmed_registration)
+            + "</li>"
+        )
 
     html += "</ul>"
 
@@ -62,11 +67,15 @@ def show_wines():
 
 @app.post("/register")
 def register():
-    # email, password = itemgetter('email', 'password')(request.form)
     email, password = get_request_parameters(request, "email", "password")
 
     if not table_exists(db, "user"):
         User.__table__.create(db.engine)
+
+    isDuplicate = len(User.query.filter_by(email=email).all()) > 0
+
+    if isDuplicate:
+        return "", 400
 
     user = User(email, password)
     db.session.add(user)
