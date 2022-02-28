@@ -1,3 +1,4 @@
+from hashlib import md5
 from operator import imod, itemgetter
 
 from flask import Flask, json, jsonify, request
@@ -26,7 +27,9 @@ def hello_world():
         html += (
             "<li>"
             + user.email
-            + " registered ? : "
+            + " "
+            + user.password
+            + ", registered ? : "
             + str(user.confirmed_registration)
             + "</li>"
         )
@@ -68,6 +71,7 @@ def show_wines():
 @app.post("/register")
 def register():
     email, password = get_request_parameters(request, "email", "password")
+    hashed_password = md5(password.encode()).hexdigest()
 
     if not table_exists(db, "user"):
         User.__table__.create(db.engine)
@@ -77,7 +81,7 @@ def register():
     if isDuplicate:
         return "", 400
 
-    user = User(email, password)
+    user = User(email, hashed_password)
     db.session.add(user)
     db.session.commit()
 
