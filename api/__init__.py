@@ -85,7 +85,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify(user=user)
+    return "", 204
 
 
 @app.get("/wines")
