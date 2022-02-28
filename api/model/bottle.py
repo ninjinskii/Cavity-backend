@@ -25,19 +25,6 @@ class Bottle(db.Model):
     consumed = db.Column(db.Integer, unique=False, nullable=False)
     tasting_id = db.Column(db.Integer, unique=False, nullable=True)
 
-    def from_json(bottle, user_id):
-        Bottle(
-            user_id,
-            bottle.id,
-            bottle.name,
-            bottle.naming,
-            bottle.color,
-            bottle.cuvee,
-            bottle.is_organic,
-            bottle.img_path,
-            bottle.county_id,
-        )
-
     def __init__(
         self,
         user_id,
@@ -58,3 +45,38 @@ class Bottle(db.Model):
         tasting_id,
     ) -> None:
         self.user_id = user_id
+        self.id = id
+        self.wine_id = wine_id
+        self.vintage = vintage
+        self.apogee = apogee
+        self.is_favorite = is_favorite
+        self.price = price
+        self.currency = currency
+        self.other_info = other_info
+        self.buy_location = buy_location
+        self.buy_date = buy_date
+        self.tasting_taste_comment = tasting_taste_comment
+        self.bottle_size = bottle_size
+        self.pdf_path = pdf_path
+        self.consumed = consumed
+        self.tasting_id = tasting_id
+
+    def from_json(bottle, user_id):
+        return Bottle(
+            user_id,
+            bottle["id"],
+            bottle["wine_id"],
+            bottle["vintage"],
+            bottle["apogee"],
+            bottle["is_favorite"],
+            bottle["price"],
+            bottle["currency"],
+            bottle["other_info"],
+            bottle["buy_location"],
+            bottle["buy_date"],
+            bottle["tasting_taste_comment"],
+            bottle["bottle_size"],
+            bottle["pdf_path"],
+            bottle["consumed"],
+            bottle["tasting_id"],
+        )
