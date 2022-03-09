@@ -130,7 +130,8 @@ def post_wines():
 @app.post("/auth/login")
 def login():
     email, password = get_request_parameters(request, "email", "password")
-    user = User.query.filter_by(email=email, password=password).first()
+    hashed_password = md5(password.encode()).hexdigest()
+    user = User.query.filter_by(email=email, password=hashed_password).first()
 
     if user:
         token = generate_auth_token(user.id, app)
@@ -152,9 +153,6 @@ def purge():
 
 def get_request_parameters(request, *parameters):
     if request.method == "POST":
-        print("_______________________________")
-        print(request.json)
-        print(*parameters)
         return itemgetter(*parameters)(request.json)
     else:
         result = ()
