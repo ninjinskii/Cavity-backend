@@ -7,7 +7,7 @@ from .database import Database
 
 from .model.user import User
 from .model.wine import Wine
-from .util import table_exists
+from .util import table_exists, generate_account_confirmation_code
 from .auth import AuthException, authenticate, generate_auth_token
 
 app = Flask(__name__)
@@ -31,6 +31,8 @@ def hello_world():
             + user.password
             + ", registered ? : "
             + str(user.confirmed_registration)
+            + " , registration code:"
+            + str(user.registration_code)
             + "</li>"
         )
 
@@ -81,11 +83,32 @@ def register():
     if isDuplicate:
         return "", 400
 
-    user = User(email, hashed_password)
+    registration_code = generate_account_confirmation_code()
+    user = User(email, hashed_password, registration_code)
     db.session.add(user)
     db.session.commit()
 
     return "", 204
+
+
+@app.post("/confirm-registration")
+def confirm_registration():
+    email, registration_code = get_request_parameters(
+        request, "email", "registration_code"
+    )
+    user = db.session.query(User).filter_by(email=email).first()
+
+    if user is None:
+        return "Unknown user", 403
+
+    if registration_code == user.registration_code:
+        user.confirmed_registration = True
+        db.session.commit()
+
+        return "", 204
+
+    else:
+        return "Registration code is invalid", 400
 
 
 @app.get("/wines")
@@ -132,6 +155,8 @@ def login():
     email, password = get_request_parameters(request, "email", "password")
     hashed_password = md5(password.encode()).hexdigest()
     user = User.query.filter_by(email=email, password=hashed_password).first()
+
+    # Check if user is confirmed
 
     if user:
         token = generate_auth_token(user.id, app)
