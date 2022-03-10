@@ -7,7 +7,7 @@ from .database import Database
 
 from .model.user import User
 from .model.wine import Wine
-from .util import table_exists, generate_account_confirmation_code
+from .util import send_confirmation_mail, table_exists, generate_account_confirmation_code
 from .auth import AuthException, authenticate, generate_auth_token
 
 app = Flask(__name__)
@@ -81,10 +81,11 @@ def register():
     isDuplicate = len(User.query.filter_by(email=email).all()) > 0
 
     if isDuplicate:
-        return "", 400
+        return "User already exists", 400
 
     registration_code = generate_account_confirmation_code()
     user = User(email, hashed_password, registration_code)
+    send_confirmation_mail(user)
     db.session.add(user)
     db.session.commit()
 

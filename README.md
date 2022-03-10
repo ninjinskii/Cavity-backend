@@ -42,3 +42,17 @@ The first time, an error might occure since you need to pull images, just ```doc
 ```bash
 curl -d '{"email":"user@bruh.com", "password":"passwd"}' -H "Content-Type: application/json" -X POST http://172.25.0.3:5000/auth/login
 ```
+
+# Add depedencies
+```bash
+. venv/bin/activate
+pip install [package]
+pip freeze > requirements.txt
+```
+
+# Init the mail client
+Use the `init_mail_client` CLI command with the argument password to register the cavity mail account to Yagmail.
+
+```bash
+docker-compose run --rm web python ./api/manage.py init_mail_client [password]
+```

@@ -29,8 +29,8 @@ services:
     # labels:
     #   - traefik.enable=true
     #   - traefik.http.routers.db.rule=Host(`db.local.cvt.io`)
-    volumes:
-      - ./data/db:/var/lib/postgresql/data
+    # volumes:
+    #   - ./data/db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=cavity
       - POSTGRES_USER=postgres

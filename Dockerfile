@@ -20,4 +20,4 @@ RUN pip3 install -r requirements.txt
 
 COPY ./api ./api
 
-CMD ["python", "./api/manage.py", "run", "-h", "0.0.0.0"]
+CMD ["python3", "./api/manage.py", "run", "-h", "0.0.0.0"]
