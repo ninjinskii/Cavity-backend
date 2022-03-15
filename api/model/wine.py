@@ -43,3 +43,15 @@ class Wine(db.Model):
             wine["img_path"],
             wine["county_id"],
         )
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "naming": self.naming,
+            "color": self.color,
+            "cuvee": self.cuvee,
+            "is_organic": self.is_organic,
+            "img_path": self.img_path,
+            "county_id": self.county_id,
+        }

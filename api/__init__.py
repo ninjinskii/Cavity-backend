@@ -143,25 +143,49 @@ def get_wines():
     try:
         user_id = authenticate(app, request)
     except jwt.ExpiredSignatureError:
-        return jsonify({"message": "Token expired"}), 401
+        return "Token expired", 401
     except jwt.jwt.InvalidTokenError:
-        return jsonify({"message": "Invalid token"}), 401
+        return "Invalid token", 401
 
     if user_id == -1:
         return "Unknown user", 404
 
-    if not table_exists(db, "wine"):
-        Wine.__table__.create(db.engine)
-
-    pname, color = get_request_parameters(request, "pname", "color")
-    entry = Wine(pname, color)
-    db.session.add(entry)
-    db.session.commit()
-    return "wine added"
+    wines = Wine.query.filter_by(user_id=user_id).all()
+    return jsonify([wine.to_json() for wine in wines]), 200
 
 
 @app.post("/wines")
 def post_wines():
+    user_id = -1
+
+    try:
+        user_id = authenticate(app, request)
+    except jwt.ExpiredSignatureError:
+        return "Token expired", 401
+    except jwt.jwt.InvalidTokenError:
+        return "Invalid token", 401
+
+    if user_id == -1:
+        return "Unknown user", 404
+
+    wines = request.json
+
+    if not table_exists(db, "wine"):
+        Wine.__table__.create(db.engine)
+    else:
+        query = delete(Wine).where(Wine.user_id == user_id)
+        db.session.execute(query)
+
+    user_wines = list(map(lambda wine: Wine.from_json(wine, user_id), wines))
+
+    db.session.add_all(user_wines)
+    db.session.commit()
+
+    return "", 204
+
+
+@app.get("/bottles")
+def get_bottles():
     user_id = -1
 
     try:
@@ -173,21 +197,6 @@ def post_wines():
 
     if user_id == -1:
         return "Unknown user", 404
-
-    wines = get_request_parameters(request, "wines")
-
-    if not table_exists(db, "wine"):
-        User.__table__.create(db.engine)
-    else:
-        query = delete(Wine).where(Wine.user_id == user_id)
-        db.session.execute(query)
-
-    user_wines = list(map(lambda wine: Wine.from_json(wine, user_id), wines))
-
-    db.session.add_all(user_wines)
-    db.session.commit()
-
-    return "", 204
 
 
 @app.get("/purge")
