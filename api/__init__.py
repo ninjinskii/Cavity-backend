@@ -1,3 +1,5 @@
+import jwt
+
 from hashlib import md5
 from operator import imod, itemgetter
 
@@ -7,8 +9,12 @@ from .database import Database
 
 from .model.user import User
 from .model.wine import Wine
-from .util import send_confirmation_mail, table_exists, generate_account_confirmation_code
-from .auth import AuthException, authenticate, generate_auth_token
+from .util import (
+    send_confirmation_mail,
+    table_exists,
+    generate_account_confirmation_code,
+)
+from .auth import authenticate, generate_auth_token # AuthException ?
 
 app = Flask(__name__)
 app.config.from_object("api.config.Config")
@@ -114,12 +120,22 @@ def confirm_registration():
 
 @app.get("/wines")
 def get_wines():
+    user_id = -1
+
+    try:
+        user_id = authenticate(app, request)
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token expired"}), 401
+    except jwt.jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token"}), 401
+
+    if user_id == -1:
+        return "Unknown user", 404
+
     if not table_exists(db, "wine"):
         Wine.__table__.create(db.engine)
 
     pname, color = get_request_parameters(request, "pname", "color")
-    print("______________________________")
-    print(pname, color)
     entry = Wine(pname, color)
     db.session.add(entry)
     db.session.commit()
@@ -130,20 +146,25 @@ def get_wines():
 def post_wines():
     user_id = -1
 
-    # try:
-    #     user_id = authenticate(app, request)
-    # except AuthException as e:
-    #     return jsonify({"message": str(e)}), 401
+    try:
+        user_id = authenticate(app, request)
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token expired"}), 401
+    except jwt.jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token"}), 401
+
+    if user_id == -1:
+        return "Unknown user", 404
 
     wines = get_request_parameters(request, "wines")
 
     if not table_exists(db, "wine"):
         User.__table__.create(db.engine)
     else:
-        query = delete(Wine).where(Wine.user_id == 1)
+        query = delete(Wine).where(Wine.user_id == user_id)
         db.session.execute(query)
 
-    user_wines = list(map(lambda wine: Wine.from_json(wine, 1), wines))
+    user_wines = list(map(lambda wine: Wine.from_json(wine, user_id), wines))
 
     db.session.add_all(user_wines)
     db.session.commit()
@@ -157,15 +178,16 @@ def login():
     hashed_password = md5(password.encode()).hexdigest()
     user = User.query.filter_by(email=email, password=hashed_password).first()
 
-    # Check if user is confirmed
-
-    if user:
-        token = generate_auth_token(user.id, app)
-        user.token = token
-        db.session.commit()
-        return jsonify({"token": token})
+    if user is not None:
+        if user.confirmed_registration:
+            token = generate_auth_token(user.id, app)
+            # user.token = token
+            # db.session.commit()
+            return jsonify({"token": token})
+        else:
+            return "Account confirmation needed", 400
     else:
-        return "", 404  # TODO: true handle
+        return "Unknown user", 404
 
 
 @app.get("/purge")
