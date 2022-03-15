@@ -14,7 +14,7 @@ from .util import (
     table_exists,
     generate_account_confirmation_code,
 )
-from .auth import authenticate, generate_auth_token # AuthException ?
+from .auth import authenticate, generate_auth_token  # AuthException ?
 
 app = Flask(__name__)
 app.config.from_object("api.config.Config")
@@ -74,6 +74,24 @@ def show_wines():
     html += "</ul>"
 
     return html
+
+
+@app.post("/auth/login")
+def login():
+    email, password = get_request_parameters(request, "email", "password")
+    hashed_password = md5(password.encode()).hexdigest()
+    user = User.query.filter_by(email=email, password=hashed_password).first()
+
+    if user is not None:
+        if user.confirmed_registration:
+            token = generate_auth_token(user.id, app)
+            # user.token = token
+            # db.session.commit()
+            return jsonify({"token": token})
+        else:
+            return "Account confirmation needed", 400
+    else:
+        return "Unknown user", 404
 
 
 @app.post("/register")
@@ -170,24 +188,6 @@ def post_wines():
     db.session.commit()
 
     return "", 204
-
-
-@app.post("/auth/login")
-def login():
-    email, password = get_request_parameters(request, "email", "password")
-    hashed_password = md5(password.encode()).hexdigest()
-    user = User.query.filter_by(email=email, password=hashed_password).first()
-
-    if user is not None:
-        if user.confirmed_registration:
-            token = generate_auth_token(user.id, app)
-            # user.token = token
-            # db.session.commit()
-            return jsonify({"token": token})
-        else:
-            return "Account confirmation needed", 400
-    else:
-        return "Unknown user", 404
 
 
 @app.get("/purge")
