@@ -1,23 +1,18 @@
-# syntax=docker/dockerfile:1
+FROM denoland/deno:debian
 
-FROM python:3.10.0-slim-buster
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+EXPOSE 5000
 
 WORKDIR /app
 
-COPY requirements.txt .
+USER deno
 
-RUN adduser --system --group flask && \
-  mkdir -p /home/flask/.local/bin
+COPY deps.ts .
+COPY deps_dev.ts .
 
-ENV PYTHONPATH "${PYTHONPATH}:/home/flask/.local/bin"
-ENV PATH "${PATH}:/home/flask/.local/bin"
-RUN chown -R flask /home/flask/.local
-USER flask
+RUN deno cache deps.ts
+RUN deno cache deps_dev.ts
 
-RUN pip3 install -r requirements.txt
+ADD . .
+RUN deno cache main.ts
 
-COPY ./api ./api
-
-CMD ["python3", "./api/manage.py", "run", "-h", "0.0.0.0"]
+CMD ["run", "--allow-net", "main.ts"]
