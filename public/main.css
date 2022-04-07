@@ -2,3 +2,7 @@ body {
   background-color: #121212;
   color: rgba(255, 255, 255, 0.86);
 }
+
+td {
+  text-align: center;
+}

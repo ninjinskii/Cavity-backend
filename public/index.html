@@ -7,6 +7,25 @@
     <title>Cavity API</title>
   </head>
 
+  <body>
+    <h1>Cavity API</h1>
+    <input id="tables" label="Nom de / des tables (séparés par virgules)"></input>
+    <button onclick="createTables()">Créer les tables</button>
+    <button onclick="deleteTable()">Supprimer la table</button>
+    <button onclick="showTable()">Voir la table</button>
+
+    <div>
+      <table>
+        <thead>
+          <tr>
+            <th id="table-name" colspan="3">account</th>
+          </tr>
+        </thead>
+        <tr id="db-table" />
+      </table>
+    </div>
+  </body>
+
   <script>
     function createTables() {
       const input = document.getElementById("tables");
@@ -39,13 +58,25 @@
       .then((res) => console.log(res))
       .catch((error) => console.log(error));
     }
+
+    async function showTable() {
+      const input = document.getElementById("tables").value;
+      const url = `/${input}`;
+
+      try {
+        const response = await fetch(url,
+          {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            method: "GET"
+        });
+
+        console.log(response);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   </script>
-
-  <body>
-    <h1>Cavity API</h1>
-    <input id="tables" label="Nom de / des tables (séparés par virgules)"></input>
-    <button onclick="createTables()">Créer les tables</button>
-    <button onclick="deleteTable()">Supprimer la table</button>
-  </body>
-
 </html>
