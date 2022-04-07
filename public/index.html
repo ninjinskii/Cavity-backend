@@ -7,7 +7,45 @@
     <title>Cavity API</title>
   </head>
 
+  <script>
+    function createTables() {
+      const input = document.getElementById("tables");
+  
+      fetch("/create-tables",
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          body: JSON.stringify({ tables: input.value.split(",").map(e => e.trim()) })
+      })
+      .then((res) => console.log(res))
+      .catch((error) => console.log(error));
+    }
+
+    function deleteTable() {
+      const input = document.getElementById("tables");
+  
+      fetch("/delete-table",
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          body: JSON.stringify({ table: input.value.trim() })
+      })
+      .then((res) => console.log(res))
+      .catch((error) => console.log(error));
+    }
+  </script>
+
   <body>
     <h1>Cavity API</h1>
+    <input id="tables" label="Nom de / des tables (séparés par virgules)"></input>
+    <button onclick="createTables()">Créer les tables</button>
+    <button onclick="deleteTable()">Supprimer la table</button>
   </body>
+
 </html>
