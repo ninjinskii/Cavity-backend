@@ -10,6 +10,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.cavity.rule=Host(`cavity.njk.localhost`)"
       - "traefik.http.routers.cavity.tls=true"
+      - "traefik.docker.network=proxy"
     networks:
       - default
       - proxy
