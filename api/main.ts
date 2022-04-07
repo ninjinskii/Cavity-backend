@@ -26,8 +26,7 @@ app.post("/delete-table", async (ctx: Context) => {
 });
 
 app.get("/account", async () => {
-  const results = await repository.select("account") as { rows: Array<any> };
-  console.log(results);
+  const results = await repository.select<Account>("account");
   return results.rows;
 });
 

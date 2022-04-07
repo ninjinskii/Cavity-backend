@@ -64,10 +64,10 @@ export default class Repository {
   }
 
   // TODO: map model object in return type
-  async select(table: string): Promise<unknown> {
+  async select<T>(table: string): Promise<{ rows: Array<T>}> {
     const query = `SELECT * FROM ${table}`;
 
-    return await this.db.doQuery(query);
+    return await this.db.doQuery(query) as { rows: Array<T>};
   }
 
   async insert(table: string, object: any): Promise<void> {
