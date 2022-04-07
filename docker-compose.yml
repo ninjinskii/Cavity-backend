@@ -3,7 +3,15 @@ version: "3.7"
 services:
   web:
     build: .
-    container_name: cavity.local.cvt.io
+    container_name: cavity.njk.localhost
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cavity.rule=Host(`cavity.njk.localhost`)"
+      - "traefik.http.routers.cavity.tls=true"
+    networks:
+      - proxy
     volumes:
       - ./:/app
     ports:
@@ -15,8 +23,14 @@ services:
 
   db:
     image: postgres:alpine
-    container_name: db.local.cvt.io
+    container_name: db.njk.localhost
+    security_opt:
+      - no-new-privileges:true
     environment:
       - POSTGRES_DB=cavity
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=plout
+
+networks:
+  proxy:
+    external: true
