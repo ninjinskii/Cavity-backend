@@ -12,4 +12,4 @@ RUN ls api
 
 RUN deno cache ./api/main.ts
 
-CMD ["run", "--allow-net", "./api/main.ts"]
+CMD ["run", "--allow-net", "--allow-read", "--watch", "./api/main.ts", "./api/main.ts"]
