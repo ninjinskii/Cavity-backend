@@ -3,13 +3,13 @@ export class County {
   userId: number;
   id: number;
   name: string;
-  prefOrder: number;
+  pref_order: number;
 
   constructor(county: CountyDTO, userId: number) {
     this.userId = userId;
     this.id = county.id;
     this.name = county.name;
-    this.prefOrder = county.prefOrder;
+    this.pref_order = county.prefOrder;
   }
 }
 

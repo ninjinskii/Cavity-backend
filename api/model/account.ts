@@ -2,12 +2,12 @@ export class Account {
   id!: number;
   email: string;
   password: string;
-  registrationCode: number | undefined;
+  registration_code: number | undefined;
 
   constructor(account: AccountDTO) {
     this.email = account.email;
     this.password = account.password;
-    this.registrationCode = 123456;
+    this.registration_code = 123456;
   }
 }
 

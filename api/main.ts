@@ -1,4 +1,5 @@
 import { Application, Context } from "../deps.ts";
+import { Account, AccountDTO } from "./model/account.ts";
 import Repository from "./repository.ts";
 
 type CreateTablesBody = { tables: Array<string> };
@@ -25,17 +26,16 @@ app.post("/delete-table", async (ctx: Context) => {
 });
 
 app.get("/account", async () => {
-  const results = await repository.select("account") as { rows : Array<any> };
+  const results = await repository.select("account") as { rows: Array<any> };
   console.log(results);
   return results.rows;
-})
+});
 
 app.post("/account", async (ctx: Context) => {
-  const account = await ctx.body as {
-    email: string;
-    password: string;
-    registration_code: number;
-  };
+  const accountDto = await ctx.body as AccountDTO;
+  const account = new Account(accountDto);
 
   repository.insert("account", account);
+
+  return ctx.json(account);
 });
