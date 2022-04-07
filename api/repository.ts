@@ -20,21 +20,27 @@ export default class Repository {
     }
   }
 
-  async createTable(tableName: string): Promise<Array<any>> {
+  async createAllTables(): Promise<void> {
+    await this.createTables("account", "county");
+  }
+
+  async createTables(...tables: Array<string>): Promise<void> {
+    for (const table of tables) {
+      try {
+        const query = await Deno.readTextFile(`./sql/${table}.sql`);
+        await this.db.doQuery(query);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }
+
+  async removeTable(table: string) {
     try {
-      const result = await this.db.doQuery(
-        `CREATE TABLE IF NOT EXISTS county (
-          _id serial PRIMARY KEY,
-          user_id INT NOT NULL,
-          id BIGINT NOT NULL,
-          name VARCHAR NOT NULL,
-          pref_order INT NOT NULL
-        )`,
-      );
-      return result.rows;
+      const query = `DROP TABLE IF EXISTS ${table}`;
+      await this.db.doQuery(query);
     } catch (error) {
       console.log(error);
-      return [];
     }
   }
 
