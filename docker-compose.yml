@@ -11,13 +11,14 @@ services:
       - "traefik.http.routers.cavity.rule=Host(`cavity.njk.localhost`)"
       - "traefik.http.routers.cavity.tls=true"
     networks:
+      - default
       - proxy
     volumes:
       - ./:/app
     ports:
       - 5000:5000
     environment:
-      - DATABASE_URL=postgresql://postgres:plout@db/cavity
+      - DATABASE_URL=postgres://postgres:plout@db/cavity
     depends_on:
       - db
 
@@ -26,6 +27,8 @@ services:
     container_name: db.njk.localhost
     security_opt:
       - no-new-privileges:true
+    networks:
+      - default
     environment:
       - POSTGRES_DB=cavity
       - POSTGRES_USER=postgres
