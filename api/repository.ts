@@ -2,6 +2,11 @@ import Database from "./db.ts";
 
 let instance: Repository | null = null;
 
+interface InsertQueryParams {
+  vars: string;
+  values: string;
+}
+
 export default class Repository {
   private db!: Database;
 
@@ -20,6 +25,20 @@ export default class Repository {
     }
   }
 
+  private toPgsqlArgs(object: any): InsertQueryParams {
+    let vars = "";
+    let values = "";
+
+    Object.keys(object).forEach((key) => vars += key + ",");
+    Object.values(object).forEach((val) => values += `'${val}',`);
+
+    // Remove trailing comma
+    vars = vars.slice(0, -1);
+    values = values.slice(0, -1);
+
+    return { vars, values };
+  }
+
   async createAllTables(): Promise<void> {
     await this.createTables("account", "county");
   }
@@ -27,7 +46,7 @@ export default class Repository {
   async createTables(...tables: Array<string>): Promise<void> {
     for (const table of tables) {
       try {
-        const query = await Deno.readTextFile(`./sql/${table}.sql`);
+        const query = await Deno.readTextFile(`./api/sql/${table}.sql`);
         await this.db.doQuery(query);
       } catch (error) {
         console.log(error);
@@ -35,9 +54,27 @@ export default class Repository {
     }
   }
 
-  async removeTable(table: string) {
+  async dropTable(table: string) {
     try {
-      const query = `DROP TABLE IF EXISTS ${table}`;
+      const query = `DROP TABLE IF EXISTS ${table};`;
+      await this.db.doQuery(query);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // TODO: map model object in return type
+  async select(table: string): Promise<unknown> {
+    const query = `SELECT * FROM ${table}`;
+
+    return await this.db.doQuery(query);
+  }
+
+  async insert(table: string, object: any): Promise<void> {
+    const { vars, values } = this.toPgsqlArgs(object);
+    const query = `INSERT INTO ${table} (${vars}) VALUES (${values});`;
+
+    try {
       await this.db.doQuery(query);
     } catch (error) {
       console.log(error);
