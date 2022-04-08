@@ -104,25 +104,26 @@ export default class AccountController extends Controller {
       if (account.length === 0) {
         return ctx.json({ message: this.translator.wrongAccount }, 400);
       }
-      
+
       if (account[0].registration_code === null) {
         return ctx.json({ message: this.translator.alreadyConfirmed }, 400);
-      }  
+      }
 
       const code = parseInt(confirmDto.registrationCode);
 
       if (account[0].registration_code === code) {
-        const updated = await this.repository.update<Account>(
-          "account",
-          "registration_code",
-          null,
-          {
-            filter: "email",
-            value: confirmDto.email,
-          },
-        );
+        await this.repository.update("account", "registration_code", null, {
+          filter: "email",
+          value: confirmDto.email,
+        });
 
-        return ctx.json(updated[0]);
+        const updated = {
+          ...account[0],
+          registration_code: null,
+          password: undefined,
+        };
+
+        return ctx.json(updated);
       }
 
       return ctx.json({ message: this.translator.wrongRegistrationCode }, 400);
