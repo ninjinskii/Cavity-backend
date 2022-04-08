@@ -36,8 +36,16 @@ export default class AccountController extends Controller {
       } else {
         return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
       }
-      return ctx.json(account);
+
+      const updated = { ...account, password: undefined };
+      return ctx.json(updated);
     } catch (error) {
+      try {
+        this.repository.deleteBy("account", "email", account.email);
+      } catch (error) {
+        console.warn("Unable to delete account");
+      }
+
       return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
@@ -142,6 +150,10 @@ export default class AccountController extends Controller {
     const client = new SmtpClient();
     const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
 
+    if (!account.registration_code) {
+      throw new Error(`No registration code for account ${account.email}`);
+    }
+
     await client.connectTLS({
       hostname: "smtp.gmail.com",
       port: 465,
@@ -149,12 +161,11 @@ export default class AccountController extends Controller {
       password: MAIL_PASSWORD,
     });
 
-    // TODO: replace with true mail
     await client.send({
       from: MAIL,
-      to: "louiszimbabwe@gmail.com",
-      subject: "Hello mom",
-      content: account.registration_code?.toString() || "erreur",
+      to: account.email,
+      subject: this.translator.emailSubject,
+      content: this.translator.emailContent + account.registration_code,
     });
 
     await client.close();
