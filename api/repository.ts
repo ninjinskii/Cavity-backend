@@ -29,8 +29,8 @@ export default class Repository {
     let vars = "";
     let values = "";
 
-    const noIdValues = Object.values(object)
-    const noIdKeys = Object.keys(object)
+    const noIdValues = Object.values(object);
+    const noIdKeys = Object.keys(object);
     noIdValues.shift();
     noIdKeys.shift();
 
@@ -107,6 +107,24 @@ export default class Repository {
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot insert data into ${table} table.`);
+    }
+  }
+
+  async update(
+    table: string,
+    field: string,
+    value: string,
+    where?: { filter: string; value: string },
+  ): Promise<void> {
+    const query = where
+      ? `UPDATE ${table} SET ${field} = '${value}' WHERE ${where.filter} = '${where.value}'`
+      : `UPDATE ${table} SET ${field} = '${value}'`;
+
+    try {
+      await this.db.doQuery(query);
+    } catch (error) {
+      console.warn(error);
+      throw new Error(`Cannot update ${table} table.`);
     }
   }
 
