@@ -64,7 +64,7 @@ export default class Repository {
   }
 
   async select<T>(table: string): Promise<Array<T>> {
-    const query = `SELECT * FROM ${table}`;
+    const query = `SELECT * FROM ${table};`;
 
     try {
       const result = await this.db.doQuery(query);
@@ -78,9 +78,9 @@ export default class Repository {
   async selectBy<T>(
     table: string,
     by: string,
-    value: number,
+    value: string,
   ): Promise<Array<T>> {
-    const query = `SELECT * FROM ${table} WHERE ${by} = ${value}`;
+    const query = `SELECT * FROM ${table} WHERE ${by} = '${value}';`;
 
     try {
       const result = await this.db.doQuery(query);
@@ -105,8 +105,8 @@ export default class Repository {
     }
   }
 
-  async deleteBy(table: string, by: string, value: number): Promise<void> {
-    const query = `DELETE FROM ${table} WHERE ${by} = ${value}`;
+  async deleteBy(table: string, by: string, value: string): Promise<void> {
+    const query = `DELETE FROM ${table} WHERE ${by} = '${value}';`;
 
     try {
       await this.db.doQuery(query);
