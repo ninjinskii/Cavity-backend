@@ -29,8 +29,13 @@ export default class Repository {
     let vars = "";
     let values = "";
 
-    Object.keys(object).forEach((key) => vars += key + ",");
-    Object.values(object).forEach((val) => values += `'${val}',`);
+    const noIdValues = Object.values(object)
+    const noIdKeys = Object.keys(object)
+    noIdValues.shift();
+    noIdKeys.shift();
+
+    noIdKeys.forEach((key) => vars += key + ",");
+    noIdValues.forEach((val) => values += `'${val}',`);
 
     // Remove trailing comma
     vars = vars.slice(0, -1);

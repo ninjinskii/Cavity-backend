@@ -21,7 +21,11 @@ export default class AccountController extends Controller {
     const account = new Account(accountDto);
 
     try {
-      this.repository.insert("account", account);
+      if (await this.isAccountUnique(account.email)) {
+        this.repository.insert("account", account);
+      } else {
+        return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
+      }
       return ctx.json(account);
     } catch (error) {
       return ctx.json({ message: this.translator.baseError }, 500);
@@ -49,7 +53,7 @@ export default class AccountController extends Controller {
       const account = await this.repository.selectBy<Account>(
         "account",
         "id",
-        parsed,
+        id,
       );
 
       if (account.length) {
@@ -71,9 +75,14 @@ export default class AccountController extends Controller {
     }
 
     try {
-      await this.repository.deleteBy("account", "id", parsed);
+      await this.repository.deleteBy("account", "id", id);
     } catch (error) {
       return ctx.json({ message: this.translator.baseError }, 500);
     }
+  }
+
+  private async isAccountUnique(email: string): Promise<boolean> {
+    const account = await this.repository.selectBy("account", "email", email);
+    return account.length == 0;
   }
 }
