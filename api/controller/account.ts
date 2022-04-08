@@ -3,15 +3,17 @@ import { Account, AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
-  path = "/account";
+  default = "/account";
+  register = "/account/register";
+  confirm = "/account/confirm";
 
   handleRequests(): void {
     this.app
-      .post(this.path, async (ctx: Context) => this.postAccount(ctx))
-      .get(this.path, async (ctx: Context) => this.getAccounts(ctx))
-      .get(`${this.path}/:id`, async (ctx: Context) => this.getAccount(ctx))
+      .post(this.default, async (ctx: Context) => this.postAccount(ctx))
+      .get(this.default, async (ctx: Context) => this.getAccounts(ctx))
+      .get(`${this.default}/:id`, async (ctx: Context) => this.getAccount(ctx))
       .delete(
-        `${this.path}/:id`,
+        `${this.default}/:id`,
         async (ctx: Context) => this.deleteAccount(ctx),
       );
   }

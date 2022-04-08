@@ -6,7 +6,6 @@ export default abstract class Controller {
   app: Application;
   repository: Repository;
   translator: Translatable = new EnTranslations();
-  path: string = "/account";
 
   constructor(app: Application, repository: Repository) {
     this.app = app;
