@@ -1,19 +1,28 @@
-import { Context } from "../../deps.ts";
-import { Account, AccountDTO } from "../model/account.ts";
+import { Context, SmtpClient } from "../../deps.ts";
+import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
-  path = "/account";
+  get default() {
+    return "/account";
+  }
+
+  get confirm() {
+    return "/account/confirm";
+  }
 
   handleRequests(): void {
     this.app
-      .post(this.path, async (ctx: Context) => this.postAccount(ctx))
-      .get(this.path, async (ctx: Context) => this.getAccounts(ctx))
-      .get(`${this.path}/:id`, async (ctx: Context) => this.getAccount(ctx))
+      .post(this.default, async (ctx: Context) => this.postAccount(ctx))
+      .get(this.default, async (ctx: Context) => this.getAccounts(ctx))
+      .get(`${this.default}/:id`, async (ctx: Context) => this.getAccount(ctx))
       .delete(
-        `${this.path}/:id`,
+        `${this.default}/:id`,
         async (ctx: Context) => this.deleteAccount(ctx),
       );
+
+    this.app
+      .post(this.confirm, async (ctx: Context) => this.confirmAccount(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -23,11 +32,20 @@ export default class AccountController extends Controller {
     try {
       if (await this.isAccountUnique(account.email)) {
         this.repository.insert("account", account);
+        await this.sendConfirmMail(account);
       } else {
         return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
       }
-      return ctx.json(account);
+
+      const updated = { ...account, password: undefined };
+      return ctx.json(updated);
     } catch (error) {
+      try {
+        this.repository.deleteBy("account", "email", account.email);
+      } catch (error) {
+        console.warn("Unable to delete account");
+      }
+
       return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
@@ -82,8 +100,74 @@ export default class AccountController extends Controller {
     }
   }
 
+  async confirmAccount(ctx: Context): Promise<void> {
+    const confirmDto = await ctx.body as ConfirmAccountDTO;
+
+    try {
+      const account = await this.repository.selectBy<Account>(
+        "account",
+        "email",
+        confirmDto.email,
+      );
+
+      if (account.length === 0) {
+        return ctx.json({ message: this.translator.wrongAccount }, 400);
+      }
+
+      if (account[0].registration_code === null) {
+        return ctx.json({ message: this.translator.alreadyConfirmed }, 400);
+      }
+
+      const code = parseInt(confirmDto.registrationCode);
+
+      if (account[0].registration_code === code) {
+        await this.repository.update("account", "registration_code", null, {
+          filter: "email",
+          value: confirmDto.email,
+        });
+
+        const updated = {
+          ...account[0],
+          registration_code: null,
+          password: undefined,
+        };
+
+        return ctx.json(updated);
+      }
+
+      return ctx.json({ message: this.translator.wrongRegistrationCode }, 400);
+    } catch (error) {
+      return ctx.json({ message: this.translator.baseError }, 500);
+    }
+  }
+
   private async isAccountUnique(email: string): Promise<boolean> {
     const account = await this.repository.selectBy("account", "email", email);
     return account.length == 0;
+  }
+
+  private async sendConfirmMail(account: Account) {
+    const client = new SmtpClient();
+    const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
+
+    if (!account.registration_code) {
+      throw new Error(`No registration code for account ${account.email}`);
+    }
+
+    await client.connectTLS({
+      hostname: "smtp.gmail.com",
+      port: 465,
+      username: MAIL,
+      password: MAIL_PASSWORD,
+    });
+
+    await client.send({
+      from: MAIL,
+      to: account.email,
+      subject: this.translator.emailSubject,
+      content: this.translator.emailContent + account.registration_code,
+    });
+
+    await client.close();
   }
 }

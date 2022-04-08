@@ -4,8 +4,8 @@ export default class Database {
   private client: PostgresClient;
 
   constructor() {
-    const connectionString = Deno.env.get("DATABASE_URL");
-    this.client = new PostgresClient(connectionString);
+    const DATABASE_URL = Deno.env.get("DATABASE_URL");
+    this.client = new PostgresClient(DATABASE_URL);
     // this.client = new PostgresClient({
     //   database: "cavity",
     //   hostname: "db",
