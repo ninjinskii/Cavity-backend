@@ -67,7 +67,12 @@ export default class Repository {
   async select<T>(table: string): Promise<{ rows: Array<T>}> {
     const query = `SELECT * FROM ${table}`;
 
-    return await this.db.doQuery(query) as { rows: Array<T>};
+    try {
+      return await this.db.doQuery(query) as { rows: Array<T>};
+    } catch (error) {
+      console.warn(error);
+      throw new Error(`Cannot execute select statement into ${table} table.`)
+    }
   }
 
   async insert(table: string, object: any): Promise<void> {
@@ -77,7 +82,8 @@ export default class Repository {
     try {
       await this.db.doQuery(query);
     } catch (error) {
-      console.log(error);
+      console.warn(error);
+      throw new Error(`Cannot insert data into ${table} table.`);
     }
   }
 
