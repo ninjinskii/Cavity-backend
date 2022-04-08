@@ -110,18 +110,20 @@ export default class Repository {
     }
   }
 
-  async update(
+  async update<T>(
     table: string,
     field: string,
-    value: string,
+    value: string | null,
     where?: { filter: string; value: string },
-  ): Promise<void> {
+  ): Promise<Array<T>> {
+    const quotedValue = value ? `'${value}'` : null;
     const query = where
-      ? `UPDATE ${table} SET ${field} = '${value}' WHERE ${where.filter} = '${where.value}'`
-      : `UPDATE ${table} SET ${field} = '${value}'`;
+      ? `UPDATE ${table} SET ${field} = ${quotedValue} WHERE ${where.filter} = '${where.value}'`
+      : `UPDATE ${table} SET ${field} = '${quotedValue}'`;
 
     try {
-      await this.db.doQuery(query);
+      const result = await this.db.doQuery(query);
+      return result.rows as Array<T>;
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot update ${table} table.`);
