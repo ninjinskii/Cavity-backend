@@ -24,7 +24,7 @@ export default class AccountController extends Controller {
       this.repository.insert("account", account);
       return ctx.json(account);
     } catch (error) {
-      return ctx.json({ message: this.translator?.baseError }, 500);
+      return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
 
@@ -33,7 +33,7 @@ export default class AccountController extends Controller {
       const accounts = await this.repository.select<Account>("account");
       return ctx.json(accounts);
     } catch (error) {
-      return ctx.json({ message: this.translator?.baseError }, 500);
+      return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
 
@@ -42,7 +42,7 @@ export default class AccountController extends Controller {
     const parsed = parseInt(id);
 
     if (isNaN(parsed)) {
-      return ctx.json({ message: this.translator?.baseError }, 400);
+      return ctx.json({ message: this.translator.baseError }, 400);
     }
 
     try {
@@ -55,10 +55,10 @@ export default class AccountController extends Controller {
       if (account.length) {
         return ctx.json(account[0]);
       } else {
-        return ctx.json({ message: this.translator?.notFound }, 404);
+        return ctx.json({ message: this.translator.notFound }, 404);
       }
     } catch (error) {
-      return ctx.json({ message: this.translator?.baseError }, 500);
+      return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
 
@@ -67,13 +67,13 @@ export default class AccountController extends Controller {
     const parsed = parseInt(id);
 
     if (isNaN(parsed)) {
-      return ctx.json({ message: this.translator?.baseError }, 400);
+      return ctx.json({ message: this.translator.baseError }, 400);
     }
 
     try {
       await this.repository.deleteBy("account", "id", parsed);
     } catch (error) {
-      return ctx.json({ message: this.translator?.baseError }, 500);
+      return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
 }
