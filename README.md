@@ -14,4 +14,4 @@ You can now acces the project at https://cavity.njk.localhost
 ## Make a request from another device
 You can use the api while serving it with a mobile device for example.
 You first need to find out your ip on your local network.
-Access the app from http://<ip>:5000
+Access the app from http://ip:5000

@@ -1,4 +1,4 @@
-import { Context, SmtpClient } from "../../deps.ts";
+import { bcrypt, Context, SmtpClient } from "../../deps.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
@@ -27,6 +27,8 @@ export default class AccountController extends Controller {
 
   async postAccount(ctx: Context): Promise<void> {
     const accountDto = await ctx.body as AccountDTO;
+    accountDto.password = await this.hashPassword(accountDto.password);
+
     const account = new Account(accountDto);
 
     try {
@@ -144,6 +146,10 @@ export default class AccountController extends Controller {
   private async isAccountUnique(email: string): Promise<boolean> {
     const account = await this.repository.selectBy("account", "email", email);
     return account.length == 0;
+  }
+
+  private hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password);
   }
 
   private async sendConfirmMail(account: Account) {
