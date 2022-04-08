@@ -6,6 +6,8 @@ export interface Translatable {
   wrongAccount: string;
   wrongRegistrationCode: string;
   alreadyConfirmed: string;
+  emailSubject: string;
+  emailContent: string;
   // accountResgistrationFailed: string
 }
 
@@ -17,6 +19,8 @@ export class FrTranslations implements Translatable {
   wrongAccount = "Ce compte n'existe pas.";
   wrongRegistrationCode = "Le code n'est pas bon.";
   alreadyConfirmed = "Ce compte est déjà confirmé.";
+  emailSubject = "Validation de votre compte Cavity";
+  emailContent = "Voici le code de confirmation de votre compte: ";
 }
 
 export class EnTranslations implements Translatable {
@@ -27,4 +31,6 @@ export class EnTranslations implements Translatable {
   wrongAccount = "This account does not exists.";
   wrongRegistrationCode = "Wrong code.";
   alreadyConfirmed = "Account already confirmed";
+  emailSubject = "Validate your Cavity account";
+  emailContent = "Here is your account confirmation code: ";
 }
