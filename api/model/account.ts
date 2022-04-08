@@ -2,7 +2,7 @@ export class Account {
   id!: number;
   email: string;
   password: string;
-  registration_code: number | undefined;
+  registration_code: number | null;
 
   constructor(account: AccountDTO) {
     this.email = account.email;
@@ -14,4 +14,9 @@ export class Account {
 export interface AccountDTO {
   email: string;
   password: string;
+}
+
+export interface ConfirmAccountDTO {
+  email: string;
+  registrationCode: string;
 }
