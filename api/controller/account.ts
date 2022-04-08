@@ -76,6 +76,7 @@ export default class AccountController extends Controller {
 
     try {
       await this.repository.deleteBy("account", "id", id);
+      return ctx.json({});
     } catch (error) {
       return ctx.json({ message: this.translator.baseError }, 500);
     }
