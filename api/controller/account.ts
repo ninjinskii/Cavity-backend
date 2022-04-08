@@ -1,4 +1,4 @@
-import { Context } from "../../deps.ts";
+import { Context, SmtpClient } from "../../deps.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
@@ -32,6 +32,7 @@ export default class AccountController extends Controller {
     try {
       if (await this.isAccountUnique(account.email)) {
         this.repository.insert("account", account);
+        await this.sendConfirmMail(account);
       } else {
         return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
       }
@@ -135,5 +136,27 @@ export default class AccountController extends Controller {
   private async isAccountUnique(email: string): Promise<boolean> {
     const account = await this.repository.selectBy("account", "email", email);
     return account.length == 0;
+  }
+
+  private async sendConfirmMail(account: Account) {
+    const client = new SmtpClient();
+    const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
+
+    await client.connectTLS({
+      hostname: "smtp.gmail.com",
+      port: 465,
+      username: MAIL,
+      password: MAIL_PASSWORD,
+    });
+
+    // TODO: replace with true mail
+    await client.send({
+      from: MAIL,
+      to: "louiszimbabwe@gmail.com",
+      subject: "Hello mom",
+      content: account.registration_code?.toString() || "erreur",
+    });
+
+    await client.close();
   }
 }
