@@ -9,7 +9,11 @@ export default class AccountController extends Controller {
     this.app
       .post(this.path, async (ctx: Context) => this.postAccount(ctx))
       .get(this.path, async (ctx: Context) => this.getAccounts(ctx))
-      .get(`${this.path}/:id`, async (ctx: Context) => this.getAccount(ctx));
+      .get(`${this.path}/:id`, async (ctx: Context) => this.getAccount(ctx))
+      .delete(
+        `${this.path}/:id`,
+        async (ctx: Context) => this.deleteAccount(ctx),
+      );
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -35,10 +39,41 @@ export default class AccountController extends Controller {
 
   async getAccount(ctx: Context): Promise<void> {
     const { id } = ctx.params;
+    const parsed = parseInt(id);
 
-    
+    if (isNaN(parsed)) {
+      return ctx.json({ message: this.translator?.baseError }, 400);
+    }
+
+    try {
+      const account = await this.repository.selectBy<Account>(
+        "account",
+        "id",
+        parsed,
+      );
+
+      if (account.length) {
+        return ctx.json(account[0]);
+      } else {
+        return ctx.json({ message: this.translator?.notFound }, 404);
+      }
+    } catch (error) {
+      return ctx.json({ message: this.translator?.baseError }, 500);
+    }
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
+    const { id } = ctx.params;
+    const parsed = parseInt(id);
+
+    if (isNaN(parsed)) {
+      return ctx.json({ message: this.translator?.baseError }, 400);
+    }
+
+    try {
+      await this.repository.deleteBy("account", "id", parsed);
+    } catch (error) {
+      return ctx.json({ message: this.translator?.baseError }, 500);
+    }
   }
 }

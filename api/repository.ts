@@ -63,15 +63,33 @@ export default class Repository {
     }
   }
 
-  // TODO: map model object in return type
-  async select<T>(table: string): Promise<{ rows: Array<T>}> {
+  async select<T>(table: string): Promise<Array<T>> {
     const query = `SELECT * FROM ${table}`;
 
     try {
-      return await this.db.doQuery(query) as { rows: Array<T>};
+      const result = await this.db.doQuery(query);
+      return result.rows as Array<T>;
     } catch (error) {
       console.warn(error);
-      throw new Error(`Cannot execute select statement into ${table} table.`)
+      throw new Error(`Cannot execute select statement into ${table} table.`);
+    }
+  }
+
+  async selectBy<T>(
+    table: string,
+    by: string,
+    value: number,
+  ): Promise<Array<T>> {
+    const query = `SELECT * FROM ${table} WHERE ${by} = ${value}`;
+
+    try {
+      const result = await this.db.doQuery(query);
+      return result.rows as Array<T>;
+    } catch (error) {
+      console.warn(error);
+      throw new Error(
+        `Cannot execute select statement into ${table} table where ${by} = ${value}.`,
+      );
     }
   }
 
@@ -84,6 +102,19 @@ export default class Repository {
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot insert data into ${table} table.`);
+    }
+  }
+
+  async deleteBy(table: string, by: string, value: number): Promise<void> {
+    const query = `DELETE FROM ${table} WHERE ${by} = ${value}`;
+
+    try {
+      await this.db.doQuery(query);
+    } catch (error) {
+      console.warn(error);
+      throw new Error(
+        `Cannot delete into ${table} table where ${by} = ${value}.`,
+      );
     }
   }
 

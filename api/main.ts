@@ -4,7 +4,6 @@ import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
-import { Account, AccountDTO } from "./model/account.ts";
 import Repository from "./repository.ts";
 
 type CreateTablesBody = { tables: Array<string> };
@@ -46,18 +45,4 @@ app.post("/create-tables", async (ctx: Context) => {
 app.post("/delete-table", async (ctx: Context) => {
   const { table } = await ctx.body as DeleteTableBody;
   repository.dropTable(table);
-});
-
-app.get("/account", async () => {
-  const results = await repository.select<Account>("account");
-  return results.rows;
-});
-
-app.post("/account", async (ctx: Context) => {
-  const accountDto = await ctx.body as AccountDTO;
-  const account = new Account(accountDto);
-
-  repository.insert("account", account);
-
-  return ctx.json(account);
 });

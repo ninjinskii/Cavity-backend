@@ -6,11 +6,13 @@ export default abstract class Controller {
   app: Application;
   repository: Repository;
   translator: Translatable | null = null;
-  abstract path: string;
+  path: string = "/account";
 
   constructor(app: Application, repository: Repository) {
     this.app = app;
     this.repository = repository;
+
+    this.handleRequests();
   }
 
   abstract handleRequests(): void;
