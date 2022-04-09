@@ -21,16 +21,21 @@ export default class AuthController extends Controller {
   }
 
   async login(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.body() as AccountDTO;
+    const { email, password } = await ctx.body as AccountDTO;
     const account = await this.repository.selectBy<Account>(
       "account",
       "email",
       email,
     );
-    const isAuthenticated = await bcrypt.compare(password, account[0].password);
-
-    if (account.length === 0 || !isAuthenticated) {
+    
+    if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons
+      return ctx.json({ message: this.translator.wrongCredentials }, 400);
+    }
+    
+    const isAuthenticated = await bcrypt.compare(password, account[0].password);
+    
+    if (!isAuthenticated) {
       return ctx.json({ message: this.translator.wrongCredentials }, 400);
     }
 
