@@ -10,6 +10,7 @@ export interface Translatable {
   emailContent: string;
   wrongCredentials: string;
   unauthorized: string;
+  missingParameters: string;
   // accountResgistrationFailed: string
 }
 
@@ -25,6 +26,7 @@ export class FrTranslations implements Translatable {
   emailContent = "Voici le code de confirmation de votre compte: ";
   wrongCredentials = "Identifiants erronés.";
   unauthorized = "Session expirée.";
+  missingParameters = "Paramètres manquants.";
 }
 
 export class EnTranslations implements Translatable {
@@ -39,4 +41,5 @@ export class EnTranslations implements Translatable {
   emailContent = "Here is your account confirmation code: ";
   wrongCredentials = "Wrong credentials";
   unauthorized = "Session expired.";
+  missingParameters = "Missing parameters.";
 }

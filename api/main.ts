@@ -11,7 +11,12 @@ type DeleteTableBody = { table: string };
 
 const app = new Application();
 const repository: Repository = await Repository.getInstance();
-const jwtKey = await crypto.subtle.generateKey(
+
+const encoder = new TextEncoder();
+const keyBuffer = encoder.encode("mySuperSecret");
+const jwtKey = await crypto.subtle.importKey(
+  "raw",
+  keyBuffer,
   { name: "HMAC", hash: "SHA-512" },
   true,
   ["sign", "verify"],

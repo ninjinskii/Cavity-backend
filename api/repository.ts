@@ -110,6 +110,33 @@ export default class Repository {
     }
   }
 
+  async insertMany(table: string, objects: Array<any>): Promise<void> {
+    if (!objects.length) {
+      return;
+    }
+
+    const { vars } = this.toPgsqlArgs(objects[0]);
+    let query = `INSERT INTO ${table} (${vars}) VALUES`;
+
+    for (const object of objects) {
+      const { values } = this.toPgsqlArgs(object);
+      query += ` (${values}),`;
+    }
+
+    query = query.slice(0, -1);
+    query += ";";
+
+    console.log("query");
+    console.log(query);
+
+    try {
+      await this.db.doQuery(query);
+    } catch (error) {
+      console.warn(error);
+      throw new Error(`Cannot insert data into ${table} table.`);
+    }
+  }
+
   async update(
     table: string,
     field: string,

@@ -17,12 +17,11 @@ export default class DataController extends Controller {
 
   handleRequests(): void {
     this.app
-      .post(this.county, async (ctx: Context) => this.postCounty(ctx))
-      .get(this.county, async (ctx: Context) => this.getCounties(ctx))
-      .get(`${this.county}/:id`, async (ctx: Context) => this.getCounty(ctx));
+      .post(this.county, async (ctx: Context) => this.postCounties(ctx))
+      .get(this.county, async (ctx: Context) => this.getCounties(ctx));
   }
 
-  async postCounty(ctx: Context): Promise<void> {
+  async postCounties(ctx: Context): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
@@ -30,14 +29,63 @@ export default class DataController extends Controller {
     }
 
     const [_, token] = authorization.split(" ");
-    const { account_id } = await jwt.verify(token, this.jwtKey);
-    const countyDto = await ctx.body as CountyDTO;
-    const county = new County(countyDto, account_id);
+
+    try {
+      const { account_id } = await jwt.verify(token, this.jwtKey) as {
+        account_id: string;
+      };
+
+      const countiesDto = await ctx.body as Array<CountyDTO>;
+
+      if (!(countiesDto instanceof Array)) {
+        return ctx.json({ message: this.translator.missingParameters }, 400);
+      }
+
+      const counties = countiesDto.map((countyDto) =>
+        new County(countyDto, parseInt(account_id))
+      );
+
+      try {
+        this.repository.insertMany("county", counties);
+        return ctx.json({ ok: true });
+      } catch (error) {
+        console.warn("Unable to insert counties");
+      }
+    } catch (error) {
+      console.log(error);
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
   }
 
-  getCounties(ctx: Context): void {
-  }
+  async getCounties(ctx: Context): Promise<void> {
+    const authorization = ctx.request.headers.get("Authorization");
 
-  getCounty(ctx: Context): void {
+    if (!authorization) {
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
+
+    const [_, token] = authorization.split(" ");
+
+    try {
+      const { account_id } = await jwt.verify(token, this.jwtKey) as {
+        account_id: string;
+      };
+
+      try {
+        const counties = await this.repository.selectBy<County>(
+          "county",
+          "account_id",
+          account_id,
+        );
+
+        const countiesDto = counties.map((county) => County.toDTO(county));
+
+        ctx.json(countiesDto);
+      } catch (error) {
+        console.warn("Unable to get counties");
+      }
+    } catch (error) {
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
   }
 }
