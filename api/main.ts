@@ -11,10 +11,15 @@ type DeleteTableBody = { table: string };
 
 const app = new Application();
 const repository: Repository = await Repository.getInstance();
+const jwtKey = await crypto.subtle.generateKey(
+  { name: "HMAC", hash: "SHA-512" },
+  true,
+  ["sign", "verify"],
+);
 
 const accountController = new AccountController(app, repository);
-const authController = new AuthController(app, repository);
-const dataController = new DataController(app, repository);
+const authController = new AuthController(app, repository, jwtKey);
+const dataController = new DataController(app, repository, jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(accountController, authController, dataController);
 

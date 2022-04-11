@@ -1,23 +1,23 @@
-import { bcrypt, Context, jwt } from "../../deps.ts";
+import { Application, bcrypt, Context, jwt } from "../../deps.ts";
 import { Account, AccountDTO } from "../model/account.ts";
+import Repository from "../repository.ts";
 import Controller from "./controller.ts";
 
 export default class AuthController extends Controller {
-  jwtKey: CryptoKey | null = null;
+  private jwtKey: CryptoKey;
+
+  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
+    super(app, repository);
+    this.jwtKey = jwtKey;
+  }
 
   get default() {
     return "/auth/login";
   }
 
   async handleRequests(): Promise<void> {
-    this.jwtKey = await crypto.subtle.generateKey(
-      { name: "HMAC", hash: "SHA-512" },
-      true,
-      ["sign", "verify"],
-    );
-
     this.app
-      .post(this.default, (ctx: Context) => this.login(ctx));
+      .post(this.default, async (ctx: Context) => this.login(ctx));
   }
 
   async login(ctx: Context): Promise<void> {

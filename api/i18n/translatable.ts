@@ -9,6 +9,7 @@ export interface Translatable {
   emailSubject: string;
   emailContent: string;
   wrongCredentials: string;
+  unauthorized: string;
   // accountResgistrationFailed: string
 }
 
@@ -23,6 +24,7 @@ export class FrTranslations implements Translatable {
   emailSubject = "Validation de votre compte Cavity";
   emailContent = "Voici le code de confirmation de votre compte: ";
   wrongCredentials = "Identifiants erronés.";
+  unauthorized = "Session expirée.";
 }
 
 export class EnTranslations implements Translatable {
@@ -36,4 +38,5 @@ export class EnTranslations implements Translatable {
   emailSubject = "Validate your Cavity account";
   emailContent = "Here is your account confirmation code: ";
   wrongCredentials = "Wrong credentials";
+  unauthorized = "Session expired.";
 }

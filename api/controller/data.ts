@@ -1,8 +1,16 @@
-import { Context, jwt } from "../../deps.ts";
+import { Application, Context, jwt } from "../../deps.ts";
 import { County, CountyDTO } from "../model/county.ts";
+import Repository from "../repository.ts";
 import Controller from "./controller.ts";
 
 export default class DataController extends Controller {
+  private jwtKey: CryptoKey;
+
+  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
+    super(app, repository);
+    this.jwtKey = jwtKey;
+  }
+
   get county() {
     return "/county";
   }
@@ -18,12 +26,18 @@ export default class DataController extends Controller {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
-      return;
+      return ctx.json({ message: this.translator.unauthorized }, 401);
     }
 
     const [_, token] = authorization.split(" ");
-    const payload = await jwt.verify(token, "");
+    const { account_id } = await jwt.verify(token, this.jwtKey);
     const countyDto = await ctx.body as CountyDTO;
-    const county = new County(countyDto, 1);
+    const county = new County(countyDto, account_id);
+  }
+
+  getCounties(ctx: Context): void {
+  }
+
+  getCounty(ctx: Context): void {
   }
 }
