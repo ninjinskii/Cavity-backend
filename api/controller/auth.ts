@@ -33,7 +33,12 @@ export default class AuthController extends Controller {
       return ctx.json({ message: this.translator.wrongCredentials }, 400);
     }
 
+    const isConfirmed = account[0].registration_code === null;
     const isAuthenticated = await bcrypt.compare(password, account[0].password);
+
+    if (!isConfirmed) {
+      return ctx.json({ message: this.translator.confirmAccount }, 412);
+    }
 
     if (!isAuthenticated) {
       return ctx.json({ message: this.translator.wrongCredentials }, 400);
