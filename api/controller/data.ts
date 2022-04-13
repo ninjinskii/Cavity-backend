@@ -17,11 +17,21 @@ export default class DataController extends Controller {
 
   handleRequests(): void {
     this.app
-      .post(this.county, async (ctx: Context) => this.postCounties(ctx))
-      .get(this.county, async (ctx: Context) => this.getCounties(ctx));
+      .post(
+        this.county,
+        async (ctx: Context) => this.genericPost(ctx, "county", "County"),
+      )
+      .get(
+        this.county,
+        async (ctx: Context) => this.genericGet(ctx, "county", "County"),
+      );
   }
 
-  async postCounties(ctx: Context): Promise<void> {
+  async genericPost(
+    ctx: Context,
+    tableName: string,
+    className: string,
+  ): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
@@ -35,21 +45,31 @@ export default class DataController extends Controller {
         account_id: string;
       };
 
-      const countiesDto = await ctx.body as Array<CountyDTO>;
+      const dtoList = await ctx.body;
 
-      if (!(countiesDto instanceof Array)) {
+      if (!(dtoList instanceof Array)) {
         return ctx.json({ message: this.translator.missingParameters }, 400);
       }
 
-      const counties = countiesDto.map((countyDto) =>
-        new County(countyDto, parseInt(account_id))
+      // Need to validate so called unused import
+      County
+
+      const objects = dtoList.map((countyDto) =>
+        eval("new " + className + ` (countyDto, account_id)`)
       );
 
       try {
-        this.repository.insertMany("county", counties);
+        await this.repository.insertMany(tableName, objects);
+        // await this.repository.doInTransaction(
+        //   `postCounty-${account_id}`,
+        //   async () => {
+        //     //await this.repository.deleteBy("county", "account_id", account_id);
+        //   },
+        // );
         return ctx.json({ ok: true });
       } catch (error) {
-        console.warn("Unable to insert counties");
+        console.warn("Unable to insert objects");
+        // error 400
       }
     } catch (error) {
       console.log(error);
@@ -57,7 +77,11 @@ export default class DataController extends Controller {
     }
   }
 
-  async getCounties(ctx: Context): Promise<void> {
+  async genericGet<T>(
+    ctx: Context,
+    tableName: string,
+    className: string,
+  ): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
@@ -72,16 +96,20 @@ export default class DataController extends Controller {
       };
 
       try {
-        const counties = await this.repository.selectBy<County>(
-          "county",
+        const objects = await this.repository.selectBy<T>(
+          tableName,
           "account_id",
           account_id,
         );
 
-        const countiesDto = counties.map((county) => County.toDTO(county));
+        County
 
-        ctx.json(countiesDto);
+        const dtoList = objects.map((dto) => eval(`${className}.toDTO(dto)`));
+        console.log(dtoList);
+
+        ctx.json(dtoList);
       } catch (error) {
+        console.log(error);
         console.warn("Unable to get counties");
       }
     } catch (error) {
