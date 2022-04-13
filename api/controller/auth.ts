@@ -27,21 +27,24 @@ export default class AuthController extends Controller {
       "email",
       email,
     );
-    
+
     if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons
       return ctx.json({ message: this.translator.wrongCredentials }, 400);
     }
-    
+
     const isAuthenticated = await bcrypt.compare(password, account[0].password);
-    
+
     if (!isAuthenticated) {
       return ctx.json({ message: this.translator.wrongCredentials }, 400);
     }
 
     const token = await jwt.create(
       { alg: "HS512", typ: "JWT" },
-      { exp: jwt.getNumericDate(60 * 60), account_id: account[0].id }, // 60 min
+      {
+        //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+        account_id: account[0].id,
+      },
       this.jwtKey,
     );
 
