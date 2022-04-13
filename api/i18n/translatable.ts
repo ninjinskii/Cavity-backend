@@ -11,6 +11,7 @@ export interface Translatable {
   wrongCredentials: string;
   unauthorized: string;
   missingParameters: string;
+  confirmAccount: string;
   // accountResgistrationFailed: string
 }
 
@@ -27,6 +28,7 @@ export class FrTranslations implements Translatable {
   wrongCredentials = "Identifiants erronés.";
   unauthorized = "Session expirée.";
   missingParameters = "Paramètres manquants.";
+  confirmAccount = "Confirmez votre compte avant de vous connecter.";
 }
 
 export class EnTranslations implements Translatable {
@@ -42,4 +44,5 @@ export class EnTranslations implements Translatable {
   wrongCredentials = "Wrong credentials";
   unauthorized = "Session expired.";
   missingParameters = "Missing parameters.";
+  confirmAccount = "Confirm your account creation before logging in.";
 }
