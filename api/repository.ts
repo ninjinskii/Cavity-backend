@@ -1,4 +1,5 @@
 import Database from "./db.ts";
+import PersistableUserData from "./model/persistable-user-data.ts";
 
 let instance: Repository | null = null;
 
@@ -167,6 +168,10 @@ export default class Repository {
         `Cannot delete into ${table} table where ${by} = ${value}.`,
       );
     }
+  }
+
+  doInTransaction(name: string, block: () => void): Promise<void> {
+    return this.db.doInTransaction(name, block);
   }
 
   static async getInstance(): Promise<Repository> {

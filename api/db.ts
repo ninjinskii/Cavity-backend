@@ -29,4 +29,12 @@ export default class Database {
   async doQuery(query: string): Promise<QueryObjectResult<unknown>> {
     return await this.client.queryObject(query);
   }
+
+  async doInTransaction(name: string, block: () => void): Promise<void> {
+    const transaction = this.client.createTransaction(name);
+
+    await transaction.begin();
+    await block();
+    await transaction.commit();
+  }
 }

@@ -1,5 +1,6 @@
 import { Application, Context, jwt } from "../../deps.ts";
 import { County, CountyDTO } from "../model/county.ts";
+import PersistableUserData from "../model/persistable-user-data.ts";
 import Repository from "../repository.ts";
 import Controller from "./controller.ts";
 
@@ -17,70 +18,32 @@ export default class DataController extends Controller {
 
   handleRequests(): void {
     this.app
-      .post(
-        this.county,
-        async (ctx: Context) => this.genericPost(ctx, "county", "County"),
-      )
+      // .post(
+      //   this.county,
+      //   async (ctx: Context) => this.genericPost(ctx, "county", "County"),
+      // )
       .get(
         this.county,
-        async (ctx: Context) => this.genericGet(ctx, "county", "County"),
+        async (ctx: Context) =>
+          this.handleGet(ctx, async (accountId) => {
+            const objects = await this.repository.selectBy(
+              mapper[ctx.path].table,
+              "account_id",
+              accountId,
+            );
+
+            const dtoList = objects.map((object) =>
+              mapper[ctx.path].toDTO(object)
+            );
+
+            return dtoList;
+          }),
       );
   }
 
-  async genericPost(
+  async handleGet(
     ctx: Context,
-    tableName: string,
-    className: string,
-  ): Promise<void> {
-    const authorization = ctx.request.headers.get("Authorization");
-
-    if (!authorization) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
-
-    const [_, token] = authorization.split(" ");
-
-    try {
-      const { account_id } = await jwt.verify(token, this.jwtKey) as {
-        account_id: string;
-      };
-
-      const dtoList = await ctx.body;
-
-      if (!(dtoList instanceof Array)) {
-        return ctx.json({ message: this.translator.missingParameters }, 400);
-      }
-
-      // Need to validate so called unused import
-      County
-
-      const objects = dtoList.map((countyDto) =>
-        eval("new " + className + ` (countyDto, account_id)`)
-      );
-
-      try {
-        await this.repository.insertMany(tableName, objects);
-        // await this.repository.doInTransaction(
-        //   `postCounty-${account_id}`,
-        //   async () => {
-        //     //await this.repository.deleteBy("county", "account_id", account_id);
-        //   },
-        // );
-        return ctx.json({ ok: true });
-      } catch (error) {
-        console.warn("Unable to insert objects");
-        // error 400
-      }
-    } catch (error) {
-      console.log(error);
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
-  }
-
-  async genericGet<T>(
-    ctx: Context,
-    tableName: string,
-    className: string,
+    onSuccess: (accountId: string) => Promise<Array<any>>,
   ): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
@@ -96,18 +59,8 @@ export default class DataController extends Controller {
       };
 
       try {
-        const objects = await this.repository.selectBy<T>(
-          tableName,
-          "account_id",
-          account_id,
-        );
-
-        County
-
-        const dtoList = objects.map((dto) => eval(`${className}.toDTO(dto)`));
-        console.log(dtoList);
-
-        ctx.json(dtoList);
+        const a = await onSuccess(account_id);
+        ctx.json(a);
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
@@ -117,3 +70,14 @@ export default class DataController extends Controller {
     }
   }
 }
+
+// Can replace these two interfaces by splitting up this controller by data object
+// and add a super class that require a table name and a function to transform
+// their objects to DTOs.
+interface PathMapper {
+  [path: string]: { table: string; toDTO: (object: any) => any };
+}
+
+const mapper: PathMapper = {
+  "/county": { table: "county", toDTO: County.toDTO },
+};
