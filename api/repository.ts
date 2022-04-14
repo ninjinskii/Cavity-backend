@@ -1,5 +1,4 @@
 import Database from "./db.ts";
-import PersistableUserData from "./model/persistable-user-data.ts";
 
 let instance: Repository | null = null;
 
