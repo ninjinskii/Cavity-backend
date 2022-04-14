@@ -1,6 +1,5 @@
 import { Application, Context, jwt } from "../../deps.ts";
-import { County, CountyDTO } from "../model/county.ts";
-import PersistableUserData from "../model/persistable-user-data.ts";
+import { County } from "../model/county.ts";
 import Repository from "../repository.ts";
 import Controller from "./controller.ts";
 
