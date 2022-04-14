@@ -11,14 +11,11 @@ export default class DataController extends Controller {
     this.jwtKey = jwtKey;
   }
 
-  get county() {
-    return "/county";
-  }
-
   handleRequests(): void {
-    this.app
-      .post(this.county, (ctx: Context) => this.handlePost(ctx))
-      .get(this.county, (ctx: Context) => this.handleGet(ctx));
+    for (const path of Object.keys(mapper)) {
+      this.app.post(path, (ctx: Context) => this.handlePost(ctx))
+      this.app.get(path, (ctx: Context) => this.handleGet(ctx))
+    }
   }
 
   async handlePost(ctx: Context): Promise<void> {
@@ -98,7 +95,7 @@ export default class DataController extends Controller {
   }
 }
 
-// Can replace these two interfaces by splitting up this controller by data object
+// Can replace these two pieces by splitting up this controller by data object
 // and add a super class that require a table name and a function to transform
 // their objects to DTOs.
 interface PathMapper {
