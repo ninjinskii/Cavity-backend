@@ -22,29 +22,10 @@ export default class DataController extends Controller {
       //   this.county,
       //   async (ctx: Context) => this.genericPost(ctx, "county", "County"),
       // )
-      .get(
-        this.county,
-        async (ctx: Context) =>
-          this.handleGet(ctx, async (accountId) => {
-            const objects = await this.repository.selectBy(
-              mapper[ctx.path].table,
-              "account_id",
-              accountId,
-            );
-
-            const dtoList = objects.map((object) =>
-              mapper[ctx.path].toDTO(object)
-            );
-
-            return dtoList;
-          }),
-      );
+      .get(this.county, (ctx: Context) => this.handleGet(ctx));
   }
 
-  async handleGet(
-    ctx: Context,
-    onSuccess: (accountId: string) => Promise<Array<any>>,
-  ): Promise<void> {
+  async handleGet(ctx: Context): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
@@ -59,8 +40,15 @@ export default class DataController extends Controller {
       };
 
       try {
-        const a = await onSuccess(account_id);
-        ctx.json(a);
+        const objects = await this.repository.selectBy(
+          mapper[ctx.path].table,
+          "account_id",
+          account_id,
+        );
+
+        const dtoList = objects.map((object) => mapper[ctx.path].toDTO(object));
+
+        return ctx.json(dtoList);
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
