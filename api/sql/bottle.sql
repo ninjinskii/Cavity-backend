@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS bottle (
+  _id serial PRIMARY KEY,
+  account_id INT NOT NULL,
+  id INT NOT NULL,
+  wine_id INT NOT NULL,
+  vintage INT NOT NULL,
+  apogee INT NOT NULL,
+  is_favorite INT NOT NULL,
+  price FLOAT NOT NULL,
+  currency VARCHAR NOT NULL,
+  other_info VARCHAR NOT NULL,
+  buy_location VARCHAR NOT NULL,
+  buy_date BIGINT NOT NULL,
+  tasting_taste_comment VARCHAR NOT NULL,
+  bottle_size VARCHAR NOT NULL,
+  pdf_path VARCHAR NOT NULL,
+  consumed INT NOT NULL,
+  tasting_id INT,
+  UNIQUE (account_id, id)
+);
