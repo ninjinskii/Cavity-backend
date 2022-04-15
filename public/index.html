@@ -10,12 +10,27 @@
   <body>
     <h1>Cavity API</h1>
     <input id="tables" label="Nom de / des tables (séparés par virgules)"></input>
-    <button onclick="createTables()">Créer les tables</button>
+    <button onclick="createTables()">Créer toutes les tables</button>
     <button onclick="deleteTable()">Supprimer la table</button>
 
   <script>
     function createTables() {
-      const input = document.getElementById("tables");
+      const input = [
+        "account",
+        "bottle",
+        "county",
+        "friend",
+        "grape",
+        "history-entry",
+        "review",
+        "tasting-action",
+        "tasting",
+        "wine",
+        "xrefs/f-review",
+        "xrefs/history-x-friend",
+        "xrefs/q-grape",
+        "xrefs/tasting-x-friend",
+      ]
   
       fetch("/create-tables",
         {
@@ -24,7 +39,7 @@
             'Content-Type': 'application/json'
           },
           method: "POST",
-          body: JSON.stringify({ tables: input.value.split(",").map(e => e.trim()) })
+          body: JSON.stringify({ tables: input })
       })
       .then((res) => console.log(res))
       .catch((error) => console.log(error));
