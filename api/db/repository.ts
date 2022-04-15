@@ -51,7 +51,7 @@ export default class Repository {
   async createTables(...tables: Array<string>): Promise<void> {
     for (const table of tables) {
       try {
-        const query = await Deno.readTextFile(`./api/sql/${table}.sql`);
+        const query = await Deno.readTextFile(`./api/db/sql/${table}.sql`);
         await this.db.doQuery(query);
       } catch (error) {
         console.log(error);
