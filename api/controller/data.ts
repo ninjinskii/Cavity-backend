@@ -1,5 +1,17 @@
 import { Application, Context, jwt } from "../../deps.ts";
 import { County } from "../model/county.ts";
+import { Wine } from "../model/wine.ts";
+import { Bottle } from "../model/bottle.ts";
+import { HistoryEntry } from "../model/history-entry.ts";
+import { Friend } from "../model/friend.ts";
+import { Grape } from "../model/grape.ts";
+import { Review } from "../model/review.ts";
+import { FReview } from "../model/f-review.ts";
+import { QGrape } from "../model/q-grape.ts";
+import { Tasting } from "../model/tasting.ts";
+import { TastingAction } from "../model/tasting-action.ts";
+import { TastingXFriend } from "../model/tasting-x-friend.ts";
+import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 
@@ -13,8 +25,8 @@ export default class DataController extends Controller {
 
   handleRequests(): void {
     for (const path of Object.keys(mapper)) {
-      this.app.post(path, (ctx: Context) => this.handlePost(ctx))
-      this.app.get(path, (ctx: Context) => this.handleGet(ctx))
+      this.app.post(path, (ctx: Context) => this.handlePost(ctx));
+      this.app.get(path, (ctx: Context) => this.handleGet(ctx));
     }
   }
 
@@ -111,5 +123,65 @@ const mapper: PathMapper = {
     table: "county",
     toDTO: County.toDTO,
     fromDTO: (dto, accountId) => new County(dto, accountId),
+  },
+  "/wine": {
+    table: "wine",
+    toDTO: Wine.toDTO,
+    fromDTO: (dto, accountId) => new Wine(dto, accountId),
+  },
+  "/bottle": {
+    table: "bottle",
+    toDTO: Bottle.toDTO,
+    fromDTO: (dto, accountId) => new Bottle(dto, accountId),
+  },
+  "/history": {
+    table: "history_entry",
+    toDTO: HistoryEntry.toDTO,
+    fromDTO: (dto, accountId) => new HistoryEntry(dto, accountId),
+  },
+  "/friend": {
+    table: "friend",
+    toDTO: Friend.toDTO,
+    fromDTO: (dto, accountId) => new Friend(dto, accountId),
+  },
+  "/grape": {
+    table: "grape",
+    toDTO: Grape.toDTO,
+    fromDTO: (dto, accountId) => new Grape(dto, accountId),
+  },
+  "/review": {
+    table: "review",
+    toDTO: Review.toDTO,
+    fromDTO: (dto, accountId) => new Review(dto, accountId),
+  },
+  "/qgrape": {
+    table: "q-grape",
+    toDTO: QGrape.toDTO,
+    fromDTO: (dto, accountId) => new QGrape(dto, accountId),
+  },
+  "/freview": {
+    table: "f-review",
+    toDTO: FReview.toDTO,
+    fromDTO: (dto, accountId) => new FReview(dto, accountId),
+  },
+  "/tasting": {
+    table: "tasting",
+    toDTO: Tasting.toDTO,
+    fromDTO: (dto, accountId) => new Tasting(dto, accountId),
+  },
+  "/tasting-action": {
+    table: "tasting_action",
+    toDTO: TastingAction.toDTO,
+    fromDTO: (dto, accountId) => new TastingAction(dto, accountId),
+  },
+  "/tasting-x-friends": {
+    table: "tasting_x_friends",
+    toDTO: TastingXFriend.toDTO,
+    fromDTO: (dto, accountId) => new TastingXFriend(dto, accountId),
+  },
+  "/history-x-friends": {
+    table: "history_x_friend",
+    toDTO: HistoryXFriend.toDTO,
+    fromDTO: (dto, accountId) => new HistoryXFriend(dto, accountId),
   },
 };
