@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS q_grape (
   bottle_id INT NOT NULL,
   grape_id INT NOT NULL,
   percentage INT NOT NULL,
-  UNIQUE (account_id, id)
+  UNIQUE (account_id, bottle_id, grape_id)
 );
