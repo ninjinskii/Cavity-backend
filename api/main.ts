@@ -4,7 +4,7 @@ import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
-import Repository from "./repository.ts";
+import Repository from "./db/repository.ts";
 
 type CreateTablesBody = { tables: Array<string> };
 type DeleteTableBody = { table: string };

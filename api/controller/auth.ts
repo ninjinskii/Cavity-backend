@@ -1,6 +1,6 @@
 import { Application, bcrypt, Context, jwt } from "../../deps.ts";
 import { Account, AccountDTO } from "../model/account.ts";
-import Repository from "../repository.ts";
+import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 
 export default class AuthController extends Controller {

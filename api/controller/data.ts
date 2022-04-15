@@ -1,6 +1,6 @@
 import { Application, Context, jwt } from "../../deps.ts";
 import { County } from "../model/county.ts";
-import Repository from "../repository.ts";
+import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 
 export default class DataController extends Controller {

@@ -1,4 +1,4 @@
-import { PostgresClient, QueryObjectResult } from "../deps.ts";
+import { PostgresClient, QueryObjectResult } from "../../deps.ts";
 
 export default class Database {
   private client: PostgresClient;
