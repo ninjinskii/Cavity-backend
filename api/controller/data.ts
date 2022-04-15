@@ -27,6 +27,7 @@ export default class DataController extends Controller {
     for (const path of Object.keys(mapper)) {
       this.app.post(path, (ctx: Context) => this.handlePost(ctx));
       this.app.get(path, (ctx: Context) => this.handleGet(ctx));
+      this.app.delete(path, (ctx: Context) => this.handleDelete(ctx));
     }
   }
 
@@ -100,6 +101,37 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
+      }
+    } catch (error) {
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
+  }
+
+  async handleDelete(ctx: Context): Promise<void> {
+    const authorization = ctx.request.headers.get("Authorization");
+
+    if (!authorization) {
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
+
+    const [_, token] = authorization.split(" ");
+
+    try {
+      const { account_id } = await jwt.verify(token, this.jwtKey) as {
+        account_id: string;
+      };
+
+      try {
+        await this.repository.deleteBy(
+          mapper[ctx.path].table,
+          "account_id",
+          account_id,
+        );
+
+        return ctx.json({ ok: true });
+      } catch (error) {
+        console.log(error);
+        console.warn("Unable to delete objects");
       }
     } catch (error) {
       return ctx.json({ message: this.translator.unauthorized }, 401);
