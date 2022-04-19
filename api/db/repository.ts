@@ -101,18 +101,17 @@ export default class Repository {
 
   async insert(
     table: string,
-    objects: Array<any> | any,
+    objects: Array<any>,
     t: Transaction | null = null,
   ): Promise<void> {
     if (!objects.length) {
       return;
     }
 
-    const unboxed = objects instanceof Array ? objects : [objects];
     const { vars } = this.toPgsqlArgs(objects[0]);
     let query = `INSERT INTO ${table} (${vars}) VALUES`;
 
-    for (const object of unboxed) {
+    for (const object of objects) {
       const { values } = this.toPgsqlArgs(object);
       query += ` (${values}),`;
     }
