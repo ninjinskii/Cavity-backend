@@ -1,3 +1,4 @@
+import { Transaction } from "../../deps.ts";
 import Database from "./db.ts";
 
 let instance: Repository | null = null;
@@ -98,12 +99,16 @@ export default class Repository {
     }
   }
 
-  async insert(table: string, objects: Array<any> | any): Promise<void> {
+  async insert(
+    table: string,
+    objects: Array<any> | any,
+    t: Transaction | null = null,
+  ): Promise<void> {
     if (!objects.length) {
       return;
     }
 
-    const unboxed = objects instanceof Array ? objects : [objects]
+    const unboxed = objects instanceof Array ? objects : [objects];
     const { vars } = this.toPgsqlArgs(objects[0]);
     let query = `INSERT INTO ${table} (${vars}) VALUES`;
 
@@ -116,7 +121,7 @@ export default class Repository {
     query += ";";
 
     try {
-      await this.db.doQuery(query);
+      await this.db.doQuery(query, t);
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot insert data into ${table} table.`);
@@ -142,11 +147,16 @@ export default class Repository {
     }
   }
 
-  async deleteBy(table: string, by: string, value: string): Promise<void> {
+  async deleteBy(
+    table: string,
+    by: string,
+    value: string,
+    t: Transaction | null = null,
+  ): Promise<void> {
     const query = `DELETE FROM ${table} WHERE ${by} = '${value}';`;
 
     try {
-      await this.db.doQuery(query);
+      await this.db.doQuery(query, t);
     } catch (error) {
       console.warn(error);
       throw new Error(
@@ -155,7 +165,10 @@ export default class Repository {
     }
   }
 
-  doInTransaction(name: string, block: () => void): Promise<void> {
+  doInTransaction(
+    name: string,
+    block: (t: Transaction) => Promise<void>,
+  ): Promise<void> {
     return this.db.doInTransaction(name, block);
   }
 

@@ -1,4 +1,4 @@
-import { Application, Context, jwt } from "../../deps.ts";
+import { Application, Context, jwt, Transaction } from "../../deps.ts";
 import { County } from "../model/county.ts";
 import { Wine } from "../model/wine.ts";
 import { Bottle } from "../model/bottle.ts";
@@ -57,17 +57,22 @@ export default class DataController extends Controller {
       );
 
       try {
-        await this.repository.insert(mapper[ctx.path].table, objects);
-        // await this.repository.doInTransaction(
-        //   `postCounty-${account_id}`,
-        //   async () => {
-        //     //await this.repository.deleteBy("county", "account_id", account_id);
-        //   },
-        // );
+        await this.repository.doInTransaction(
+          `postCounty-${account_id}`,
+          async (t: Transaction) => {
+            await this.repository.deleteBy(
+              mapper[ctx.path].table,
+              "account_id",
+              account_id,
+              t,
+            );
+            await this.repository.insert(mapper[ctx.path].table, objects, t);
+          },
+        );
         return ctx.json({ ok: true });
       } catch (error) {
         console.warn("Unable to insert objects");
-        return ctx.json({ message: this.translator.baseError}, 400);
+        return ctx.json({ message: this.translator.baseError }, 400);
       }
     } catch (error) {
       return ctx.json({ message: this.translator.unauthorized }, 401);
@@ -81,9 +86,8 @@ export default class DataController extends Controller {
       return ctx.json({ message: this.translator.unauthorized }, 401);
     }
 
-    
     const [_, token] = authorization.split(" ");
-    
+
     try {
       const { account_id } = await jwt.verify(token, this.jwtKey) as {
         account_id: string;
@@ -102,7 +106,7 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
-        return ctx.json({ message: this.translator.baseError}, 500);
+        return ctx.json({ message: this.translator.baseError }, 500);
       }
     } catch (error) {
       return ctx.json({ message: this.translator.unauthorized }, 401);
