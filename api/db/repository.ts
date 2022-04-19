@@ -98,27 +98,16 @@ export default class Repository {
     }
   }
 
-  async insert(table: string, object: any): Promise<void> {
-    const { vars, values } = this.toPgsqlArgs(object);
-    const query = `INSERT INTO ${table} (${vars}) VALUES (${values});`;
-
-    try {
-      await this.db.doQuery(query);
-    } catch (error) {
-      console.warn(error);
-      throw new Error(`Cannot insert data into ${table} table.`);
-    }
-  }
-
-  async insertMany(table: string, objects: Array<any>): Promise<void> {
+  async insert(table: string, objects: Array<any> | any): Promise<void> {
     if (!objects.length) {
       return;
     }
 
+    const unboxed = objects instanceof Array ? objects : [objects]
     const { vars } = this.toPgsqlArgs(objects[0]);
     let query = `INSERT INTO ${table} (${vars}) VALUES`;
 
-    for (const object of objects) {
+    for (const object of unboxed) {
       const { values } = this.toPgsqlArgs(object);
       query += ` (${values}),`;
     }

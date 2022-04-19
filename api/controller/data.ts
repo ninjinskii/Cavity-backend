@@ -57,7 +57,7 @@ export default class DataController extends Controller {
       );
 
       try {
-        await this.repository.insertMany(mapper[ctx.path].table, objects);
+        await this.repository.insert(mapper[ctx.path].table, objects);
         // await this.repository.doInTransaction(
         //   `postCounty-${account_id}`,
         //   async () => {
@@ -67,7 +67,7 @@ export default class DataController extends Controller {
         return ctx.json({ ok: true });
       } catch (error) {
         console.warn("Unable to insert objects");
-        // error 400
+        return ctx.json({ message: this.translator.baseError}, 400);
       }
     } catch (error) {
       return ctx.json({ message: this.translator.unauthorized }, 401);
@@ -81,8 +81,9 @@ export default class DataController extends Controller {
       return ctx.json({ message: this.translator.unauthorized }, 401);
     }
 
+    
     const [_, token] = authorization.split(" ");
-
+    
     try {
       const { account_id } = await jwt.verify(token, this.jwtKey) as {
         account_id: string;
@@ -101,6 +102,7 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
+        return ctx.json({ message: this.translator.baseError}, 500);
       }
     } catch (error) {
       return ctx.json({ message: this.translator.unauthorized }, 401);
