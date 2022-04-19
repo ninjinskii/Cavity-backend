@@ -53,6 +53,6 @@ export default class AuthController extends Controller {
       this.jwtKey,
     );
 
-    return ctx.json({ token });
+    return ctx.json({ token, email });
   }
 }
