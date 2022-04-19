@@ -35,20 +35,18 @@ export default class AccountController extends Controller {
       if (await this.isAccountUnique(account.email)) {
         this.repository.insert("account", account);
         await this.sendConfirmMail(account);
+        return ctx.json({ ok: true });
       } else {
         return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
       }
-
-      const updated = { ...account, password: undefined };
-      return ctx.json(updated);
     } catch (error) {
       try {
         this.repository.deleteBy("account", "email", account.email);
+        return ctx.json({ message: this.translator.invalidEmail }, 500);
       } catch (error) {
         console.warn("Unable to delete account");
+        return ctx.json({ message: this.translator.baseError }, 500);
       }
-
-      return ctx.json({ message: this.translator.baseError }, 500);
     }
   }
 

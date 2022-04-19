@@ -12,6 +12,7 @@ export interface Translatable {
   unauthorized: string;
   missingParameters: string;
   confirmAccount: string;
+  invalidEmail: string;
   // accountResgistrationFailed: string
 }
 
@@ -29,6 +30,7 @@ export class FrTranslations implements Translatable {
   unauthorized = "Session expirée.";
   missingParameters = "Paramètres manquants.";
   confirmAccount = "Confirmez votre compte avant de vous connecter.";
+  invalidEmail = "Email non valide."
 }
 
 export class EnTranslations implements Translatable {
@@ -45,4 +47,5 @@ export class EnTranslations implements Translatable {
   unauthorized = "Session expired.";
   missingParameters = "Missing parameters.";
   confirmAccount = "Confirm your account creation before logging in.";
+  invalidEmail = "Invalid email."
 }
