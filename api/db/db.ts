@@ -18,16 +18,16 @@ export default class Database {
     // });
   }
 
-  async connect() {
-    await this.client.connect();
+  connect(): Promise<void> {
+    return this.client.connect();
   }
 
-  async close() {
-    await this.client.end();
+  close(): Promise<void> {
+    return this.client.end();
   }
 
-  async doQuery(query: string): Promise<QueryObjectResult<unknown>> {
-    return await this.client.queryObject(query);
+  doQuery(query: string): Promise<QueryObjectResult<unknown>> {
+    return this.client.queryObject(query);
   }
 
   async doInTransaction(name: string, block: () => void): Promise<void> {

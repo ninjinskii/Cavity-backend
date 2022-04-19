@@ -44,8 +44,8 @@ export default class Repository {
     return { vars, values };
   }
 
-  async createAllTables(): Promise<void> {
-    await this.createTables("account", "county");
+  createAllTables(): Promise<void> {
+    return this.createTables("account", "county");
   }
 
   async createTables(...tables: Array<string>): Promise<void> {
@@ -114,9 +114,6 @@ export default class Repository {
 
     query = query.slice(0, -1);
     query += ";";
-
-    console.log("query");
-    console.log(query);
 
     try {
       await this.db.doQuery(query);
