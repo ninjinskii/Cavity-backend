@@ -4,11 +4,11 @@ import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
-  private jwtKey: CryptoKey
+  private jwtKey: CryptoKey;
 
   constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
     super(app, repository);
-    this.jwtKey = jwtKey
+    this.jwtKey = jwtKey;
   }
 
   get default() {
@@ -41,7 +41,7 @@ export default class AccountController extends Controller {
 
     try {
       if (await this.isAccountUnique(account.email)) {
-        this.repository.insert("account", account);
+        await this.repository.insert("account", account);
         await this.sendConfirmMail(account);
         return ctx.json({ ok: true });
       } else {
@@ -142,7 +142,7 @@ export default class AccountController extends Controller {
           },
           this.jwtKey,
         );
-    
+
         return ctx.json({ token });
       }
 
