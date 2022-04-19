@@ -1,8 +1,16 @@
-import { bcrypt, Context, SmtpClient } from "../../deps.ts";
+import { Application, bcrypt, Context, jwt, SmtpClient } from "../../deps.ts";
+import Repository from "../db/repository.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
+  private jwtKey: CryptoKey
+
+  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
+    super(app, repository);
+    this.jwtKey = jwtKey
+  }
+
   get default() {
     return "/account";
   }
@@ -126,13 +134,16 @@ export default class AccountController extends Controller {
           value: confirmDto.email,
         });
 
-        const updated = {
-          ...account[0],
-          registration_code: null,
-          password: undefined,
-        };
-
-        return ctx.json(updated);
+        const token = await jwt.create(
+          { alg: "HS512", typ: "JWT" },
+          {
+            //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+            account_id: account[0].id,
+          },
+          this.jwtKey,
+        );
+    
+        return ctx.json({ token });
       }
 
       return ctx.json({ message: this.translator.wrongRegistrationCode }, 400);

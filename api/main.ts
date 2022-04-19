@@ -22,7 +22,7 @@ const jwtKey = await crypto.subtle.importKey(
   ["sign", "verify"],
 );
 
-const accountController = new AccountController(app, repository);
+const accountController = new AccountController(app, repository, jwtKey);
 const authController = new AuthController(app, repository, jwtKey);
 const dataController = new DataController(app, repository, jwtKey);
 const manager = new ControllerManager();
