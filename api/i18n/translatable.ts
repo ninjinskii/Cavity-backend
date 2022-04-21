@@ -40,10 +40,10 @@ export class EnTranslations implements Translatable {
   accountAlreadyExists = "Account already exists.";
   wrongAccount = "This account does not exists.";
   wrongRegistrationCode = "Wrong code.";
-  alreadyConfirmed = "Account already confirmed";
+  alreadyConfirmed = "Account already confirmed.";
   emailSubject = "Validate your Cavity account";
   emailContent = "Here is your account confirmation code: ";
-  wrongCredentials = "Wrong credentials";
+  wrongCredentials = "Wrong credentials.";
   unauthorized = "Session expired.";
   missingParameters = "Missing parameters.";
   confirmAccount = "Confirm your account creation before logging in.";

@@ -3,9 +3,9 @@ export class Tasting {
   account_id: number;
   id: number;
   date: number;
-  is_midday: number;
+  is_midday: boolean;
   opportunity: string;
-  done: number;
+  done: boolean;
 
   constructor(tasting: TastingDTO, account_id: number) {
     this.account_id = account_id;
@@ -30,7 +30,7 @@ export class Tasting {
 export interface TastingDTO {
   id: number;
   date: number;
-  isMidday: number;
+  isMidday: boolean;
   opportunity: string;
-  done: number;
+  done: boolean;
 }

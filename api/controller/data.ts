@@ -71,6 +71,7 @@ export default class DataController extends Controller {
         );
         return ctx.json({ ok: true });
       } catch (error) {
+        console.log(error);
         console.warn("Unable to insert objects");
         return ctx.json({ message: this.translator.baseError }, 400);
       }
@@ -193,12 +194,12 @@ const mapper: PathMapper = {
     fromDTO: (dto, accountId) => new Review(dto, accountId),
   },
   "/qgrape": {
-    table: "q-grape",
+    table: "q_grape",
     toDTO: QGrape.toDTO,
     fromDTO: (dto, accountId) => new QGrape(dto, accountId),
   },
   "/freview": {
-    table: "f-review",
+    table: "f_review",
     toDTO: FReview.toDTO,
     fromDTO: (dto, accountId) => new FReview(dto, accountId),
   },
@@ -212,12 +213,12 @@ const mapper: PathMapper = {
     toDTO: TastingAction.toDTO,
     fromDTO: (dto, accountId) => new TastingAction(dto, accountId),
   },
-  "/tasting-x-friends": {
-    table: "tasting_x_friends",
+  "/tasting-x-friend": {
+    table: "tasting_x_friend",
     toDTO: TastingXFriend.toDTO,
     fromDTO: (dto, accountId) => new TastingXFriend(dto, accountId),
   },
-  "/history-x-friends": {
+  "/history-x-friend": {
     table: "history_x_friend",
     toDTO: HistoryXFriend.toDTO,
     fromDTO: (dto, accountId) => new HistoryXFriend(dto, accountId),

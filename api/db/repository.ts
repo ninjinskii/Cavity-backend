@@ -36,7 +36,9 @@ export default class Repository {
     noIdKeys.shift();
 
     noIdKeys.forEach((key) => vars += key + ",");
-    noIdValues.forEach((val) => values += `'${val}',`);
+    noIdValues.forEach((val) =>
+      val !== undefined ? values += `'${val}',` : values += `NULL,`
+    );
 
     // Remove trailing comma
     vars = vars.slice(0, -1);

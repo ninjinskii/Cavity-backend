@@ -9,6 +9,8 @@ import Repository from "./db/repository.ts";
 type CreateTablesBody = { tables: Array<string> };
 type DeleteTableBody = { table: string };
 
+applyBigIntSerializer()
+
 const app = new Application();
 const repository: Repository = await Repository.getInstance();
 
@@ -56,3 +58,15 @@ app.post("/delete-table", async (ctx: Context) => {
   const { table } = await ctx.body as DeleteTableBody;
   repository.dropTable(table);
 });
+
+function applyBigIntSerializer() {
+  BigInt.prototype.toJSON = function() { 
+    return parseInt(this.toString()) 
+  }
+}
+
+declare global {
+  interface BigInt {
+    toJSON: () => number
+  }
+}

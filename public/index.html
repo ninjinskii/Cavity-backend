@@ -12,6 +12,7 @@
     <input id="tables" label="Nom de / des tables (séparés par virgules)"></input>
     <button onclick="createTables()">Créer toutes les tables</button>
     <button onclick="deleteTable()">Supprimer la table</button>
+    <button onclick="deleteAllTables()">Supprimer toutes les tables</button>
 
   <script>
     function createTables() {
@@ -59,6 +60,39 @@
       })
       .then((res) => console.log(res))
       .catch((error) => console.log(error));
+    }
+
+    function deleteAllTables() {
+      const input = [
+        "account",
+        "bottle",
+        "county",
+        "friend",
+        "grape",
+        "history_entry",
+        "review",
+        "tasting_action",
+        "tasting",
+        "wine",
+        "f_review",
+        "history_x_friend",
+        "q_grape",
+        "tasting_x_friend",
+      ]
+
+      input.forEach((table) => {
+        fetch("/delete-table",
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          body: JSON.stringify({ table })
+      })
+      .then((res) => console.log(res))
+      .catch((error) => console.log(error));
+      })
     }
   </script>
 </html>

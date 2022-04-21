@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS tasting (
   account_id INT NOT NULL,
   id INT NOT NULL,
   date BIGINT NOT NULL,
-  is_midday INT NOT NULL,
+  is_midday BOOLEAN NOT NULL,
   opportunity VARCHAR NOT NULL,
-  done INT NOT NULL,
+  done BOOLEAN NOT NULL,
   UNIQUE (account_id, id)
 );
