@@ -4,6 +4,7 @@ import { WineImageDTO } from "../model/wine-image.ts";
 import { WineImage } from "../model/wine-image.ts";
 import Controller from "./controller.ts";
 
+// Refact: repository mutliple conditions handler (AND, OR), token recup dupplication. 
 export default class FileController extends Controller {
   private jwtKey: CryptoKey;
 
@@ -69,7 +70,7 @@ export default class FileController extends Controller {
       return ctx.json({ ok: true });
     } catch (error) {
       console.log(error);
-      return ctx.json({ message: this.translator.baseError }, 400);
+      return ctx.json({ message: this.translator.unauthorized }, 401);
     }
   }
 
