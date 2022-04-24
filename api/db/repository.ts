@@ -109,7 +109,6 @@ export default class Repository {
     if (!objects.length) {
       return;
     }
-
     const { vars } = this.toPgsqlArgs(objects[0]);
     let query = `INSERT INTO ${table} (${vars}) VALUES`;
 
@@ -162,6 +161,38 @@ export default class Repository {
       console.warn(error);
       throw new Error(
         `Cannot delete into ${table} table where ${by} = ${value}.`,
+      );
+    }
+  }
+
+  async deleteByMutlipleCond(
+    table: string,
+    by: Array<string>,
+    value: Array<string>,
+    t: Transaction | null = null,
+  ): Promise<void> {
+    if (by.length !== value.length) {
+      throw new Error("'by' and 'value' must have the same length");
+    }
+    let query = `DELETE FROM ${table} WHERE `;
+
+    for (const [index, cond] of by.entries()) {
+      const val = value[index];
+      query += `${cond} = ${val}`;
+
+      if (index !== by.length - 1) {
+        query += " AND ";
+      }
+    }
+
+    query += ";";
+
+    try {
+      await this.db.doQuery(query, t);
+    } catch (error) {
+      console.warn(error);
+      throw new Error(
+        `Cannot delete into ${table} table.`,
       );
     }
   }

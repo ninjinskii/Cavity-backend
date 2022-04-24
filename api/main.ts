@@ -5,11 +5,12 @@ import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import Repository from "./db/repository.ts";
+import FileController from "./controller/file.ts";
 
 type CreateTablesBody = { tables: Array<string> };
 type DeleteTableBody = { table: string };
 
-applyBigIntSerializer()
+applyBigIntSerializer();
 
 const app = new Application();
 const repository: Repository = await Repository.getInstance();
@@ -27,8 +28,14 @@ const jwtKey = await crypto.subtle.importKey(
 const accountController = new AccountController(app, repository, jwtKey);
 const authController = new AuthController(app, repository, jwtKey);
 const dataController = new DataController(app, repository, jwtKey);
+const fileController = new FileController(app, repository, jwtKey);
 const manager = new ControllerManager();
-manager.addControllers(accountController, authController, dataController);
+manager.addControllers(
+  accountController,
+  authController,
+  dataController,
+  fileController,
+);
 
 app.static("/", "./public");
 app.use((next) =>
@@ -60,13 +67,13 @@ app.post("/delete-table", async (ctx: Context) => {
 });
 
 function applyBigIntSerializer() {
-  BigInt.prototype.toJSON = function() { 
-    return parseInt(this.toString()) 
-  }
+  BigInt.prototype.toJSON = function () {
+    return parseInt(this.toString());
+  };
 }
 
 declare global {
   interface BigInt {
-    toJSON: () => number
+    toJSON: () => number;
   }
 }
