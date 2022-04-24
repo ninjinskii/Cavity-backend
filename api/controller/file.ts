@@ -24,12 +24,13 @@ export default class FileController extends Controller {
     this.app
       .post(
         this.wineImage,
-        async (ctx: Context) => this.handlePostWineImages(ctx),
+        async (ctx: Context) => this.handlePostWineImage(ctx),
       )
+      .get(this.wineImage, async (ctx: Context) => this.handleGetWineImage(ctx))
       .post(this.bottlePdf, async (ctx: Context) => this.handleBottlePdfs(ctx));
   }
 
-  async handlePostWineImages(ctx: Context): Promise<void> {
+  async handlePostWineImage(ctx: Context): Promise<void> {
     const authorization = ctx.request.headers.get("Authorization");
 
     if (!authorization) {
@@ -66,6 +67,38 @@ export default class FileController extends Controller {
         return ctx.json({ message: this.translator.baseError }, 400);
       }
       return ctx.json({ ok: true });
+    } catch (error) {
+      console.log(error);
+      return ctx.json({ message: this.translator.baseError }, 400);
+    }
+  }
+
+  async handleGetWineImage(ctx: Context): Promise<void> {
+    const authorization = ctx.request.headers.get("Authorization");
+
+    if (!authorization) {
+      return ctx.json({ message: this.translator.unauthorized }, 401);
+    }
+
+    const [_, token] = authorization.split(" ");
+
+    try {
+      const { account_id } = await jwt.verify(token, this.jwtKey) as {
+        account_id: string;
+      };
+      const { wineId } = ctx.params;
+
+      try {
+        const wineImage = await this.repository.selectBy(
+          "wine_image",
+          "account_id",
+          account_id,
+        );
+        return ctx.json(wineImage);
+      } catch (error) {
+        console.log(error);
+        return ctx.json({ message: this.translator.baseError }, 400);
+      }
     } catch (error) {
       console.log(error);
       return ctx.json({ message: this.translator.baseError }, 400);
