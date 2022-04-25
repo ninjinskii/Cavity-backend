@@ -33,7 +33,7 @@ export default class DataController extends Controller {
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       const dtoList = await ctx.body;
       if (!(dtoList instanceof Array)) {
         return ctx.json({ message: this.translator.missingParameters }, 400);
@@ -66,7 +66,7 @@ export default class DataController extends Controller {
   }
 
   async handleGet(ctx: Context): Promise<void> {
-    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
         const objects = await this.repository.selectBy(
           mapper[ctx.path].table,
@@ -86,7 +86,7 @@ export default class DataController extends Controller {
   }
 
   async handleDelete(ctx: Context): Promise<void> {
-    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
         await this.repository.deleteBy(
           mapper[ctx.path].table,
