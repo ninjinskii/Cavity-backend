@@ -14,6 +14,7 @@ import { TastingXFriend } from "../model/tasting-x-friend.ts";
 import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
+import inAuthentication from "../util/authenticator.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -32,22 +33,8 @@ export default class DataController extends Controller {
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    const authorization = ctx.request.headers.get("Authorization");
-
-    if (!authorization) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
-
-    const [_, token] = authorization.split(" ");
-
-    try {
-      const { account_id } = await jwt.verify(token, this.jwtKey) as {
-        account_id: string;
-      };
-      const accountId = parseInt(account_id);
-
+    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       const dtoList = await ctx.body;
-
       if (!(dtoList instanceof Array)) {
         return ctx.json({ message: this.translator.missingParameters }, 400);
       }
@@ -58,12 +45,12 @@ export default class DataController extends Controller {
 
       try {
         await this.repository.doInTransaction(
-          `postCounty-${account_id}`,
+          `postCounty-${accountId}`,
           async (t: Transaction) => {
             await this.repository.deleteBy(
               mapper[ctx.path].table,
               "account_id",
-              account_id,
+              accountId.toString(),
               t,
             );
             await this.repository.insert(mapper[ctx.path].table, objects, t);
@@ -73,32 +60,18 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to insert objects");
-        return ctx.json({ message: this.translator.baseError }, 400);
+        return ctx.json({ message: this.translator.baseError }, 500);
       }
-    } catch (error) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
+    });
   }
 
   async handleGet(ctx: Context): Promise<void> {
-    const authorization = ctx.request.headers.get("Authorization");
-
-    if (!authorization) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
-
-    const [_, token] = authorization.split(" ");
-
-    try {
-      const { account_id } = await jwt.verify(token, this.jwtKey) as {
-        account_id: string;
-      };
-
+    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
         const objects = await this.repository.selectBy(
           mapper[ctx.path].table,
           "account_id",
-          account_id,
+          accountId.toString(),
         );
 
         const dtoList = objects.map((object) => mapper[ctx.path].toDTO(object));
@@ -109,40 +82,25 @@ export default class DataController extends Controller {
         console.warn("Unable to get counties");
         return ctx.json({ message: this.translator.baseError }, 500);
       }
-    } catch (error) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
+    });
   }
 
   async handleDelete(ctx: Context): Promise<void> {
-    const authorization = ctx.request.headers.get("Authorization");
-
-    if (!authorization) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
-
-    const [_, token] = authorization.split(" ");
-
-    try {
-      const { account_id } = await jwt.verify(token, this.jwtKey) as {
-        account_id: string;
-      };
-
+    inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
         await this.repository.deleteBy(
           mapper[ctx.path].table,
           "account_id",
-          account_id,
+          accountId.toString(),
         );
 
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
         console.warn("Unable to delete objects");
+        return ctx.json({ message: this.translator.baseError }, 500);
       }
-    } catch (error) {
-      return ctx.json({ message: this.translator.unauthorized }, 401);
-    }
+    });
   }
 }
 
