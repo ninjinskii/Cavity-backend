@@ -47,10 +47,9 @@ export default class DataController extends Controller {
         await this.repository.doInTransaction(
           `postCounty-${accountId}`,
           async (t: Transaction) => {
-            await this.repository.deleteBy(
+            await this.repository.delete(
               mapper[ctx.path].table,
-              "account_id",
-              accountId.toString(),
+              [{ where: "account_id", equals: accountId.toString()}],
               t,
             );
             await this.repository.insert(mapper[ctx.path].table, objects, t);
@@ -68,10 +67,9 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
-        const objects = await this.repository.selectBy(
+        const objects = await this.repository.select(
           mapper[ctx.path].table,
-          "account_id",
-          accountId.toString(),
+          [{ where: "account_id", equals: accountId.toString()}],
         );
 
         const dtoList = objects.map((object) => mapper[ctx.path].toDTO(object));
@@ -88,10 +86,9 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
-        await this.repository.deleteBy(
+        await this.repository.delete(
           mapper[ctx.path].table,
-          "account_id",
-          accountId.toString(),
+          [{ where: "account_id", equals: accountId.toString()}],
         );
 
         return ctx.json({ ok: true });

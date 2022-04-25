@@ -22,10 +22,9 @@ export default class AuthController extends Controller {
 
   async login(ctx: Context): Promise<void> {
     const { email, password } = await ctx.body as AccountDTO;
-    const account = await this.repository.selectBy<Account>(
+    const account = await this.repository.select<Account>(
       "account",
-      "email",
-      email,
+      [{ where: "email", equals: email }],
     );
 
     if (account.length === 0) {

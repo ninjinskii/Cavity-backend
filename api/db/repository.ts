@@ -8,6 +8,11 @@ interface InsertQueryParams {
   values: string;
 }
 
+interface QueryCondition {
+  where: string;
+  equals: string;
+}
+
 export default class Repository {
   private db!: Database;
 
@@ -47,6 +52,31 @@ export default class Repository {
     return { vars, values };
   }
 
+  private buildQueryConditions(
+    query: string,
+    conditions: Array<QueryCondition>,
+  ): string {
+    if (conditions.length === 0) {
+      return `${query};`;
+    }
+
+    let result = query;
+    result += " WHERE ";
+    
+    for (const [index, condition] of conditions.entries()) {
+      const field = condition.where;
+      const value = condition.equals
+      result += `${field} = '${value}'`;
+
+      if (index !== conditions.length - 1) {
+        result += " AND ";
+      }
+    }
+
+    result += ";";
+    return result;
+  }
+
   createAllTables(): Promise<void> {
     return this.createTables("account", "county");
   }
@@ -71,32 +101,20 @@ export default class Repository {
     }
   }
 
-  async select<T>(table: string): Promise<Array<T>> {
-    const query = `SELECT * FROM ${table};`;
-
-    try {
-      const result = await this.db.doQuery(query);
-      return result.rows as Array<T>;
-    } catch (error) {
-      console.warn(error);
-      throw new Error(`Cannot execute select statement into ${table} table.`);
-    }
-  }
-
-  async selectBy<T>(
+  async select<T>(
     table: string,
-    by: string,
-    value: string,
+    conditions: Array<QueryCondition> = [],
   ): Promise<Array<T>> {
-    const query = `SELECT * FROM ${table} WHERE ${by} = '${value}';`;
+    const query = `SELECT * FROM ${table}`;
+    const fullQuery = this.buildQueryConditions(query, conditions);
 
     try {
-      const result = await this.db.doQuery(query);
+      const result = await this.db.doQuery(fullQuery);
       return result.rows as Array<T>;
     } catch (error) {
       console.warn(error);
       throw new Error(
-        `Cannot execute select statement into ${table} table where ${by} = ${value}.`,
+        `Cannot execute select statement into ${table} table.`,
       );
     }
   }
@@ -132,68 +150,40 @@ export default class Repository {
     table: string,
     field: string,
     value: string | null,
-    where?: { filter: string; value: string },
+    conditions: Array<QueryCondition>,
   ): Promise<void> {
     const quotedValue = value ? `'${value}'` : null;
-    const query = where
-      ? `UPDATE ${table} SET ${field} = ${quotedValue} WHERE ${where.filter} = '${where.value}'`
-      : `UPDATE ${table} SET ${field} = ${quotedValue}`;
+    const query = `UPDATE ${table} SET ${field} = ${quotedValue}`;
+    const fullQuery = this.buildQueryConditions(query, conditions);
 
     try {
-      await this.db.doQuery(query);
+      await this.db.doQuery(fullQuery);
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot update ${table} table.`);
     }
   }
 
-  async deleteBy(
+  async delete(
     table: string,
-    by: string,
-    value: string,
+    conditions: Array<QueryCondition>,
     t: Transaction | null = null,
   ): Promise<void> {
-    const query = `DELETE FROM ${table} WHERE ${by} = '${value}';`;
-
-    try {
-      await this.db.doQuery(query, t);
-    } catch (error) {
-      console.warn(error);
+    if (conditions.length === 0) {
       throw new Error(
-        `Cannot delete into ${table} table where ${by} = ${value}.`,
+        "Cannot run a delete command without at least 1 condition",
       );
     }
-  }
 
-  async deleteByMutlipleCond(
-    table: string,
-    by: Array<string>,
-    value: Array<string>,
-    t: Transaction | null = null,
-  ): Promise<void> {
-    if (by.length !== value.length) {
-      throw new Error("'by' and 'value' must have the same length");
-    }
-    let query = `DELETE FROM ${table} WHERE `;
-
-    for (const [index, cond] of by.entries()) {
-      const val = value[index];
-      query += `${cond} = ${val}`;
-
-      if (index !== by.length - 1) {
-        query += " AND ";
-      }
-    }
-
-    query += ";";
+    const query = `DELETE FROM ${table}`;
+    const fullQuery = this.buildQueryConditions(query, conditions);
 
     try {
-      await this.db.doQuery(query, t);
+      await this.db.doQuery(fullQuery, t);
     } catch (error) {
+      console.log(fullQuery);
       console.warn(error);
-      throw new Error(
-        `Cannot delete into ${table} table.`,
-      );
+      throw new Error(`Cannot delete into ${table} table.`);
     }
   }
 

@@ -48,8 +48,12 @@ export default class AccountController extends Controller {
         return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
       }
     } catch (error) {
+      console.log(error);
       try {
-        this.repository.deleteBy("account", "email", account.email);
+        this.repository.delete("account", [{
+          where: "email",
+          equals: account.email,
+        }]);
         return ctx.json({ message: this.translator.invalidEmail }, 500);
       } catch (error) {
         console.warn("Unable to delete account");
@@ -76,10 +80,9 @@ export default class AccountController extends Controller {
     }
 
     try {
-      const account = await this.repository.selectBy<Account>(
+      const account = await this.repository.select<Account>(
         "account",
-        "id",
-        id,
+        [{ where: "id", equals: id }],
       );
 
       if (account.length) {
@@ -101,7 +104,7 @@ export default class AccountController extends Controller {
     }
 
     try {
-      await this.repository.deleteBy("account", "id", id);
+      await this.repository.delete("account", [{ where: "id", equals: id }]);
       return ctx.json({});
     } catch (error) {
       return ctx.json({ message: this.translator.baseError }, 500);
@@ -112,10 +115,9 @@ export default class AccountController extends Controller {
     const confirmDto = await ctx.body as ConfirmAccountDTO;
 
     try {
-      const account = await this.repository.selectBy<Account>(
+      const account = await this.repository.select<Account>(
         "account",
-        "email",
-        confirmDto.email,
+        [{ where: "email", equals: confirmDto.email }],
       );
 
       if (account.length === 0) {
@@ -129,10 +131,10 @@ export default class AccountController extends Controller {
       const code = parseInt(confirmDto.registrationCode);
 
       if (account[0].registration_code === code) {
-        await this.repository.update("account", "registration_code", null, {
-          filter: "email",
-          value: confirmDto.email,
-        });
+        await this.repository.update("account", "registration_code", null, [{
+          where: "email",
+          equals: confirmDto.email,
+        }]);
 
         const token = await jwt.create(
           { alg: "HS512", typ: "JWT" },
@@ -153,7 +155,10 @@ export default class AccountController extends Controller {
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
-    const account = await this.repository.selectBy("account", "email", email);
+    const account = await this.repository.select("account", [{
+      where: "email",
+      equals: email,
+    }]);
     return account.length == 0;
   }
 

@@ -1,4 +1,4 @@
-import { Application, Context, jwt, Transaction } from "../../deps.ts";
+import { Application, Context, Transaction } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { WineImageDTO } from "../model/wine-image.ts";
 import { WineImage } from "../model/wine-image.ts";
@@ -45,22 +45,24 @@ export default class FileController extends Controller {
 
       try {
         await this.repository.doInTransaction(
-          `postWineImage-${1}`,
+          `postWineImage-${accountId}`,
           async (t: Transaction) => {
-            await this.repository.deleteByMutlipleCond(
+            await this.repository.delete(
               "wine_image",
-              ["wine_id", "account_id"],
-              [wineId, accountId.toString()],
+              [
+                { where: "wine_id", equals: wineId }, 
+                { where: "account_id", equals: accountId.toString()}
+              ],
               t,
             );
             await this.repository.insert("wine_image", [wineImage], t);
           },
         );
+        return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
         return ctx.json({ message: this.translator.baseError }, 400);
       }
-      return ctx.json({ ok: true });
     });
   }
 
@@ -74,10 +76,12 @@ export default class FileController extends Controller {
 
     await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
-        const wineImage = await this.repository.selectBy(
+        const wineImage = await this.repository.select(
           "wine_image",
-          "account_id",
-          accountId.toString(),
+          [
+            { where: "wine_id", equals: wineId }, 
+            { where: "account_id", equals: accountId.toString()}
+          ],
         );
 
         return ctx.json(wineImage);
