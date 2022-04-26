@@ -23,15 +23,12 @@ export default class FileController extends Controller {
 
   async handleRequests(): Promise<void> {
     this.app
-      .post(
-        this.wineImage,
-        async (ctx: Context) => this.handlePostWineImage(ctx),
-      )
-      .get(this.wineImage, async (ctx: Context) => this.handleGetWineImage(ctx))
-      .post(this.bottlePdf, async (ctx: Context) => this.handleBottlePdfs(ctx));
+      .post(this.wineImage,async (ctx: Context) => this.postWineImage(ctx))
+      .get(this.wineImage, async (ctx: Context) => this.getWineImage(ctx))
+      .post(this.bottlePdf, async (ctx: Context) => this.postBottlePdf(ctx));
   }
 
-  async handlePostWineImage(ctx: Context): Promise<void> {
+  async postWineImage(ctx: Context): Promise<void> {
     const body = await ctx.body as WineImageDTO;
     const { wineId } = ctx.params;
     const safeWineId = parseInt(wineId);
@@ -66,7 +63,7 @@ export default class FileController extends Controller {
     });
   }
 
-  async handleGetWineImage(ctx: Context): Promise<void> {
+  async getWineImage(ctx: Context): Promise<void> {
     const { wineId } = ctx.params;
     const safeWineId = parseInt(wineId);
 
@@ -76,15 +73,16 @@ export default class FileController extends Controller {
 
     await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
       try {
-        const wineImage = await this.repository.select(
+        const wineImage = await this.repository.select<WineImage>(
           "wine_image",
           [
             { where: "wine_id", equals: wineId }, 
             { where: "account_id", equals: accountId.toString()}
           ],
         );
+        const wineImageDto = WineImage.toDTO(wineImage[0])
 
-        return ctx.json(wineImage);
+        return ctx.json(wineImageDto);
       } catch (error) {
         console.log(error);
         return ctx.json({ message: this.translator.baseError }, 400);
@@ -92,6 +90,6 @@ export default class FileController extends Controller {
     });
   }
 
-  async handleBottlePdfs(ctx: Context): Promise<void> {
+  async postBottlePdf(ctx: Context): Promise<void> {
   }
 }
