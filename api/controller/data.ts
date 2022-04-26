@@ -33,10 +33,10 @@ export default class DataController extends Controller {
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const dtoList = await ctx.body;
       if (!(dtoList instanceof Array)) {
-        return ctx.json({ message: this.translator.missingParameters }, 400);
+        return ctx.json({ message: this.$t.missingParameters }, 400);
       }
 
       const objects = dtoList.map((dto) =>
@@ -49,7 +49,7 @@ export default class DataController extends Controller {
           async (t: Transaction) => {
             await this.repository.delete(
               mapper[ctx.path].table,
-              [{ where: "account_id", equals: accountId.toString()}],
+              [{ where: "account_id", equals: accountId.toString() }],
               t,
             );
             await this.repository.insert(mapper[ctx.path].table, objects, t);
@@ -59,17 +59,17 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to insert objects");
-        return ctx.json({ message: this.translator.baseError }, 500);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
 
   async handleGet(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         const objects = await this.repository.select(
           mapper[ctx.path].table,
-          [{ where: "account_id", equals: accountId.toString()}],
+          [{ where: "account_id", equals: accountId.toString() }],
         );
 
         const dtoList = objects.map((object) => mapper[ctx.path].toDTO(object));
@@ -78,24 +78,24 @@ export default class DataController extends Controller {
       } catch (error) {
         console.log(error);
         console.warn("Unable to get counties");
-        return ctx.json({ message: this.translator.baseError }, 500);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
 
   async handleDelete(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         await this.repository.delete(
           mapper[ctx.path].table,
-          [{ where: "account_id", equals: accountId.toString()}],
+          [{ where: "account_id", equals: accountId.toString() }],
         );
 
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
         console.warn("Unable to delete objects");
-        return ctx.json({ message: this.translator.baseError }, 500);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }

@@ -23,7 +23,7 @@ export default class FileController extends Controller {
 
   async handleRequests(): Promise<void> {
     this.app
-      .post(this.wineImage,async (ctx: Context) => this.postWineImage(ctx))
+      .post(this.wineImage, async (ctx: Context) => this.postWineImage(ctx))
       .get(this.wineImage, async (ctx: Context) => this.getWineImage(ctx))
       .post(this.bottlePdf, async (ctx: Context) => this.postBottlePdf(ctx));
   }
@@ -34,10 +34,10 @@ export default class FileController extends Controller {
     const safeWineId = parseInt(wineId);
 
     if (isNaN(safeWineId)) {
-      return ctx.json({ message: this.translator.notFound }, 404);
+      return ctx.json({ message: this.$t.notFound }, 404);
     }
 
-    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const wineImage = new WineImage(body, accountId, safeWineId);
 
       try {
@@ -47,8 +47,8 @@ export default class FileController extends Controller {
             await this.repository.delete(
               "wine_image",
               [
-                { where: "wine_id", equals: wineId }, 
-                { where: "account_id", equals: accountId.toString()}
+                { where: "wine_id", equals: wineId },
+                { where: "account_id", equals: accountId.toString() },
               ],
               t,
             );
@@ -58,7 +58,7 @@ export default class FileController extends Controller {
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.translator.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 400);
       }
     });
   }
@@ -68,24 +68,24 @@ export default class FileController extends Controller {
     const safeWineId = parseInt(wineId);
 
     if (isNaN(safeWineId)) {
-      return ctx.json({ message: this.translator.notFound }, 404);
+      return ctx.json({ message: this.$t.notFound }, 404);
     }
 
-    await inAuthentication(ctx, this.jwtKey, this.translator, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         const wineImage = await this.repository.select<WineImage>(
           "wine_image",
           [
-            { where: "wine_id", equals: wineId }, 
-            { where: "account_id", equals: accountId.toString()}
+            { where: "wine_id", equals: wineId },
+            { where: "account_id", equals: accountId.toString() },
           ],
         );
-        const wineImageDto = WineImage.toDTO(wineImage[0])
+        const wineImageDto = WineImage.toDTO(wineImage[0]);
 
         return ctx.json(wineImageDto);
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.translator.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 400);
       }
     });
   }

@@ -41,11 +41,11 @@ app.static("/", "./public");
 app.use((next) =>
   (ctx: Context) => {
     const language = ctx.request.headers.get("Accept-Language");
-    const translator = language?.includes("fr-")
+    const $t = language?.includes("fr-")
       ? new FrTranslations()
       : new EnTranslations();
 
-    manager.updateControllersTranslator(translator);
+    manager.updateControllersTranslator($t);
 
     return next(ctx);
   }

@@ -45,7 +45,7 @@ export default class AccountController extends Controller {
         await this.sendConfirmMail(account);
         return ctx.json({ ok: true });
       } else {
-        return ctx.json({ message: this.translator.accountAlreadyExists }, 400);
+        return ctx.json({ message: this.$t.accountAlreadyExists }, 400);
       }
     } catch (error) {
       console.log(error);
@@ -54,10 +54,10 @@ export default class AccountController extends Controller {
           where: "email",
           equals: account.email,
         }]);
-        return ctx.json({ message: this.translator.invalidEmail }, 500);
+        return ctx.json({ message: this.$t.invalidEmail }, 500);
       } catch (error) {
         console.warn("Unable to delete account");
-        return ctx.json({ message: this.translator.baseError }, 500);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     }
   }
@@ -67,7 +67,7 @@ export default class AccountController extends Controller {
       const accounts = await this.repository.select<Account>("account");
       return ctx.json(accounts);
     } catch (error) {
-      return ctx.json({ message: this.translator.baseError }, 500);
+      return ctx.json({ message: this.$t.baseError }, 500);
     }
   }
 
@@ -76,7 +76,7 @@ export default class AccountController extends Controller {
     const parsed = parseInt(id);
 
     if (isNaN(parsed)) {
-      return ctx.json({ message: this.translator.baseError }, 400);
+      return ctx.json({ message: this.$t.baseError }, 400);
     }
 
     try {
@@ -88,10 +88,10 @@ export default class AccountController extends Controller {
       if (account.length) {
         return ctx.json(account[0]);
       } else {
-        return ctx.json({ message: this.translator.notFound }, 404);
+        return ctx.json({ message: this.$t.notFound }, 404);
       }
     } catch (error) {
-      return ctx.json({ message: this.translator.baseError }, 500);
+      return ctx.json({ message: this.$t.baseError }, 500);
     }
   }
 
@@ -100,14 +100,14 @@ export default class AccountController extends Controller {
     const parsed = parseInt(id);
 
     if (isNaN(parsed)) {
-      return ctx.json({ message: this.translator.baseError }, 400);
+      return ctx.json({ message: this.$t.baseError }, 400);
     }
 
     try {
       await this.repository.delete("account", [{ where: "id", equals: id }]);
       return ctx.json({});
     } catch (error) {
-      return ctx.json({ message: this.translator.baseError }, 500);
+      return ctx.json({ message: this.$t.baseError }, 500);
     }
   }
 
@@ -121,11 +121,11 @@ export default class AccountController extends Controller {
       );
 
       if (account.length === 0) {
-        return ctx.json({ message: this.translator.wrongAccount }, 400);
+        return ctx.json({ message: this.$t.wrongAccount }, 400);
       }
 
       if (account[0].registration_code === null) {
-        return ctx.json({ message: this.translator.alreadyConfirmed }, 400);
+        return ctx.json({ message: this.$t.alreadyConfirmed }, 400);
       }
 
       const code = parseInt(confirmDto.registrationCode);
@@ -148,9 +148,9 @@ export default class AccountController extends Controller {
         return ctx.json({ token });
       }
 
-      return ctx.json({ message: this.translator.wrongRegistrationCode }, 400);
+      return ctx.json({ message: this.$t.wrongRegistrationCode }, 400);
     } catch (error) {
-      return ctx.json({ message: this.translator.baseError }, 500);
+      return ctx.json({ message: this.$t.baseError }, 500);
     }
   }
 
@@ -184,8 +184,8 @@ export default class AccountController extends Controller {
     await client.send({
       from: MAIL,
       to: account.email,
-      subject: this.translator.emailSubject,
-      content: this.translator.emailContent + account.registration_code,
+      subject: this.$t.emailSubject,
+      content: this.$t.emailContent + account.registration_code,
     });
 
     await client.close();

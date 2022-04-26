@@ -8,9 +8,9 @@ export default class ControllerManager {
     this.controllers.push(...controllers);
   }
 
-  updateControllersTranslator(translator: Translatable): void {
+  updateControllersTranslator($t: Translatable): void {
     this.controllers.forEach((controller) => {
-      controller.translator = translator;
+      controller.$t = $t;
     });
   }
 }

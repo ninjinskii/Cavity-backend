@@ -16,8 +16,7 @@ export default class AuthController extends Controller {
   }
 
   async handleRequests(): Promise<void> {
-    this.app
-      .post(this.default, async (ctx: Context) => this.login(ctx));
+    this.app.post(this.default, async (ctx: Context) => this.login(ctx));
   }
 
   async login(ctx: Context): Promise<void> {
@@ -29,18 +28,18 @@ export default class AuthController extends Controller {
 
     if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons
-      return ctx.json({ message: this.translator.wrongCredentials }, 400);
+      return ctx.json({ message: this.$t.wrongCredentials }, 400);
     }
 
     const isConfirmed = account[0].registration_code === null;
     const isAuthenticated = await bcrypt.compare(password, account[0].password);
 
     if (!isConfirmed) {
-      return ctx.json({ message: this.translator.confirmAccount }, 412);
+      return ctx.json({ message: this.$t.confirmAccount }, 412);
     }
 
     if (!isAuthenticated) {
-      return ctx.json({ message: this.translator.wrongCredentials }, 400);
+      return ctx.json({ message: this.$t.wrongCredentials }, 400);
     }
 
     const token = await jwt.create(

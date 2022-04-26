@@ -5,7 +5,7 @@ import { EnTranslations, Translatable } from "../i18n/translatable.ts";
 export default abstract class Controller {
   app: Application;
   repository: Repository;
-  translator: Translatable = new EnTranslations();
+  $t: Translatable = new EnTranslations();
 
   constructor(app: Application, repository: Repository) {
     this.app = app;
