@@ -42,7 +42,7 @@ export default class AccountController extends Controller {
     try {
       if (await this.isAccountUnique(account.email)) {
         await this.repository.insert("account", [account]);
-        await this.sendConfirmMail(account);
+        //await this.sendConfirmMail(account);
         return ctx.json({ ok: true });
       } else {
         return ctx.json({ message: this.$t.accountAlreadyExists }, 400);

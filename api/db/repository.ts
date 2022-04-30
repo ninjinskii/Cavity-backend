@@ -35,7 +35,13 @@ export default class Repository {
     let vars = "";
     let values = "";
 
-    const noIdValues = Object.values(object);
+    const noIdValues = Object.values(object).map((value) => {
+      if (typeof value === "string") {
+        return (value as string)?.replaceAll("'", "''");
+      } else {
+        return value;
+      }
+    });
     const noIdKeys = Object.keys(object);
     noIdValues.shift();
     noIdKeys.shift();
@@ -52,6 +58,33 @@ export default class Repository {
     return { vars, values };
   }
 
+  private prepareInsert(table: string, objects: Array<any>) {
+    const args = [];
+    const noIdKeys = Object.keys(objects[0]);
+    noIdKeys.shift();
+
+    let vars = "";
+    noIdKeys.forEach((key) => vars += key + ",");
+    let query = `INSERT INTO ${table} (${vars}) VALUES `;
+
+    for (const object of objects) {
+      let preparedArgs = "";
+
+      for (const [index, _] of Object.entries(object)) {
+        preparedArgs += "$" + index + ",";
+      }
+
+      // Remove trailing comma
+      preparedArgs.slice(0, -1);
+
+      query += `(${preparedArgs})`;
+      args.push(Object.values(object));
+    }
+
+    console.log(query);
+    console.log(args);
+  }
+
   private buildQueryConditions(
     query: string,
     conditions: Array<QueryCondition>,
@@ -62,10 +95,10 @@ export default class Repository {
 
     let result = query;
     result += " WHERE ";
-    
+
     for (const [index, condition] of conditions.entries()) {
       const field = condition.where;
-      const value = condition.equals
+      const value = condition.equals;
       result += `${field} = '${value}'`;
 
       if (index !== conditions.length - 1) {
@@ -127,19 +160,41 @@ export default class Repository {
     if (!objects.length) {
       return;
     }
-    const { vars } = this.toPgsqlArgs(objects[0]);
-    let query = `INSERT INTO ${table} (${vars}) VALUES`;
 
+    const args = [];
+    const noIdKeys = Object.keys(objects[0]);
+    noIdKeys.shift();
+    let vars = "";
+    noIdKeys.forEach((key) => vars += key + ",");
+    
+    // Remove trailing comma
+    vars = vars.slice(0, -1);
+    
+    let query = `INSERT INTO ${table} (${vars}) VALUES `;
+    let index = 1;
+    
     for (const object of objects) {
-      const { values } = this.toPgsqlArgs(object);
-      query += ` (${values}),`;
+      let preparedArgs = "";
+
+      for (let i = 1; i <= noIdKeys.length; i++) {
+        preparedArgs += "$" + i + ",";
+      }
+
+      // Remove trailing comma
+      preparedArgs = preparedArgs.slice(0, -1);
+
+      query += `(${preparedArgs}),`;
+      args.push(...Object.values(object));
     }
 
+    // Remove trailing comma
     query = query.slice(0, -1);
     query += ";";
 
+    console.log(query);
+
     try {
-      await this.db.doQuery(query, t);
+      await this.db.doPreparedQuery(query, args, t);
     } catch (error) {
       console.warn(error);
       throw new Error(`Cannot insert data into ${table} table.`);

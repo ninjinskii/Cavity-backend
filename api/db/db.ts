@@ -33,6 +33,14 @@ export default class Database {
     return (t || this.client).queryObject(query);
   }
 
+  doPreparedQuery(
+    query: string,
+    args: Array<any>,
+    t: Transaction | null = null,
+  ): Promise<QueryObjectResult<unknown>> {
+    return (t || this.client).queryObject(query, args);
+  }
+
   async doInTransaction(
     name: string,
     block: (t: Transaction) => Promise<void>,
