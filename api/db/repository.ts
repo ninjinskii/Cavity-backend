@@ -42,7 +42,9 @@ export default class Repository {
 
     noIdKeys.forEach((key) => vars += key + ",");
     noIdValues.forEach((val) =>
-      val !== undefined ? values += `'${val}',` : values += `NULL,`
+      val !== undefined && val !== null
+        ? values += `'${val}',`
+        : values += `NULL,`
     );
 
     // Remove trailing comma
@@ -62,10 +64,10 @@ export default class Repository {
 
     let result = query;
     result += " WHERE ";
-    
+
     for (const [index, condition] of conditions.entries()) {
       const field = condition.where;
-      const value = condition.equals
+      const value = condition.equals;
       result += `${field} = '${value}'`;
 
       if (index !== conditions.length - 1) {
