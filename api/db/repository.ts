@@ -166,32 +166,32 @@ export default class Repository {
     noIdKeys.shift();
     let vars = "";
     noIdKeys.forEach((key) => vars += key + ",");
-    
+
     // Remove trailing comma
     vars = vars.slice(0, -1);
-    
+
     let query = `INSERT INTO ${table} (${vars}) VALUES `;
     let index = 1;
-    
+
     for (const object of objects) {
       let preparedArgs = "";
 
       for (let i = 1; i <= noIdKeys.length; i++) {
-        preparedArgs += "$" + i + ",";
+        preparedArgs += "$" + index++ + ",";
       }
 
       // Remove trailing comma
       preparedArgs = preparedArgs.slice(0, -1);
 
       query += `(${preparedArgs}),`;
-      args.push(...Object.values(object));
+      args.push(
+        ...Object.values(object).filter((value) => value !== undefined),
+      );
     }
 
     // Remove trailing comma
     query = query.slice(0, -1);
     query += ";";
-
-    console.log(query);
 
     try {
       await this.db.doPreparedQuery(query, args, t);
