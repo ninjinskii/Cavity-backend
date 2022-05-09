@@ -14,7 +14,7 @@ export class HistoryEntry {
     this.id = historyEntry.id;
     this.date = historyEntry.date;
     this.bottle_id = historyEntry.bottleId;
-    this.tasting_id = historyEntry.tastingId;
+    this.tasting_id = historyEntry.tastingId || null;
     this.comment = historyEntry.comment;
     this.type = historyEntry.type;
     this.favorite = historyEntry.favorite;

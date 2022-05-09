@@ -33,7 +33,7 @@ export class Bottle {
     this.bottle_size = bottle.bottleSize;
     this.pdf_path = bottle.pdfPath;
     this.consumed = bottle.consumed;
-    this.tasting_id = bottle.tastingId;
+    this.tasting_id = bottle.tastingId || null;
   }
 
   static toDTO(bottle: Bottle): BottleDTO {
@@ -53,7 +53,7 @@ export class Bottle {
       pdfPath: bottle.pdf_path,
       consumed: bottle.consumed,
       tastingId: bottle.tasting_id,
-    }
+    };
   }
 }
 
