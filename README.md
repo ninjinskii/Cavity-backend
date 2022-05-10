@@ -20,3 +20,9 @@ hostname -I | awk '{print $1}'
 ```
 
 Access the app from http://ip:5000
+
+## Run tests
+```bash
+docker-compose up -d
+docker-compose exec web deno test --allow-env /app/tests
+```
