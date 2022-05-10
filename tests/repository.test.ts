@@ -32,24 +32,3 @@ Deno.test("Query conditions builder, no condition", () => {
 
   assertEquals(fullQuery, "SELECT * FROM user;");
 });
-
-Deno.test("Build insert query arguments without undefined or null value", () => {
-  const toPgsqlArgs = repository["toPgsqlArgs"];
-  const args = toPgsqlArgs({ id: "1", user: "user1", password: "azerty" });
-
-  assertEquals(args, { vars: "user,password", values: "'user1','azerty'" });
-});
-
-Deno.test("Build insert query arguments with undefined value", () => {
-  const toPgsqlArgs = repository["toPgsqlArgs"];
-  const args = toPgsqlArgs({ id: "1", user: "user1", password: undefined });
-
-  assertEquals(args, { vars: "user,password", values: "'user1',NULL" });
-});
-
-Deno.test("Build insert query arguments with null value", () => {
-  const toPgsqlArgs = repository["toPgsqlArgs"];
-  const args = toPgsqlArgs({ id: "1", user: "user1", password: null });
-
-  assertEquals(args, { vars: "user,password", values: "'user1',NULL" });
-});

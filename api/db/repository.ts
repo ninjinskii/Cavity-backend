@@ -3,11 +3,6 @@ import Database from "./db.ts";
 
 let instance: Repository | null = null;
 
-interface InsertQueryParams {
-  vars: string;
-  values: string;
-}
-
 interface QueryCondition {
   where: string;
   equals: string;
@@ -31,62 +26,6 @@ export default class Repository {
     }
   }
 
-  private toPgsqlArgs(object: any): InsertQueryParams {
-    let vars = "";
-    let values = "";
-
-    const noIdValues = Object.values(object).map((value) => {
-      if (typeof value === "string") {
-        return (value as string)?.replaceAll("'", "''");
-      } else {
-        return value;
-      }
-    });
-    const noIdKeys = Object.keys(object);
-    noIdValues.shift();
-    noIdKeys.shift();
-
-    noIdKeys.forEach((key) => vars += key + ",");
-    noIdValues.forEach((val) =>
-      val !== undefined && val !== null
-        ? values += `'${val}',`
-        : values += `NULL,`
-    );
-
-    // Remove trailing comma
-    vars = vars.slice(0, -1);
-    values = values.slice(0, -1);
-
-    return { vars, values };
-  }
-
-  private prepareInsert(table: string, objects: Array<any>) {
-    const args = [];
-    const noIdKeys = Object.keys(objects[0]);
-    noIdKeys.shift();
-
-    let vars = "";
-    noIdKeys.forEach((key) => vars += key + ",");
-    let query = `INSERT INTO ${table} (${vars}) VALUES `;
-
-    for (const object of objects) {
-      let preparedArgs = "";
-
-      for (const [index, _] of Object.entries(object)) {
-        preparedArgs += "$" + index + ",";
-      }
-
-      // Remove trailing comma
-      preparedArgs.slice(0, -1);
-
-      query += `(${preparedArgs})`;
-      args.push(Object.values(object));
-    }
-
-    console.log(query);
-    console.log(args);
-  }
-
   private buildQueryConditions(
     query: string,
     conditions: Array<QueryCondition>,
@@ -95,8 +34,7 @@ export default class Repository {
       return `${query};`;
     }
 
-    let result = query;
-    result += " WHERE ";
+    let result = query + " WHERE ";
 
     for (const [index, condition] of conditions.entries()) {
       const field = condition.where;
