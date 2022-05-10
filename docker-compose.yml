@@ -21,7 +21,7 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:plout@db/cavity
       - MAIL=cavity.app@gmail.com
-      - MAIL_PASSWORD=***REMOVED***
+      - MAIL_PASSWORD=bruh
     depends_on:
       - db
 
