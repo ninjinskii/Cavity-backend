@@ -1,36 +1,24 @@
-export class Tasting {
-  _id!: number;
-  account_id: number;
-  id: number;
-  date: number;
-  is_midday: boolean;
-  opportunity: string;
-  done: boolean;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(tasting: TastingDTO, account_id: number) {
-    this.account_id = account_id;
-    this.id = tasting.id;
-    this.date = tasting.date;
-    this.is_midday = tasting.isMidday;
-    this.opportunity = tasting.opportunity;
-    this.done = tasting.done;
-  }
-
-  static toDTO(tasting: Tasting): TastingDTO {
-    return {
-      id: tasting.id,
-      date: tasting.date,
-      isMidday: tasting.is_midday,
-      opportunity: tasting.opportunity,
-      done: tasting.done,
-    };
-  }
-}
-
-export interface TastingDTO {
-  id: number;
-  date: number;
-  isMidday: boolean;
-  opportunity: string;
-  done: boolean;
+export class Tasting extends Model {
+  static table = "tasting";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    id: DataTypes.INTEGER,
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    date: DataTypes.BIG_INTEGER,
+    isMidday: {
+      type: DataTypes.BOOLEAN,
+      as: "is_midday",
+    },
+    opportunity: DataTypes.STRING,
+    done: DataTypes.BOOLEAN,
+  };
 }

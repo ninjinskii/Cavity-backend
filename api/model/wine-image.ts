@@ -1,26 +1,22 @@
-export class WineImage {
-  _id!: number;
-  account_id: number;
-  wine_id: number;
-  content: string;
-  extension: string;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(wineImage: WineImageDTO, account_id: number, wine_id: number) {
-    this.account_id = account_id;
-    this.wine_id = wine_id;
-    this.content = wineImage.content;
-    this.extension = wineImage.extension;
-  }
-
-  static toDTO(wineImage: WineImage): WineImageDTO {
-    return {
-      content: wineImage.content,
-      extension: wineImage.extension,
-    };
-  }
-}
-
-export interface WineImageDTO {
-  content: string;
-  extension: string;
+export class WineImage extends Model {
+  static table = "wine_image";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    wineId: {
+      type: DataTypes.INTEGER,
+      as: "wine_id",
+    },
+    content: DataTypes.TEXT,
+    extension: DataTypes.STRING,
+  };
 }
