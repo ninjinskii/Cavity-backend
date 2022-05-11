@@ -1,5 +1,5 @@
-import { Bottle } from "../model/bottle.ts"
-import { Account } from "../model/model.ts"
+import { Bottle } from "../model/bottle.ts";
+import { Account } from "../model/model.ts";
 import {
   Client,
   PostgresConnector,
@@ -9,21 +9,20 @@ import {
 
 export default class Database {
   private client: Client;
-  // TODO update env vars
   private DATABASE_URL = Deno.env.get("DATABASE_URL");
 
   constructor() {
+    if (!this.DATABASE_URL) {
+      throw Error(
+        "Cannot connect to database, do you have set up DATABASE_URL env var ?",
+      );
+    }
+
     const connector = new PostgresConnector({
-      database: "cavity",
-      host: "db",
-      username: "postgres",
-      password: "plout",
-      port: 5432,
+      uri: this.DATABASE_URL,
     });
 
     this.client = new Client(connector);
-    console.log("close");
-    this.client.close();
   }
 
   async init(): Promise<void> {
