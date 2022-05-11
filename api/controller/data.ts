@@ -15,7 +15,7 @@ import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
-import { Account } from "../model/model.ts";
+import { Account } from "../model/account.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -27,9 +27,10 @@ export default class DataController extends Controller {
 
   handleRequests(): void {
     for (const path of Object.keys(mapper)) {
-      this.app.post(path, (ctx: Context) => this.handlePost(ctx));
-      this.app.get(path, (ctx: Context) => this.handleGet(ctx));
-      // this.app.delete(path, (ctx: Context) => this.handleDelete(ctx));
+      this.app
+        .post(path, (ctx: Context) => this.handlePost(ctx))
+        .get(path, (ctx: Context) => this.handleGet(ctx))
+        .delete(path, (ctx: Context) => this.handleDelete(ctx));
     }
   }
 
@@ -75,22 +76,21 @@ export default class DataController extends Controller {
     });
   }
 
-  // async handleDelete(ctx: Context): Promise<void> {
-  //   await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-  //     try {
-  //       await this.repository.delete(
-  //         mapper[ctx.path].table,
-  //         [{ where: "account_id", equals: accountId.toString() }],
-  //       );
+  async handleDelete(ctx: Context): Promise<void> {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      try {
+        const dao = mapper[ctx.path];
+        const objects = await dao
+          .where("accountId", accountId)
+          .delete();
 
-  //       return ctx.json({ ok: true });
-  //     } catch (error) {
-  //       console.log(error);
-  //       console.warn("Unable to delete objects");
-  //       return ctx.json({ message: this.$t.baseError }, 500);
-  //     }
-  //   });
-  // }
+        return ctx.json({ ok: true });
+      } catch (error) {
+        console.log(error);
+        return ctx.json({ message: this.$t.baseError }, 500);
+      }
+    });
+  }
 }
 
 interface PathMapper {
