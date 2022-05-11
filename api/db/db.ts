@@ -2,6 +2,7 @@ import { Bottle } from "../model/bottle.ts";
 import { Account } from "../model/model.ts";
 import {
   Client,
+  PostgresClient,
   PostgresConnector,
   QueryObjectResult,
   Transaction,
@@ -35,7 +36,22 @@ export default class Database {
     return this.client.close();
   }
 
-  doInTransaction(block: () => Promise<void>): Promise<void> {
-    return this.client.transaction(block) as Promise<void>;
+  async doInTransaction(block: () => Promise<void>): Promise<void> {
+    // deno-lint-ignore no-explicit-any
+    const client = this.client["_connector"]["_client"] as PostgresClient;
+    const transaction = client.createTransaction("transaction");
+    
+    // deno-lint-ignore no-explicit-any
+    this.client["_connector"]["_client"] = transaction;
+    
+    await transaction.begin();
+    await block()
+    await transaction.commit();
+
+    // deno-lint-ignore no-explicit-any
+    this.client["_connector"]["_client"] = client;
+
+    // Waiting for a fix of DenoDB
+    //return this.client.transaction(block) as Promise<void>;
   }
 }
