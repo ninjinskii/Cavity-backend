@@ -1,54 +1,42 @@
-import { PostgresClient, QueryObjectResult, Transaction } from "../../deps.ts";
+import { Bottle } from "../model/bottle.ts"
+import { Account } from "../model/model.ts"
+import {
+  Client,
+  PostgresConnector,
+  QueryObjectResult,
+  Transaction,
+} from "../../deps.ts";
 
 export default class Database {
-  private client: PostgresClient;
+  private client: Client;
+  // TODO update env vars
   private DATABASE_URL = Deno.env.get("DATABASE_URL");
 
   constructor() {
-    this.client = new PostgresClient(this.DATABASE_URL);
-    // this.client = new PostgresClient({
-    //   database: "cavity",
-    //   hostname: "db",
-    //   password: "plout",
-    //   port: 5432,
-    //   user: "postgres",
-    //   tls: {
-    //     enforce: false,
-    //   }
-    // });
+    const connector = new PostgresConnector({
+      database: "cavity",
+      host: "db",
+      username: "postgres",
+      password: "plout",
+      port: 5432,
+    });
+
+    this.client = new Client(connector);
+    console.log("close");
+    this.client.close();
   }
 
-  connect(): Promise<void> {
-    return this.client.connect();
+  async init(): Promise<void> {
+    // TODO: add model classes
+    await this.client.link([Account, Bottle]);
+    return this.client.sync();
   }
 
   close(): Promise<void> {
-    return this.client.end();
+    return this.client.close();
   }
 
-  doQuery(
-    query: string,
-    t: Transaction | null = null,
-  ): Promise<QueryObjectResult<unknown>> {
-    return (t || this.client).queryObject(query);
-  }
-
-  doPreparedQuery(
-    query: string,
-    args: Array<any>,
-    t: Transaction | null = null,
-  ): Promise<QueryObjectResult<unknown>> {
-    return (t || this.client).queryObject(query, args);
-  }
-
-  async doInTransaction(
-    name: string,
-    block: (t: Transaction) => Promise<void>,
-  ): Promise<void> {
-    const transaction = this.client.createTransaction(name);
-
-    await transaction.begin();
-    await block(transaction);
-    await transaction.commit();
+  doInTransaction(block: () => Promise<void>): Promise<void> {
+    return this.client.transaction(block) as Promise<void>;
   }
 }

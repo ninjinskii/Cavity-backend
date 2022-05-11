@@ -1,7 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.137.0/testing/asserts.ts";
 import Repository from "../api/db/repository.ts";
 
-const repository = await Repository.getInstance();
+const repository = Repository.getInstance();
 
 Deno.test("Query conditions builder, single condition", () => {
   const buildQueryConditions = repository["buildQueryConditions"];

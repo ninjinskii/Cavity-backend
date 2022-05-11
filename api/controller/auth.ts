@@ -1,56 +1,56 @@
-import { Application, bcrypt, Context, jwt } from "../../deps.ts";
-import { Account, AccountDTO } from "../model/account.ts";
-import Repository from "../db/repository.ts";
-import Controller from "./controller.ts";
+// import { Application, bcrypt, Context, jwt } from "../../deps.ts";
+// import { Account, AccountDTO } from "../model/account.ts";
+// import Repository from "../db/repository.ts";
+// import Controller from "./controller.ts";
 
-export default class AuthController extends Controller {
-  private jwtKey: CryptoKey;
+// export default class AuthController extends Controller {
+//   private jwtKey: CryptoKey;
 
-  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
-    super(app, repository);
-    this.jwtKey = jwtKey;
-  }
+//   constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
+//     super(app, repository);
+//     this.jwtKey = jwtKey;
+//   }
 
-  get default() {
-    return "/auth/login";
-  }
+//   get default() {
+//     return "/auth/login";
+//   }
 
-  async handleRequests(): Promise<void> {
-    this.app.post(this.default, async (ctx: Context) => this.login(ctx));
-  }
+//   async handleRequests(): Promise<void> {
+//     this.app.post(this.default, async (ctx: Context) => this.login(ctx));
+//   }
 
-  async login(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.body as AccountDTO;
-    const account = await this.repository.select<Account>(
-      "account",
-      [{ where: "email", equals: email }],
-    );
+//   async login(ctx: Context): Promise<void> {
+//     const { email, password } = await ctx.body as AccountDTO;
+//     const account = await this.repository.select<Account>(
+//       "account",
+//       [{ where: "email", equals: email }],
+//     );
 
-    if (account.length === 0) {
-      // Not mentionning the fact that the account doesn't exists for security reasons
-      return ctx.json({ message: this.$t.wrongCredentials }, 400);
-    }
+//     if (account.length === 0) {
+//       // Not mentionning the fact that the account doesn't exists for security reasons
+//       return ctx.json({ message: this.$t.wrongCredentials }, 400);
+//     }
 
-    const isConfirmed = account[0].registration_code === null;
-    const isAuthenticated = await bcrypt.compare(password, account[0].password);
+//     const isConfirmed = account[0].registration_code === null;
+//     const isAuthenticated = await bcrypt.compare(password, account[0].password);
 
-    if (!isConfirmed) {
-      return ctx.json({ message: this.$t.confirmAccount }, 412);
-    }
+//     if (!isConfirmed) {
+//       return ctx.json({ message: this.$t.confirmAccount }, 412);
+//     }
 
-    if (!isAuthenticated) {
-      return ctx.json({ message: this.$t.wrongCredentials }, 400);
-    }
+//     if (!isAuthenticated) {
+//       return ctx.json({ message: this.$t.wrongCredentials }, 400);
+//     }
 
-    const token = await jwt.create(
-      { alg: "HS512", typ: "JWT" },
-      {
-        //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
-        account_id: account[0].id,
-      },
-      this.jwtKey,
-    );
+//     const token = await jwt.create(
+//       { alg: "HS512", typ: "JWT" },
+//       {
+//         //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+//         account_id: account[0].id,
+//       },
+//       this.jwtKey,
+//     );
 
-    return ctx.json({ token, email });
-  }
-}
+//     return ctx.json({ token, email });
+//   }
+// }

@@ -1,24 +1,21 @@
-export class BottlePdf {
-  _id!: number;
-  account_id: number;
-  bottle_id: number;
-  content: string;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(bottlePdf: BottlePdfDTO, account_id: number, bottle_id: number) {
-    this.account_id = account_id;
-    this.bottle_id = bottle_id;
-    this.content = bottlePdf.content;
-  }
-
-  static toDTO(bottlePdf: BottlePdf): BottlePdfDTO {
-    return {
-      content: bottlePdf.content,
-      extension: "pdf",
-    };
-  }
-}
-
-export interface BottlePdfDTO {
-  content: string;
-  extension: string;
+export class BottlePdf extends Model {
+  static table = "bottle_pdf";
+  static fields = {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    bottleId: {
+      type: DataTypes.INTEGER,
+      as: "bottle_id",
+    },
+    content: DataTypes.STRING,
+  };
 }
