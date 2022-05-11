@@ -41,19 +41,16 @@ export default class DataController extends Controller {
       }
 
       try {
-        await this.repository.doInTransaction(
-          `postCounty`,
-          async () => {
-            const dao = mapper[ctx.path]
+        await this.repository.doInTransaction(async () => {
+          const dao = mapper[ctx.path];
 
-            await dao
-              .where("_id", accountId)
-              .delete();
+          await dao
+            .where("_id", accountId)
+            .delete();
 
-            await dao
-              .create(objects)
-          },
-        );
+          await dao
+            .create(objects);
+        });
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
@@ -65,10 +62,10 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[ctx.path]
+        const dao = mapper[ctx.path];
         const objects = await dao
           .where("accountId", accountId)
-          .get()
+          .get();
 
         return ctx.json(objects);
       } catch (error) {
@@ -100,6 +97,7 @@ interface PathMapper {
   [path: string]: typeof Model;
 }
 
+// Remember to also add Class name in link() in db.ts
 const mapper: PathMapper = {
   "/account": Account,
   "/county": County,

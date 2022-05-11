@@ -20,10 +20,7 @@ export default class Repository {
     }
   }
 
-  doInTransaction(
-    name: string,
-    block: () => Promise<void>,
-  ): Promise<void> {
+  doInTransaction(block: () => Promise<void>): Promise<void> {
     return this.db.doInTransaction(block);
   }
 

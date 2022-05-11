@@ -54,7 +54,6 @@ export default class Database {
       this.client["_connector"]["_client"] = client;
     }
 
-
     // Waiting for a fix of DenoDB
     //return this.client.transaction(block) as Promise<void>;
   }
