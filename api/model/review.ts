@@ -14,7 +14,7 @@ export class Review extends Model {
       as: "account_id",
     },
     contestName: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       as: "contest_name",
     },
     type: DataTypes.INTEGER,

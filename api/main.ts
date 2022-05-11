@@ -1,11 +1,11 @@
 import { Application, Context } from "../deps.ts";
-// import AccountController from "./controller/account.ts";
-// import AuthController from "./controller/auth.ts";
+import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import Repository from "./db/repository.ts";
-// import FileController from "./controller/file.ts";
+import AccountController from "./controller/account.ts";
+import FileController from "./controller/file.ts";
 
 type CreateTablesBody = { tables: Array<string> };
 type DeleteTableBody = { table: string };
@@ -25,16 +25,16 @@ const jwtKey = await crypto.subtle.importKey(
   ["sign", "verify"],
 );
 
-// const accountController = new AccountController(app, repository, jwtKey);
-// const authController = new AuthController(app, repository, jwtKey);
+const accountController = new AccountController(app, repository, jwtKey);
+const authController = new AuthController(app, repository, jwtKey);
 const dataController = new DataController(app, repository, jwtKey);
-// const fileController = new FileController(app, repository, jwtKey);
+const fileController = new FileController(app, repository, jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(
-  // accountController,
-  // authController,
+  accountController,
+  authController,
   dataController,
-  // fileController,
+  fileController,
 );
 
 app.static("/", "./public");

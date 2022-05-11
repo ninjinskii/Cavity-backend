@@ -16,7 +16,7 @@ export class WineImage extends Model {
       type: DataTypes.INTEGER,
       as: "wine_id",
     },
-    content: DataTypes.STRING,
+    content: DataTypes.TEXT,
     extension: DataTypes.STRING,
   };
 }

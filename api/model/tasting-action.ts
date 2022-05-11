@@ -13,7 +13,7 @@ export class TastingAction extends Model {
       type: DataTypes.INTEGER,
       as: "account_id",
     },
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     bottleId: {
       type: DataTypes.INTEGER,
       as: "bottle_id",

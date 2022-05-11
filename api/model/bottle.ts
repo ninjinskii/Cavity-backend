@@ -34,12 +34,12 @@ export class Bottle extends Model {
       as: "buy_location",
     },
     buyDate: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIG_INTEGER,
       as: "buy_date",
     },
     tastingTasteComment: {
       type: DataTypes.STRING,
-      as: "tasting_taste_comment"
+      as: "tasting_taste_comment",
     },
     bottleSize: {
       type: DataTypes.STRING,
@@ -49,7 +49,20 @@ export class Bottle extends Model {
     tastingId: {
       type: DataTypes.INTEGER,
       as: "tasting_id",
-      allowNull: true
+      allowNull: true,
     },
+    isSelected: {
+      type: DataTypes.BOOLEAN,
+      as: "is_selected",
+    },
+    pdfPath: {
+      type: DataTypes.STRING,
+      as: "pdf_path",
+    },
+  };
+
+  static defaults = {
+    pdfPath: "",
+    isSelected: 0,
   };
 }

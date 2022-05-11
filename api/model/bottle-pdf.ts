@@ -16,6 +16,7 @@ export class BottlePdf extends Model {
       type: DataTypes.INTEGER,
       as: "bottle_id",
     },
-    content: DataTypes.STRING,
+    content: DataTypes.TEXT,
+    extension: DataTypes.STRING,
   };
 }

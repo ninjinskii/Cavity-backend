@@ -14,5 +14,13 @@ export class Friend extends Model {
       as: "account_id",
     },
     name: DataTypes.STRING,
+    imgPath: {
+      type: DataTypes.STRING,
+      as: "img_path",
+    },
+  };
+
+  static defaults = {
+    imgPath: "",
   };
 }

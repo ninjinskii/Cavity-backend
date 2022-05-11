@@ -13,6 +13,7 @@ export class HistoryEntry extends Model {
       type: DataTypes.INTEGER,
       as: "account_id",
     },
+    date: DataTypes.BIG_INTEGER,
     bottleId: {
       type: DataTypes.INTEGER,
       as: "bottle_id",

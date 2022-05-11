@@ -1,6 +1,6 @@
-import { Application, bcrypt, Context, jwt, SmtpClient, Model } from "../../deps.ts";
+import { Application, bcrypt, Context, jwt, SmtpClient } from "../../deps.ts";
 import Repository from "../db/repository.ts";
-import { Account } from "../model/model.ts";
+import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
@@ -21,173 +21,181 @@ export default class AccountController extends Controller {
 
   handleRequests(): void {
     this.app
-      //.post(this.default, async (ctx: Context) => this.postAccount(ctx))
-      // .get(this.default, async (ctx: Context) => this.getAccounts(ctx))
-      //.get(`${this.default}/:id`, async (ctx: Context) => this.getAccount(ctx))
-      // .delete(
-      //   `${this.default}/:id`,
-      //   async (ctx: Context) => this.deleteAccount(ctx),
-      // );
+      .post(this.default, async (ctx: Context) => this.postAccount(ctx))
+      .get(this.default, async (ctx: Context) => this.getAccounts(ctx))
+      .get(`${this.default}/:id`, async (ctx: Context) => this.getAccount(ctx))
+      .delete(
+        `${this.default}/:id`,
+        async (ctx: Context) => this.deleteAccount(ctx),
+      );
 
-    // this.app
-    //   .post(this.confirm, async (ctx: Context) => this.confirmAccount(ctx));
+    this.app
+      .post(this.confirm, async (ctx: Context) => this.confirmAccount(ctx));
   }
 
-  // async postAccount(ctx: Context): Promise<void> {
-  //   const accountDto = await ctx.body as AccountDTO;
-  //   accountDto.password = await this.hashPassword(accountDto.password);
+  async postAccount(ctx: Context): Promise<void> {
+    const { email, password } = await ctx.body as {
+      email: string;
+      password: string;
+    };
+    const hash = await this.hashPassword(password);
 
-  //   const account = new Account(accountDto);
+    try {
+      if (await this.isAccountUnique(email)) {
+        const account = {
+          email,
+          password: hash,
+          registrationCode: Account.generateRegistrationCode(),
+        };
 
-  //   try {
-  //     if (await this.isAccountUnique(account.email)) {
-  //       await this.repository.insert("account", [account]);
-  //       //await this.sendConfirmMail(account);
-  //       return ctx.json({ ok: true });
-  //     } else {
-  //       return ctx.json({ message: this.$t.accountAlreadyExists }, 400);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     try {
-  //       this.repository.delete("account", [{
-  //         where: "email",
-  //         equals: account.email,
-  //       }]);
-  //       return ctx.json({ message: this.$t.invalidEmail }, 500);
-  //     } catch (error) {
-  //       console.warn("Unable to delete account");
-  //       return ctx.json({ message: this.$t.baseError }, 500);
-  //     }
-  //   }
-  // }
+        await Account
+          .create(account);
 
-  // async getAccounts(ctx: Context): Promise<void> {
-  //   try {
-  //     const accounts = await this.repository.getAll(Account);
-  //     return ctx.json(accounts);
-  //   } catch (error) {
-  //     return ctx.json({ message: this.$t.baseError }, 500);
-  //   }
-  // }
+        console.log(account.registrationCode);
+        //await this.sendConfirmMail(account);
+        return ctx.json({ ok: true });
+      } else {
+        return ctx.json({ message: this.$t.accountAlreadyExists }, 400);
+      }
+    } catch (error) {
+      console.log(error);
+      try {
+        // Mail sending has probably gone wrong. Remove the account.
+        Account
+          .where("email", email)
+          .delete();
+        return ctx.json({ message: this.$t.invalidEmail }, 500);
+      } catch (error) {
+        console.log(error);
+        return ctx.json({ message: this.$t.baseError }, 500);
+      }
+    }
+  }
 
-  // async getAccount(ctx: Context): Promise<void> {
-  //   const { id } = ctx.params;
-  //   const parsed = parseInt(id);
+  async getAccounts(ctx: Context): Promise<void> {
+    try {
+      const accounts = await Account.all();
+      return ctx.json(accounts);
+    } catch (error) {
+      return ctx.json({ message: this.$t.baseError }, 500);
+    }
+  }
 
-  //   if (isNaN(parsed)) {
-  //     return ctx.json({ message: this.$t.baseError }, 400);
-  //   }
+  async getAccount(ctx: Context): Promise<void> {
+    const { id } = ctx.params;
+    const parsed = parseInt(id);
 
-  //   try {
-  //     const account = await this.repository.select<Account>(
-  //       "account",
-  //       [{ where: "id", equals: id }],
-  //     );
+    if (isNaN(parsed)) {
+      return ctx.json({ message: this.$t.baseError }, 400);
+    }
 
-  //     if (account.length) {
-  //       return ctx.json(account[0]);
-  //     } else {
-  //       return ctx.json({ message: this.$t.notFound }, 404);
-  //     }
-  //   } catch (error) {
-  //     return ctx.json({ message: this.$t.baseError }, 500);
-  //   }
-  // }
+    try {
+      const account = await Account
+        .where("id", id)
+        .get() as Array<Account>;
 
-  // async deleteAccount(ctx: Context): Promise<void> {
-  //   const { id } = ctx.params;
-  //   const parsed = parseInt(id);
+      if (account.length) {
+        return ctx.json(account[0]);
+      } else {
+        return ctx.json({ message: this.$t.notFound }, 404);
+      }
+    } catch (error) {
+      return ctx.json({ message: this.$t.baseError }, 500);
+    }
+  }
 
-  //   if (isNaN(parsed)) {
-  //     return ctx.json({ message: this.$t.baseError }, 400);
-  //   }
+  async deleteAccount(ctx: Context): Promise<void> {
+    const { id } = ctx.params;
+    const parsed = parseInt(id);
 
-  //   try {
-  //     await this.repository.delete("account", [{ where: "id", equals: id }]);
-  //     return ctx.json({});
-  //   } catch (error) {
-  //     return ctx.json({ message: this.$t.baseError }, 500);
-  //   }
-  // }
+    if (isNaN(parsed)) {
+      return ctx.json({ message: this.$t.baseError }, 400);
+    }
 
-  // async confirmAccount(ctx: Context): Promise<void> {
-  //   const confirmDto = await ctx.body as ConfirmAccountDTO;
+    try {
+      await Account
+        .where("id", id)
+        .delete();
+      return ctx.json({ ok: true });
+    } catch (error) {
+      return ctx.json({ message: this.$t.baseError }, 500);
+    }
+  }
 
-  //   try {
-  //     const account = await this.repository.select<Account>(
-  //       "account",
-  //       [{ where: "email", equals: confirmDto.email }],
-  //     );
+  async confirmAccount(ctx: Context): Promise<void> {
+    const confirmDto = await ctx.body as ConfirmAccountDTO;
 
-  //     if (account.length === 0) {
-  //       return ctx.json({ message: this.$t.wrongAccount }, 400);
-  //     }
+    try {
+      const account = await Account
+        .where("email", confirmDto.email)
+        .get() as Array<Account>;
 
-  //     if (account[0].registration_code === null) {
-  //       return ctx.json({ message: this.$t.alreadyConfirmed }, 400);
-  //     }
+      if (account.length === 0) {
+        return ctx.json({ message: this.$t.wrongAccount }, 400);
+      }
 
-  //     const code = parseInt(confirmDto.registrationCode);
+      if (account[0].registrationCode === null) {
+        return ctx.json({ message: this.$t.alreadyConfirmed }, 400);
+      }
 
-  //     if (account[0].registration_code === code) {
-  //       await this.repository.update("account", "registration_code", null, [{
-  //         where: "email",
-  //         equals: confirmDto.email,
-  //       }]);
+      const code = parseInt(confirmDto.registrationCode);
 
-  //       const token = await jwt.create(
-  //         { alg: "HS512", typ: "JWT" },
-  //         {
-  //           //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
-  //           account_id: account[0].id,
-  //         },
-  //         this.jwtKey,
-  //       );
+      console.log(code)
+      console.log(account[0].registrationCode)
 
-  //       return ctx.json({ token });
-  //     }
+      if (account[0].registrationCode === code) {
+        await Account
+          .where("email", confirmDto.email)
+          .update("registrationCode", null);
 
-  //     return ctx.json({ message: this.$t.wrongRegistrationCode }, 400);
-  //   } catch (error) {
-  //     return ctx.json({ message: this.$t.baseError }, 500);
-  //   }
-  // }
+        const token = await jwt.create(
+          { alg: "HS512", typ: "JWT" },
+          {
+            //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+            account_id: account[0].id,
+          },
+          this.jwtKey,
+        );
 
-  // private async isAccountUnique(email: string): Promise<boolean> {
-  //   const account = await this.repository.select("account", [{
-  //     where: "email",
-  //     equals: email,
-  //   }]);
-  //   return account.length == 0;
-  // }
+        return ctx.json({ token });
+      }
 
-  // private hashPassword(password: string): Promise<string> {
-  //   return bcrypt.hash(password);
-  // }
+      return ctx.json({ message: this.$t.wrongRegistrationCode }, 400);
+    } catch (error) {
+      return ctx.json({ message: this.$t.baseError }, 500);
+    }
+  }
 
-  // private async sendConfirmMail(account: Account) {
-  //   const client = new SmtpClient();
-  //   const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
+  private async isAccountUnique(email: string): Promise<boolean> {
+    return (await Account.where("email", email).count()) == 0;
+  }
 
-  //   if (!account.registration_code) {
-  //     throw new Error(`No registration code for account ${account.email}`);
-  //   }
+  private hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password);
+  }
 
-  //   await client.connectTLS({
-  //     hostname: "smtp.gmail.com",
-  //     port: 465,
-  //     username: MAIL,
-  //     password: MAIL_PASSWORD,
-  //   });
+  private async sendConfirmMail(account: Account) {
+    const client = new SmtpClient();
+    const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
 
-  //   await client.send({
-  //     from: MAIL,
-  //     to: account.email,
-  //     subject: this.$t.emailSubject,
-  //     content: this.$t.emailContent + account.registration_code,
-  //   });
+    if (!account.registrationCode) {
+      throw new Error(`No registration code for account ${account.email}`);
+    }
 
-  //   await client.close();
-  // }
+    await client.connectTLS({
+      hostname: "smtp.gmail.com",
+      port: 465,
+      username: MAIL,
+      password: MAIL_PASSWORD,
+    });
+
+    await client.send({
+      from: MAIL,
+      to: account.email as string,
+      subject: this.$t.emailSubject,
+      content: this.$t.emailContent + account.registrationCode,
+    });
+
+    await client.close();
+  }
 }

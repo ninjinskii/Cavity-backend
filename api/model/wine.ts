@@ -25,5 +25,14 @@ export class Wine extends Model {
       type: DataTypes.INTEGER,
       as: "county_id",
     },
+    hidden: DataTypes.INTEGER,
+    imgPath: {
+      type: DataTypes.STRING,
+      as: "img_path",
+    },
+  };
+
+  static defaults = {
+    imgPath: "",
   };
 }

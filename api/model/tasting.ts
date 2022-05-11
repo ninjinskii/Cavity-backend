@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "../../deps.ts";
 
 export class Tasting extends Model {
-  static table = "bottle";
+  static table = "tasting";
   static fields = {
     _id: {
       type: DataTypes.INTEGER,
@@ -13,9 +13,9 @@ export class Tasting extends Model {
       type: DataTypes.INTEGER,
       as: "account_id",
     },
-    date: DataTypes.INTEGER,
+    date: DataTypes.BIG_INTEGER,
     isMidday: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BOOLEAN,
       as: "is_midday",
     },
     opportunity: DataTypes.STRING,

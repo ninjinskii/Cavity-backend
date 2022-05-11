@@ -53,7 +53,7 @@ export default class Database {
       BottlePdf,
       WineImage,
     ]);
-    return this.client.sync();
+    return this.client.sync({ drop: true });
   }
 
   close(): Promise<void> {
@@ -71,8 +71,8 @@ export default class Database {
     await transaction.begin();
     try {
       await block();
-    } finally {
       await transaction.commit();
+    } finally {
       // deno-lint-ignore no-explicit-any
       this.client["_connector"]["_client"] = client;
     }

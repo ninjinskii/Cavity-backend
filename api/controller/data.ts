@@ -1,4 +1,4 @@
-import { Application, Context, jwt, Model, Transaction } from "../../deps.ts";
+import { Application, Context, Model } from "../../deps.ts";
 import { County } from "../model/county.ts";
 import { Wine } from "../model/wine.ts";
 import { Bottle } from "../model/bottle.ts";
@@ -15,7 +15,6 @@ import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
-import { Account } from "../model/account.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -37,16 +36,19 @@ export default class DataController extends Controller {
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const objects = await ctx.body;
+
       if (!(objects instanceof Array)) {
         return ctx.json({ message: this.$t.missingParameters }, 400);
       }
+
+      objects.forEach((object) => object.accountId = accountId);
 
       try {
         await this.repository.doInTransaction(async () => {
           const dao = mapper[ctx.path];
 
           await dao
-            .where("_id", accountId)
+            .where("accountId", accountId)
             .delete();
 
           await dao
@@ -66,7 +68,9 @@ export default class DataController extends Controller {
         const dao = mapper[ctx.path];
         const objects = await dao
           .where("accountId", accountId)
-          .get();
+          .get() as Array<Model>;
+
+        objects.forEach((obj: any) => delete obj["accountId"]);
 
         return ctx.json(objects);
       } catch (error) {
@@ -99,7 +103,17 @@ interface PathMapper {
 
 // Remember to also add Class name in link() in db.ts
 const mapper: PathMapper = {
-  "/account": Account,
   "/county": County,
+  "/wine": Wine,
   "/bottle": Bottle,
+  "/friend": Friend,
+  "/grape": Grape,
+  "/review": Review,
+  "/qgrape": QGrape,
+  "/freview": FReview,
+  "/history": HistoryEntry,
+  "/tasting": Tasting,
+  "/tasting-action": TastingAction,
+  "/history-x-friend": HistoryXFriend,
+  "/tasting-x-friend": TastingXFriend,
 };
