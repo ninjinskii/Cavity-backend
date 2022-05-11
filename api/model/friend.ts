@@ -1,28 +1,18 @@
-export class Friend {
-  _id!: number;
-  account_id: number;
-  id: number;
-  name: string;
-  img_path: string;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(friend: FriendDTO, accountId: number) {
-    this.account_id = accountId;
-    this.id = friend.id;
-    this.name = friend.name;
-    this.img_path = friend.imgPath;
-  }
-
-  static toDTO(friend: Friend): FriendDTO {
-    return {
-      id: friend.id,
-      name: friend.name,
-      imgPath: friend.img_path,
-    };
-  }
-}
-
-export interface FriendDTO {
-  id: number;
-  name: string;
-  imgPath: string;
+export class Friend extends Model {
+  static table = "friend";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    id: DataTypes.INTEGER,
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    name: DataTypes.STRING,
+  };
 }

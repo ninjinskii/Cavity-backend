@@ -20,9 +20,3 @@ export class County extends Model {
     },
   };
 }
-
-export interface CountyDTO {
-  id: number;
-  name: string;
-  prefOrder: number;
-}

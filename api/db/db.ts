@@ -1,13 +1,20 @@
 import { Bottle } from "../model/bottle.ts";
-import { Account } from "../model/model.ts";
-import {
-  Client,
-  PostgresClient,
-  PostgresConnector,
-  QueryObjectResult,
-  Transaction,
-} from "../../deps.ts";
+import { Account } from "../model/account.ts";
+import { Client, PostgresClient, PostgresConnector } from "../../deps.ts";
 import { County } from "../model/county.ts";
+import { Wine } from "../model/wine.ts";
+import { FReview } from "../model/f-review.ts";
+import { Friend } from "../model/friend.ts";
+import { Grape } from "../model/grape.ts";
+import { HistoryEntry } from "../model/history-entry.ts";
+import { HistoryXFriend } from "../model/history-x-friend.ts";
+import { QGrape } from "../model/q-grape.ts";
+import { Review } from "../model/review.ts";
+import { Tasting } from "../model/tasting.ts";
+import { TastingAction } from "../model/tasting-action.ts";
+import { TastingXFriend } from "../model/tasting-x-friend.ts";
+import { WineImage } from "../model/wine-image.ts";
+import { BottlePdf } from "../model/bottle-pdf.ts";
 
 export default class Database {
   private client: Client;
@@ -28,8 +35,24 @@ export default class Database {
   }
 
   async init(): Promise<void> {
-    // TODO: add model classes
-    await this.client.link([Account, County, Bottle]);
+    await this.client.link([
+      Account,
+      County,
+      Wine,
+      Bottle,
+      Friend,
+      Grape,
+      Review,
+      QGrape,
+      FReview,
+      HistoryEntry,
+      Tasting,
+      TastingAction,
+      HistoryXFriend,
+      TastingXFriend,
+      BottlePdf,
+      WineImage,
+    ]);
     return this.client.sync();
   }
 
@@ -41,13 +64,13 @@ export default class Database {
     // deno-lint-ignore no-explicit-any
     const client = this.client["_connector"]["_client"] as PostgresClient;
     const transaction = client.createTransaction("transaction");
-    
+
     // deno-lint-ignore no-explicit-any
     this.client["_connector"]["_client"] = transaction;
-    
+
     await transaction.begin();
     try {
-      await block()
+      await block();
     } finally {
       await transaction.commit();
       // deno-lint-ignore no-explicit-any

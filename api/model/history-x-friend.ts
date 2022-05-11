@@ -1,24 +1,24 @@
-export class HistoryXFriend {
-  _id!: number;
-  account_id: number;
-  history_entry_id: number;
-  friend_id: number;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(historyFriendXRef: HistoryXFriendDTO, account_id: number) {
-    this.account_id = account_id;
-    this.history_entry_id = historyFriendXRef.historyEntryId;
-    this.friend_id = historyFriendXRef.friendId;
-  }
-
-  static toDTO(historyFriendXRef: HistoryXFriend): HistoryXFriendDTO {
-    return {
-      historyEntryId: historyFriendXRef.history_entry_id,
-      friendId: historyFriendXRef.friend_id,
-    };
-  }
-}
-
-export interface HistoryXFriendDTO {
-  historyEntryId: number;
-  friendId: number;
+export class HistoryXFriend extends Model {
+  static table = "history_x_friend";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    historyEntryId: {
+      type: DataTypes.INTEGER,
+      as: "history_entry_id",
+    },
+    friendId: {
+      type: DataTypes.INTEGER,
+      as: "friend_id",
+    },
+  };
 }

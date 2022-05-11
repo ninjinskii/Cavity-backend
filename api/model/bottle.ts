@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "../../deps.ts";
 
 export class Bottle extends Model {
-  static table = "account";
+  static table = "bottle";
   static fields = {
     _id: {
       type: DataTypes.INTEGER,
@@ -52,22 +52,4 @@ export class Bottle extends Model {
       allowNull: true
     },
   };
-}
-
-export interface BottleDTO {
-  id: number;
-  wineId: number;
-  vintage: number;
-  apogee: number;
-  isFavorite: number;
-  price: number;
-  currency: string;
-  otherInfo: string;
-  buyLocation: string;
-  buyDate: number;
-  tastingTasteComment: string;
-  bottleSize: string;
-  pdfPath: string;
-  consumed: number;
-  tastingId: number | null;
 }
