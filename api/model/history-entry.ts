@@ -1,44 +1,30 @@
-export class HistoryEntry {
-  _id!: number;
-  account_id: number;
-  id: number;
-  date: number;
-  bottle_id: number;
-  tasting_id: number | null;
-  comment: string;
-  type: number;
-  favorite: number;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(historyEntry: HistoryEntryDTO, account_id: number) {
-    this.account_id = account_id;
-    this.id = historyEntry.id;
-    this.date = historyEntry.date;
-    this.bottle_id = historyEntry.bottleId;
-    this.tasting_id = historyEntry.tastingId || null;
-    this.comment = historyEntry.comment;
-    this.type = historyEntry.type;
-    this.favorite = historyEntry.favorite;
-  }
-
-  static toDTO(historyEntry: HistoryEntry): HistoryEntryDTO {
-    return {
-      id: historyEntry.id,
-      date: historyEntry.date,
-      bottleId: historyEntry.bottle_id,
-      tastingId: historyEntry.tasting_id,
-      comment: historyEntry.comment,
-      type: historyEntry.type,
-      favorite: historyEntry.favorite,
-    };
-  }
-}
-
-export interface HistoryEntryDTO {
-  id: number;
-  date: number;
-  bottleId: number;
-  tastingId: number | null;
-  comment: string;
-  type: number;
-  favorite: number;
+export class HistoryEntry extends Model {
+  static table = "history_entry";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    id: DataTypes.INTEGER,
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    date: DataTypes.BIG_INTEGER,
+    bottleId: {
+      type: DataTypes.INTEGER,
+      as: "bottle_id",
+    },
+    tastingId: {
+      type: DataTypes.INTEGER,
+      as: "tasting_id",
+      allowNull: true,
+    },
+    comment: DataTypes.STRING,
+    type: DataTypes.INTEGER,
+    favorite: DataTypes.INTEGER,
+  };
 }

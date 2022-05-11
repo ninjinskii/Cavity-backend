@@ -1,7 +1,6 @@
 import { Application, Context, Transaction } from "../../deps.ts";
 import Repository from "../db/repository.ts";
-import { BottlePdf, BottlePdfDTO } from "../model/bottle-pdf.ts";
-import { WineImageDTO } from "../model/wine-image.ts";
+import { BottlePdf } from "../model/bottle-pdf.ts";
 import { WineImage } from "../model/wine-image.ts";
 import inAuthentication from "../util/authenticator.ts";
 import Controller from "./controller.ts";
@@ -31,7 +30,6 @@ export default class FileController extends Controller {
   }
 
   async postWineImage(ctx: Context): Promise<void> {
-    const body = await ctx.body as WineImageDTO;
     const { wineId } = ctx.params;
     const safeWineId = parseInt(wineId);
 
@@ -39,28 +37,26 @@ export default class FileController extends Controller {
       return ctx.json({ message: this.$t.notFound }, 404);
     }
 
+    const wineImage: any = await ctx.body;
+
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      const wineImage = new WineImage(body, accountId, safeWineId);
+      wineImage.accountId = accountId
+      wineImage.wineId = safeWineId
 
       try {
-        await this.repository.doInTransaction(
-          `postWineImage-${accountId}`,
-          async (t: Transaction) => {
-            await this.repository.delete(
-              "wine_image",
-              [
-                { where: "wine_id", equals: wineId },
-                { where: "account_id", equals: accountId.toString() },
-              ],
-              t,
-            );
-            await this.repository.insert("wine_image", [wineImage], t);
-          },
-        );
+        await this.repository.doInTransaction(async () => {
+          await WineImage
+            .where("wineId", wineId)
+            .where("account_id", accountId)
+            .delete();
+
+          await WineImage
+            .create(wineImage);
+        });
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
@@ -75,54 +71,47 @@ export default class FileController extends Controller {
 
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const wineImage = await this.repository.select<WineImage>(
-          "wine_image",
-          [
-            { where: "wine_id", equals: wineId },
-            { where: "account_id", equals: accountId.toString() },
-          ],
-        );
-        const wineImageDto = WineImage.toDTO(wineImage[0]);
+        const wineImage = await WineImage
+          .where("wineId", wineId)
+          .where("accountId", accountId)
+          .get();
 
-        return ctx.json(wineImageDto);
+        return ctx.json(wineImage);
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
 
   async postBottlePdf(ctx: Context): Promise<void> {
-    const body = await ctx.body as BottlePdfDTO;
     const { bottleId } = ctx.params;
-    const safeBottleId = parseInt(bottleId);
+    const safeBotleId = parseInt(bottleId);
 
-    if (isNaN(safeBottleId)) {
+    if (isNaN(safeBotleId)) {
       return ctx.json({ message: this.$t.notFound }, 404);
     }
 
+    const bottlePdf: any = await ctx.body;
+    
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      const bottlePdf = new BottlePdf(body, accountId, safeBottleId);
+      bottlePdf.accountId = accountId
+      bottlePdf.bottleId = safeBotleId
 
       try {
-        await this.repository.doInTransaction(
-          `postBottlePdf-${accountId}`,
-          async (t: Transaction) => {
-            await this.repository.delete(
-              "bottle_pdf",
-              [
-                { where: "bottle_id", equals: bottleId },
-                { where: "account_id", equals: accountId.toString() },
-              ],
-              t,
-            );
-            await this.repository.insert("bottle_pdf", [bottlePdf], t);
-          },
-        );
+        await this.repository.doInTransaction(async () => {
+          await BottlePdf
+            .where("bottleId", bottleId)
+            .where("account_id", accountId)
+            .delete();
+
+          await BottlePdf
+            .create(bottlePdf);
+        });
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
@@ -137,19 +126,15 @@ export default class FileController extends Controller {
 
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const wineImage = await this.repository.select<BottlePdf>(
-          "bottle_pdf",
-          [
-            { where: "bottle_id", equals: bottleId },
-            { where: "account_id", equals: accountId.toString() },
-          ],
-        );
-        const bottlePdfDto = BottlePdf.toDTO(wineImage[0]);
+        const bottlePdf = await BottlePdf
+          .where("bottleId", bottleId)
+          .where("accountId", accountId)
+          .get();
 
-        return ctx.json(bottlePdfDto);
+        return ctx.json(bottlePdf);
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 400);
+        return ctx.json({ message: this.$t.baseError }, 500);
       }
     });
   }
