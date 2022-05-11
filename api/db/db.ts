@@ -7,6 +7,7 @@ import {
   QueryObjectResult,
   Transaction,
 } from "../../deps.ts";
+import { County } from "../model/county.ts";
 
 export default class Database {
   private client: Client;
@@ -28,7 +29,7 @@ export default class Database {
 
   async init(): Promise<void> {
     // TODO: add model classes
-    await this.client.link([Account, Bottle]);
+    await this.client.link([Account, County, Bottle]);
     return this.client.sync();
   }
 
@@ -45,11 +46,14 @@ export default class Database {
     this.client["_connector"]["_client"] = transaction;
     
     await transaction.begin();
-    await block()
-    await transaction.commit();
+    try {
+      await block()
+    } finally {
+      await transaction.commit();
+      // deno-lint-ignore no-explicit-any
+      this.client["_connector"]["_client"] = client;
+    }
 
-    // deno-lint-ignore no-explicit-any
-    this.client["_connector"]["_client"] = client;
 
     // Waiting for a fix of DenoDB
     //return this.client.transaction(block) as Promise<void>;

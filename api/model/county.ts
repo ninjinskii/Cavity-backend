@@ -1,28 +1,24 @@
-export class County {
-  _id!: number;
-  account_id: number;
-  id: number;
-  name: string;
-  pref_order: number;
+import { DataTypes, Model } from "../../deps.ts";
 
-  constructor(county: CountyDTO, accountId: number) {
-    this.account_id = accountId;
-    this.id = county.id;
-    this.name = county.name;
-    this.pref_order = county.prefOrder;
-  }
-
-  get tableName(): string {
-    return "county"
-  }
-
-  static toDTO(county: County): CountyDTO {
-    return {
-      id: county.id,
-      name: county.name,
-      prefOrder: county.pref_order,
-    };
-  }
+export class County extends Model {
+  static table = "county";
+  static fields = {
+    _id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    id: DataTypes.INTEGER,
+    accountId: {
+      type: DataTypes.INTEGER,
+      as: "account_id",
+    },
+    name: DataTypes.STRING,
+    prefOrder: {
+      type: DataTypes.INTEGER,
+      as: "pref_order",
+    },
+  };
 }
 
 export interface CountyDTO {

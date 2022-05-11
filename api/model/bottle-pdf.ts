@@ -18,4 +18,8 @@ export class BottlePdf extends Model {
     },
     content: DataTypes.STRING,
   };
+
+  all(): Promise<Array<Model>> {
+    return BottlePdf.all()
+  }
 }

@@ -15,7 +15,7 @@ import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
-import { Account, Dao } from "../model/model.ts";
+import { Account } from "../model/model.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -28,64 +28,55 @@ export default class DataController extends Controller {
   handleRequests(): void {
     for (const path of Object.keys(mapper)) {
       this.app.post(path, (ctx: Context) => this.handlePost(ctx));
-      // this.app.get(path, (ctx: Context) => this.handleGet(ctx));
+      this.app.get(path, (ctx: Context) => this.handleGet(ctx));
       // this.app.delete(path, (ctx: Context) => this.handleDelete(ctx));
     }
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    // await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-    //   const dtoList = await ctx.body;
-    //   if (!(dtoList instanceof Array)) {
-    //     return ctx.json({ message: this.$t.missingParameters }, 400);
-    //   }
-
-      // const objects = dtoList.map((dto) =>
-      //   mapper[ctx.path].fromDTO(dto, accountId)
-      // );
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      const objects = await ctx.body;
+      if (!(objects instanceof Array)) {
+        return ctx.json({ message: this.$t.missingParameters }, 400);
+      }
 
       try {
         await this.repository.doInTransaction(
           `postCounty`,
           async () => {
-            const a = await mapper["/county"].dao.all()
-            console.log(a);
+            const dao = mapper[ctx.path]
 
-            // await this.repository.delete(
-            //   mapper[ctx.path].table,
-            //   [{ where: "account_id", equals: accountId.toString() }],
-            //   t,
-            // );
-            // await this.repository.insert(mapper[ctx.path].table, objects, t);
+            await dao
+              .where("_id", accountId)
+              .delete();
+
+            await dao
+              .create(objects)
           },
         );
         return ctx.json({ ok: true });
       } catch (error) {
         console.log(error);
-        console.warn("Unable to insert objects");
         return ctx.json({ message: this.$t.baseError }, 500);
       }
-    // });
+    });
   }
 
-  // async handleGet(ctx: Context): Promise<void> {
-  //   await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-  //     try {
-  //       const objects = await this.repository.select(
-  //         mapper[ctx.path].table,
-  //         [{ where: "account_id", equals: accountId.toString() }],
-  //       );
+  async handleGet(ctx: Context): Promise<void> {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      try {
+        const dao = mapper[ctx.path]
+        const objects = await dao
+          .where("accountId", accountId)
+          .get()
 
-  //       const dtoList = objects.map((object) => mapper[ctx.path].toDTO(object));
-
-  //       return ctx.json(dtoList);
-  //     } catch (error) {
-  //       console.log(error);
-  //       console.warn("Unable to get counties");
-  //       return ctx.json({ message: this.$t.baseError }, 500);
-  //     }
-  //   });
-  // }
+        return ctx.json(objects);
+      } catch (error) {
+        console.log(error);
+        return ctx.json({ message: this.$t.baseError }, 500);
+      }
+    });
+  }
 
   // async handleDelete(ctx: Context): Promise<void> {
   //   await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
@@ -105,17 +96,12 @@ export default class DataController extends Controller {
   // }
 }
 
-// Can replace these two pieces by splitting up this controller by data object
-// and add a super class that require a table name and a function to transform
-// their objects to DTOs.
 interface PathMapper {
-  [path: string]: {
-    dao: Dao
-  };
+  [path: string]: typeof Model;
 }
 
 const mapper: PathMapper = {
-  "/county": {
-    dao: new Account()
-  },
+  "/account": Account,
+  "/county": County,
+  "/bottle": Bottle,
 };

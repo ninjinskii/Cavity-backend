@@ -1,11 +1,6 @@
 import { DataTypes, Model } from "../../deps.ts";
 
-export interface Dao {
-  getClass(): typeof Model,
-  all(): Promise<Array<Model>>
-}
-
-export class Account extends Model implements Dao {
+export class Account extends Model {
   static table = "account";
   static fields = {
     id: {
@@ -32,9 +27,7 @@ export class Account extends Model implements Dao {
     return Account.all()
   }
 
-  getClass() : typeof Account {
-    return Account
-  }
+  where = Account.where
 }
 
 export interface AccountDTO {

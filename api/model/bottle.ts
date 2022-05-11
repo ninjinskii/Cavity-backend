@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "../../deps.ts";
 
-export class Bottle extends Model{
+export class Bottle extends Model {
   static table = "account";
   static fields = {
     _id: {
