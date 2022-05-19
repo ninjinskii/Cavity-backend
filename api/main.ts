@@ -38,19 +38,19 @@ manager.addControllers(
 );
 
 // app.static("/", "./public");
-// app.use((next) =>
-//   (ctx: Context) => {
-//     const language = ctx.request.headers.get("Accept-Language");
-//     const $t = language?.includes("fr-")
-//       ? new FrTranslations()
-//       : new EnTranslations();
+app.use((next) =>
+  (ctx: Context) => {
+    const language = ctx.request.headers.get("Accept-Language");
+    const $t = language?.includes("fr-")
+      ? new FrTranslations()
+      : new EnTranslations();
 
-//     manager.updateControllersTranslator($t);
+    manager.updateControllersTranslator($t);
 
-//     return next(ctx);
-//   }
-// );
-// app.start({ port: 5000 });
+    return next(ctx);
+  }
+);
+app.start({ port: 5000 });
 
 // app.file("/", "public/index.html");
 
