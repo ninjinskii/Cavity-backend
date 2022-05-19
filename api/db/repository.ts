@@ -14,7 +14,7 @@ export default class Repository {
 
   private async init() {
     try {
-      // await this.db.init();
+      await this.db.init();
     } catch (error) {
       console.error("Cannot connect to database");
     }

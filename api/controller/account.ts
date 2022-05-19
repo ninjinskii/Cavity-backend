@@ -84,9 +84,10 @@ export default class AccountController extends Controller {
   // async getAccounts(ctx: Context): Promise<void> {
   //   try {
   //     const accounts = await Account.all();
-  //     ctx.response.body = accounts);
+  //     ctx.response.body = accounts;
   //   } catch (error) {
-  //     ctx.response.body = { message: this.$t.baseError }, 500);
+  //     ctx.response.status = 500;
+  //     ctx.response.body = { message: this.$t.baseError };
   //   }
   // }
 
@@ -97,6 +98,7 @@ export default class AccountController extends Controller {
     if (isNaN(parsed)) {
       ctx.response.status = 400;
       ctx.response.body = { message: this.$t.baseError };
+      return;
     }
 
     try {
@@ -108,11 +110,11 @@ export default class AccountController extends Controller {
         ctx.response.body = account[0];
       } else {
         ctx.response.status = 404;
-        ctx.response.body = { message: this.$t.notFound }, 404;
+        ctx.response.body = { message: this.$t.notFound };
       }
     } catch (error) {
       ctx.response.status = 500;
-      ctx.response.body = { message: this.$t.baseError }, 500;
+      ctx.response.body = { message: this.$t.baseError };
     }
   }
 
@@ -124,10 +126,13 @@ export default class AccountController extends Controller {
       if (isNaN(parsed)) {
         ctx.response.status = 400;
         ctx.response.body = { message: this.$t.baseError };
+        return;
       }
 
       if (accountId !== parsed) {
-        ctx.response.body = { message: this.$t.unauthorized }, 401;
+        ctx.response.status = 401;
+        ctx.response.body = { message: this.$t.unauthorized };
+        return;
       }
 
       try {
@@ -153,11 +158,13 @@ export default class AccountController extends Controller {
       if (account.length === 0) {
         ctx.response.status = 400;
         ctx.response.body = { message: this.$t.wrongAccount };
+        return;
       }
 
       if (account[0].registrationCode === null) {
         ctx.response.status = 400;
         ctx.response.body = { message: this.$t.alreadyConfirmed };
+        return;
       }
 
       const code = parseInt(confirmDto.registrationCode);
@@ -177,13 +184,14 @@ export default class AccountController extends Controller {
         );
 
         ctx.response.body = { token };
+        return;
       }
 
       ctx.response.status = 400;
-      ctx.response.body = { message: this.$t.wrongRegistrationCode }, 400;
+      ctx.response.body = { message: this.$t.wrongRegistrationCode };
     } catch (error) {
       ctx.response.status = 500;
-      ctx.response.body = { message: this.$t.baseError }, 500;
+      ctx.response.body = { message: this.$t.baseError };
     }
   }
 

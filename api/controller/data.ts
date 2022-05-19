@@ -40,6 +40,7 @@ export default class DataController extends Controller {
       if (!(objects instanceof Array)) {
         ctx.response.status = 400;
         ctx.response.body = { message: this.$t.missingParameters };
+        return;
       }
 
       objects.forEach((object: any) => object.accountId = accountId);
@@ -101,7 +102,7 @@ export default class DataController extends Controller {
   }
 
   private getMapperEntry(ctx: Context): string {
-    return ctx.request.url.pathname.split("/").pop() || "";
+    return "/" + ctx.request.url.pathname.split("/").pop() || "";
   }
 }
 

@@ -41,7 +41,6 @@ export default class Database {
     //   host_type: "tcp",
     //   port: 5432,
     //   user: "postgres",
-    //   password: "***REMOVED***",
     //   tls: {
     //     enabled: false,
     //     //caCertificates: [cert]

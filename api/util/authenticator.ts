@@ -10,10 +10,12 @@ export default async function inAuthentication(
   const authorization = ctx.request.headers.get("Authorization");
 
   if (!authorization || authorization.split(" ").length !== 2) {
-    ctx.response.body = { message: t.unauthorized, code: 401 });
+    ctx.response.status = 401;
+    ctx.response.body = { message: t.unauthorized };
+    return;
   }
 
-  const [_, token] = authorization.split(" ");
+  const [_, token] = authorization!.split(" ");
 
   try {
     const { account_id } = await jwt.verify(token, jwtKey) as {
@@ -25,9 +27,11 @@ export default async function inAuthentication(
     if (accountId !== NaN) {
       return await block(accountId);
     } else {
-      ctx.response.body = { message: t.unauthorized, code: 401 });
+      ctx.response.status = 401;
+      ctx.response.body = { message: t.unauthorized };
     }
   } catch (error) {
-    ctx.response.body = { message: t.unauthorized, code: 401 });
+    ctx.response.status = 401;
+    ctx.response.body = { message: t.unauthorized };
   }
 }
