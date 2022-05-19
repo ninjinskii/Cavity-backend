@@ -37,22 +37,31 @@ manager.addControllers(
   fileController,
 );
 
-app.static("/", "./public");
-app.use((next) =>
-  (ctx: Context) => {
-    const language = ctx.request.headers.get("Accept-Language");
-    const $t = language?.includes("fr-")
-      ? new FrTranslations()
-      : new EnTranslations();
+// app.static("/", "./public");
+// app.use((next) =>
+//   (ctx: Context) => {
+//     const language = ctx.request.headers.get("Accept-Language");
+//     const $t = language?.includes("fr-")
+//       ? new FrTranslations()
+//       : new EnTranslations();
 
-    manager.updateControllersTranslator($t);
+//     manager.updateControllersTranslator($t);
 
-    return next(ctx);
-  }
-);
-app.start({ port: 5000 });
+//     return next(ctx);
+//   }
+// );
+// app.start({ port: 5000 });
 
-app.file("/", "public/index.html");
+// app.file("/", "public/index.html");
+
+import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
+
+console.log("Listening on http://localhost:8000");
+serve((_req) => {
+  return new Response("Hello World!", {
+    headers: { "content-type": "text/plain" },
+  });
+});
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
