@@ -50,18 +50,12 @@ app.use((next) =>
     return next(ctx);
   }
 );
+app.get("/", async (ctx: Context) => {
+  return await ctx.html(`<h1>Cavity api</h1>`, 200);
+});
 app.start({ port: 5000 });
 
 // app.file("/", "public/index.html");
-
-import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
-
-console.log("Listening on http://localhost:8000");
-serve((_req) => {
-  return new Response("Hello World!", {
-    headers: { "content-type": "text/plain" },
-  });
-});
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
