@@ -1,4 +1,11 @@
-import { Application, bcrypt, Context, jwt, SmtpClient } from "../../deps.ts";
+import {
+  bcrypt,
+  Context,
+  getQuery,
+  jwt,
+  Router,
+  SmtpClient,
+} from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import inAuthentication from "../util/authenticator.ts";
@@ -7,8 +14,8 @@ import Controller from "./controller.ts";
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
 
-  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
-    super(app, repository);
+  constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
+    super(router, repository);
     this.jwtKey = jwtKey;
   }
 
@@ -21,7 +28,7 @@ export default class AccountController extends Controller {
   }
 
   handleRequests(): void {
-    this.app
+    this.router
       .post(this.default, async (ctx: Context) => this.postAccount(ctx))
       .get(this.default, async (ctx: Context) => this.getAccount(ctx))
       .delete(
@@ -29,12 +36,12 @@ export default class AccountController extends Controller {
         async (ctx: Context) => this.deleteAccount(ctx),
       );
 
-    this.app
+    this.router
       .post(this.confirm, async (ctx: Context) => this.confirmAccount(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.body as {
+    const { email, password } = await ctx.request.body().value as {
       email: string;
       password: string;
     };
@@ -52,9 +59,10 @@ export default class AccountController extends Controller {
           .create(account);
 
         await this.sendConfirmMail(account.registrationCode, account.email);
-        return ctx.json({ ok: true });
+        ctx.response.body = { ok: true };
       } else {
-        return ctx.json({ message: this.$t.accountAlreadyExists }, 400);
+        ctx.response.status = 400;
+        ctx.response.body = { message: this.$t.accountAlreadyExists };
       }
     } catch (error) {
       console.log(error);
@@ -63,10 +71,12 @@ export default class AccountController extends Controller {
         Account
           .where("email", email)
           .delete();
-        return ctx.json({ message: this.$t.invalidEmail }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.invalidEmail };
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.baseError };
       }
     }
   }
@@ -74,62 +84,66 @@ export default class AccountController extends Controller {
   // async getAccounts(ctx: Context): Promise<void> {
   //   try {
   //     const accounts = await Account.all();
-  //     return ctx.json(accounts);
+  //     ctx.response.body = accounts);
   //   } catch (error) {
-  //     return ctx.json({ message: this.$t.baseError }, 500);
+  //     ctx.response.body = { message: this.$t.baseError }, 500);
   //   }
   // }
 
   async getAccount(ctx: Context): Promise<void> {
-    return ctx.json({ hello: "world" });
-    // const { id } = ctx.params;
-    // const parsed = parseInt(id);
+    const { id } = getQuery(ctx, { mergeParams: true });
+    const parsed = parseInt(id);
 
-    // if (isNaN(parsed)) {
-    //   return ctx.json({ message: this.$t.baseError }, 400);
-    // }
+    if (isNaN(parsed)) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: this.$t.baseError };
+    }
 
-    // try {
-    //   const account = await Account
-    //     .where("id", id)
-    //     .get() as Array<Account>;
+    try {
+      const account = await Account
+        .where("id", id)
+        .get() as Array<Account>;
 
-    //   if (account.length) {
-    //     return ctx.json(account[0]);
-    //   } else {
-    //     return ctx.json({ message: this.$t.notFound }, 404);
-    //   }
-    // } catch (error) {
-    //   return ctx.json({ message: this.$t.baseError }, 500);
-    // }
+      if (account.length) {
+        ctx.response.body = account[0];
+      } else {
+        ctx.response.status = 404;
+        ctx.response.body = { message: this.$t.notFound }, 404;
+      }
+    } catch (error) {
+      ctx.response.status = 500;
+      ctx.response.body = { message: this.$t.baseError }, 500;
+    }
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
     inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      const { id } = ctx.params;
+      const { id } = getQuery(ctx, { mergeParams: true });
       const parsed = parseInt(id);
 
       if (isNaN(parsed)) {
-        return ctx.json({ message: this.$t.baseError }, 400);
+        ctx.response.status = 400;
+        ctx.response.body = { message: this.$t.baseError };
       }
 
       if (accountId !== parsed) {
-        return ctx.json({ message: this.$t.unauthorized }, 401);
+        ctx.response.body = { message: this.$t.unauthorized }, 401;
       }
 
       try {
         await Account
           .where("id", id)
           .delete();
-        return ctx.json({ ok: true });
+        ctx.response.body = { ok: true };
       } catch (error) {
-        return ctx.json({ message: this.$t.baseError }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.baseError }, 500;
       }
     });
   }
 
   async confirmAccount(ctx: Context): Promise<void> {
-    const confirmDto = await ctx.body as ConfirmAccountDTO;
+    const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
 
     try {
       const account = await Account
@@ -137,11 +151,13 @@ export default class AccountController extends Controller {
         .get() as Array<Account>;
 
       if (account.length === 0) {
-        return ctx.json({ message: this.$t.wrongAccount }, 400);
+        ctx.response.status = 400;
+        ctx.response.body = { message: this.$t.wrongAccount };
       }
 
       if (account[0].registrationCode === null) {
-        return ctx.json({ message: this.$t.alreadyConfirmed }, 400);
+        ctx.response.status = 400;
+        ctx.response.body = { message: this.$t.alreadyConfirmed };
       }
 
       const code = parseInt(confirmDto.registrationCode);
@@ -154,18 +170,20 @@ export default class AccountController extends Controller {
         const token = await jwt.create(
           { alg: "HS512", typ: "JWT" },
           {
-            //exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+            exp: jwt.getNumericDate(60 * 60 * 48), // 48h
             account_id: account[0].id,
           },
           this.jwtKey,
         );
 
-        return ctx.json({ token });
+        ctx.response.body = { token };
       }
 
-      return ctx.json({ message: this.$t.wrongRegistrationCode }, 400);
+      ctx.response.status = 400;
+      ctx.response.body = { message: this.$t.wrongRegistrationCode }, 400;
     } catch (error) {
-      return ctx.json({ message: this.$t.baseError }, 500);
+      ctx.response.status = 500;
+      ctx.response.body = { message: this.$t.baseError }, 500;
     }
   }
 

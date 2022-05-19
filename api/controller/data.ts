@@ -1,4 +1,4 @@
-import { Application, Context, Model } from "../../deps.ts";
+import { Context, Model, Router } from "../../deps.ts";
 import { County } from "../model/county.ts";
 import { Wine } from "../model/wine.ts";
 import { Bottle } from "../model/bottle.ts";
@@ -19,14 +19,14 @@ import inAuthentication from "../util/authenticator.ts";
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
 
-  constructor(app: Application, repository: Repository, jwtKey: CryptoKey) {
-    super(app, repository);
+  constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
+    super(router, repository);
     this.jwtKey = jwtKey;
   }
 
   handleRequests(): void {
     for (const path of Object.keys(mapper)) {
-      this.app
+      this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))
         .get(path, (ctx: Context) => this.handleGet(ctx))
         .delete(path, (ctx: Context) => this.handleDelete(ctx));
@@ -35,17 +35,18 @@ export default class DataController extends Controller {
 
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      const objects = await ctx.body;
+      const objects = await ctx.request.body().value;
 
       if (!(objects instanceof Array)) {
-        return ctx.json({ message: this.$t.missingParameters }, 400);
+        ctx.response.status = 400;
+        ctx.response.body = { message: this.$t.missingParameters };
       }
 
-      objects.forEach((object) => object.accountId = accountId);
+      objects.forEach((object: any) => object.accountId = accountId);
 
       try {
         await this.repository.doInTransaction(async () => {
-          const dao = mapper[ctx.path];
+          const dao = mapper[this.getMapperEntry(ctx)];
 
           await dao
             .where("accountId", accountId)
@@ -54,10 +55,11 @@ export default class DataController extends Controller {
           await dao
             .create(objects);
         });
-        return ctx.json({ ok: true });
+        ctx.response.body = { ok: true };
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.baseError };
       }
     });
   }
@@ -65,17 +67,18 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[ctx.path];
+        const dao = mapper[this.getMapperEntry(ctx)];
         const objects = await dao
           .where("accountId", accountId)
           .get() as Array<Model>;
 
         objects.forEach((obj: any) => delete obj["accountId"]);
 
-        return ctx.json(objects);
+        ctx.response.body = objects;
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.baseError };
       }
     });
   }
@@ -83,17 +86,22 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[ctx.path];
-        const objects = await dao
+        const dao = mapper[this.getMapperEntry(ctx)];
+        await dao
           .where("accountId", accountId)
           .delete();
 
-        return ctx.json({ ok: true });
+        ctx.response.body = { ok: true };
       } catch (error) {
         console.log(error);
-        return ctx.json({ message: this.$t.baseError }, 500);
+        ctx.response.status = 500;
+        ctx.response.body = { message: this.$t.baseError };
       }
     });
+  }
+
+  private getMapperEntry(ctx: Context): string {
+    return ctx.request.url.pathname.split("/").pop() || "";
   }
 }
 

@@ -10,7 +10,7 @@ export default async function inAuthentication(
   const authorization = ctx.request.headers.get("Authorization");
 
   if (!authorization || authorization.split(" ").length !== 2) {
-    return ctx.json({ message: t.unauthorized, code: 401 });
+    ctx.response.body = { message: t.unauthorized, code: 401 });
   }
 
   const [_, token] = authorization.split(" ");
@@ -25,9 +25,9 @@ export default async function inAuthentication(
     if (accountId !== NaN) {
       return await block(accountId);
     } else {
-      return ctx.json({ message: t.unauthorized, code: 401 });
+      ctx.response.body = { message: t.unauthorized, code: 401 });
     }
   } catch (error) {
-    return ctx.json({ message: t.unauthorized, code: 401 });
+    ctx.response.body = { message: t.unauthorized, code: 401 });
   }
 }

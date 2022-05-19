@@ -1,14 +1,14 @@
-import { Application } from "../../deps.ts";
+import { Application, Router } from "../../deps.ts"
 import Repository from "../db/repository.ts";
 import { EnTranslations, Translatable } from "../i18n/translatable.ts";
 
 export default abstract class Controller {
-  app: Application;
+  router: Router;
   repository: Repository;
   $t: Translatable = new EnTranslations();
 
-  constructor(app: Application, repository: Repository) {
-    this.app = app;
+  constructor(router: Router, repository: Repository) {
+    this.router = router;
     this.repository = repository;
 
     this.handleRequests();
