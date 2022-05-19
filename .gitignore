@@ -1,3 +1,4 @@
 data/
 api/pw.txt
 .vscode
+prod-ca-2021.crt

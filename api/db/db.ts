@@ -27,11 +27,26 @@ export default class Database {
       );
     }
 
-    const connector = new PostgresConnector({
-      uri: this.DATABASE_URL,
-    });
-
+    const connector = new PostgresConnector({ uri: this.DATABASE_URL });
     this.client = new Client(connector);
+
+    // const cert = Deno.readTextFileSync(
+    //   new URL("../../prod-ca-2021.crt", import.meta.url),
+    // );
+
+    // this.client = new Client(connector);
+    // this.client["_connector"]["_client"] = new PostgresClient({
+    //   database: "postgres",
+    //   hostname: "db.pyjhfmsgwwdcdcmyiffc.supabase.co",
+    //   host_type: "tcp",
+    //   port: 5432,
+    //   user: "postgres",
+    //   password: "***REMOVED***",
+    //   tls: {
+    //     enabled: false,
+    //     //caCertificates: [cert]
+    //   },
+    // });
   }
 
   async init(): Promise<void> {
@@ -53,7 +68,7 @@ export default class Database {
       BottlePdf,
       WineImage,
     ]);
-    return this.client.sync({ drop: true });
+    return this.client.sync();
   }
 
   close(): Promise<void> {
