@@ -53,7 +53,10 @@ app.use((next) =>
 app.get("/", async (ctx: Context) => {
   return await ctx.html(`<h1>Cavity api</h1>`, 200);
 });
-app.start({ port: 5000 });
+app.get("", async (ctx: Context) => {
+  return await ctx.html(`<h1>Cavity api</h1>`, 200);
+});
+app.start({ port: 443 });
 
 // app.file("/", "public/index.html");
 
