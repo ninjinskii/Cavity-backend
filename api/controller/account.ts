@@ -1,6 +1,7 @@
 import { Application, bcrypt, Context, jwt, SmtpClient } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
+import inAuthentication from "../util/authenticator.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
@@ -22,8 +23,6 @@ export default class AccountController extends Controller {
   handleRequests(): void {
     this.app
       .post(this.default, async (ctx: Context) => this.postAccount(ctx))
-      .get(this.default, async (ctx: Context) => this.getAccounts(ctx))
-      .get(`${this.default}/:id`, async (ctx: Context) => this.getAccount(ctx))
       .delete(
         `${this.default}/:id`,
         async (ctx: Context) => this.deleteAccount(ctx),
@@ -51,8 +50,7 @@ export default class AccountController extends Controller {
         await Account
           .create(account);
 
-        console.log(account.registrationCode);
-        //await this.sendConfirmMail(account);
+        await this.sendConfirmMail(account.registrationCode, account.email);
         return ctx.json({ ok: true });
       } else {
         return ctx.json({ message: this.$t.accountAlreadyExists }, 400);
@@ -72,14 +70,14 @@ export default class AccountController extends Controller {
     }
   }
 
-  async getAccounts(ctx: Context): Promise<void> {
-    try {
-      const accounts = await Account.all();
-      return ctx.json(accounts);
-    } catch (error) {
-      return ctx.json({ message: this.$t.baseError }, 500);
-    }
-  }
+  // async getAccounts(ctx: Context): Promise<void> {
+  //   try {
+  //     const accounts = await Account.all();
+  //     return ctx.json(accounts);
+  //   } catch (error) {
+  //     return ctx.json({ message: this.$t.baseError }, 500);
+  //   }
+  // }
 
   async getAccount(ctx: Context): Promise<void> {
     const { id } = ctx.params;
@@ -105,21 +103,27 @@ export default class AccountController extends Controller {
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
-    const { id } = ctx.params;
-    const parsed = parseInt(id);
+    inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      const { id } = ctx.params;
+      const parsed = parseInt(id);
 
-    if (isNaN(parsed)) {
-      return ctx.json({ message: this.$t.baseError }, 400);
-    }
+      if (isNaN(parsed)) {
+        return ctx.json({ message: this.$t.baseError }, 400);
+      }
 
-    try {
-      await Account
-        .where("id", id)
-        .delete();
-      return ctx.json({ ok: true });
-    } catch (error) {
-      return ctx.json({ message: this.$t.baseError }, 500);
-    }
+      if (accountId !== parsed) {
+        return ctx.json({ message: this.$t.unauthorized }, 401);
+      }
+
+      try {
+        await Account
+          .where("id", id)
+          .delete();
+        return ctx.json({ ok: true });
+      } catch (error) {
+        return ctx.json({ message: this.$t.baseError }, 500);
+      }
+    });
   }
 
   async confirmAccount(ctx: Context): Promise<void> {
@@ -139,9 +143,6 @@ export default class AccountController extends Controller {
       }
 
       const code = parseInt(confirmDto.registrationCode);
-
-      console.log(code)
-      console.log(account[0].registrationCode)
 
       if (account[0].registrationCode === code) {
         await Account
@@ -174,12 +175,15 @@ export default class AccountController extends Controller {
     return bcrypt.hash(password);
   }
 
-  private async sendConfirmMail(account: Account) {
+  private async sendConfirmMail(
+    registrationCode: number,
+    email: string,
+  ): Promise<void> {
     const client = new SmtpClient();
     const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
 
-    if (!account.registrationCode) {
-      throw new Error(`No registration code for account ${account.email}`);
+    if (!registrationCode) {
+      throw new Error(`No registration code for account ${email}`);
     }
 
     await client.connectTLS({
@@ -191,9 +195,9 @@ export default class AccountController extends Controller {
 
     await client.send({
       from: MAIL,
-      to: account.email as string,
+      to: email as string,
       subject: this.$t.emailSubject,
-      content: this.$t.emailContent + account.registrationCode,
+      content: this.$t.emailContent + registrationCode,
     });
 
     await client.close();
