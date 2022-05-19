@@ -30,6 +30,7 @@ export default class AuthController extends Controller {
       // Not mentionning the fact that the account doesn't exists for security reasons
       ctx.response.status = 400;
       ctx.response.body = { message: this.$t.wrongCredentials };
+      return;
     }
 
     const isConfirmed = account[0].registrationCode === null;
@@ -41,11 +42,13 @@ export default class AuthController extends Controller {
     if (!isConfirmed) {
       ctx.response.status = 412;
       ctx.response.body = { message: this.$t.confirmAccount };
+      return;
     }
 
     if (!isAuthenticated) {
       ctx.response.status = 400;
       ctx.response.body = { message: this.$t.wrongCredentials };
+      return;
     }
 
     const token = await jwt.create(
