@@ -23,6 +23,7 @@ export default class AccountController extends Controller {
   handleRequests(): void {
     this.app
       .post(this.default, async (ctx: Context) => this.postAccount(ctx))
+      .get(this.default, async (ctx: Context) => this.getAccount(ctx))
       .delete(
         `${this.default}/:id`,
         async (ctx: Context) => this.deleteAccount(ctx),
@@ -80,26 +81,27 @@ export default class AccountController extends Controller {
   // }
 
   async getAccount(ctx: Context): Promise<void> {
-    const { id } = ctx.params;
-    const parsed = parseInt(id);
+    return ctx.json({ hello: "world" });
+    // const { id } = ctx.params;
+    // const parsed = parseInt(id);
 
-    if (isNaN(parsed)) {
-      return ctx.json({ message: this.$t.baseError }, 400);
-    }
+    // if (isNaN(parsed)) {
+    //   return ctx.json({ message: this.$t.baseError }, 400);
+    // }
 
-    try {
-      const account = await Account
-        .where("id", id)
-        .get() as Array<Account>;
+    // try {
+    //   const account = await Account
+    //     .where("id", id)
+    //     .get() as Array<Account>;
 
-      if (account.length) {
-        return ctx.json(account[0]);
-      } else {
-        return ctx.json({ message: this.$t.notFound }, 404);
-      }
-    } catch (error) {
-      return ctx.json({ message: this.$t.baseError }, 500);
-    }
+    //   if (account.length) {
+    //     return ctx.json(account[0]);
+    //   } else {
+    //     return ctx.json({ message: this.$t.notFound }, 404);
+    //   }
+    // } catch (error) {
+    //   return ctx.json({ message: this.$t.baseError }, 500);
+    // }
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
