@@ -52,19 +52,7 @@ app.use((next) =>
 );
 app.start({ port: 5000 });
 
-app.get("/", async (ctx: Context) => {
-  return await ctx.file("./public/index.html");
-});
-
-// app.post("/create-tables", async (ctx: Context) => {
-//   const { tables } = await ctx.body as CreateTablesBody;
-//   repository.createTables(...tables);
-// });
-
-// app.post("/delete-table", async (ctx: Context) => {
-//   const { table } = await ctx.body as DeleteTableBody;
-//   repository.dropTable(table);
-// });
+app.file("/", "public/index.html");
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
