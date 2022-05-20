@@ -199,7 +199,7 @@ export default class AccountController extends Controller {
       throw new Error(`No registration code for account ${email}`);
     }
 
-    await client.connectTLS({
+    await client.connect({
       hostname: "smtp.gmail.com",
       port: 465,
       username: MAIL,
