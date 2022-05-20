@@ -65,13 +65,14 @@ export default class AccountController extends Controller {
       await this.sendConfirmMail(account.registrationCode, account.email);
       success(ctx);
     } catch (error) {
+      console.log(error);
       try {
         // Mail sending has probably gone wrong. Remove the account.
         Account
           .where("email", email)
           .delete();
 
-        json(ctx, { message: this.$t.invalidEmail }, 500);
+        json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
