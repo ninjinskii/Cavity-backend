@@ -2,6 +2,7 @@ import { bcrypt, Context, jwt, Router } from "../../deps.ts";
 import { Account, AccountDTO } from "../model/account.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
+import { json, success } from "../util/api-response.ts";
 
 export default class AuthController extends Controller {
   private jwtKey: CryptoKey;
@@ -28,27 +29,24 @@ export default class AuthController extends Controller {
 
     if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons
-      ctx.response.status = 400;
-      ctx.response.body = { message: this.$t.wrongCredentials };
-      return;
+      return json(ctx, { message: this.$t.wrongCredentials }, 400);
     }
 
     const isConfirmed = account[0].registrationCode === null;
-    const isAuthenticated = await bcrypt.compare(
+
+    // Using compareSync() instead of compare() because compare() is causing a crash on Deno deploy
+    // See https://github.com/denoland/deploy_feedback/issues/171
+    const isAuthenticated = bcrypt.compareSync(
       password,
       account[0].password as string,
     );
 
     if (!isConfirmed) {
-      ctx.response.status = 412;
-      ctx.response.body = { message: this.$t.confirmAccount };
-      return;
+      return json(ctx, { message: this.$t.confirmAccount }, 412);
     }
 
     if (!isAuthenticated) {
-      ctx.response.status = 400;
-      ctx.response.body = { message: this.$t.wrongCredentials };
-      return;
+      return json(ctx, { message: this.$t.wrongCredentials }, 400);
     }
 
     const token = await jwt.create(
@@ -60,6 +58,6 @@ export default class AuthController extends Controller {
       this.jwtKey,
     );
 
-    ctx.response.body = { token, email };
+    json(ctx, { token, email });
   }
 }

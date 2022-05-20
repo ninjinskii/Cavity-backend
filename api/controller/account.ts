@@ -8,6 +8,7 @@ import {
 } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
+import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import Controller from "./controller.ts";
 
@@ -45,38 +46,34 @@ export default class AccountController extends Controller {
       email: string;
       password: string;
     };
-    const hash = await this.hashPassword(password);
+    const hash = this.hashPassword(password);
 
     try {
-      if (await this.isAccountUnique(email)) {
-        const account = {
-          email,
-          password: hash,
-          registrationCode: Account.generateRegistrationCode(),
-        };
-
-        await Account
-          .create(account);
-
-        await this.sendConfirmMail(account.registrationCode, account.email);
-        ctx.response.body = { ok: true };
-      } else {
-        ctx.response.status = 400;
-        ctx.response.body = { message: this.$t.accountAlreadyExists };
+      if (!await this.isAccountUnique(email)) {
+        return json(ctx, { message: this.$t.accountAlreadyExists }, 400);
       }
+
+      const account = {
+        email,
+        password: hash,
+        registrationCode: Account.generateRegistrationCode(),
+      };
+
+      await Account
+        .create(account);
+
+      await this.sendConfirmMail(account.registrationCode, account.email);
+      success(ctx);
     } catch (error) {
-      console.log(error);
       try {
         // Mail sending has probably gone wrong. Remove the account.
         Account
           .where("email", email)
           .delete();
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.invalidEmail };
+
+        json(ctx, { message: this.$t.invalidEmail }, 500);
       } catch (error) {
-        console.log(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.baseError };
+        json(ctx, { message: this.$t.baseError }, 500);
       }
     }
   }
@@ -96,9 +93,7 @@ export default class AccountController extends Controller {
     const parsed = parseInt(id);
 
     if (isNaN(parsed)) {
-      ctx.response.status = 400;
-      ctx.response.body = { message: this.$t.baseError };
-      return;
+      return json(ctx, { message: this.$t.baseError }, 400);
     }
 
     try {
@@ -106,15 +101,13 @@ export default class AccountController extends Controller {
         .where("id", id)
         .get() as Array<Account>;
 
-      if (account.length) {
-        ctx.response.body = account[0];
-      } else {
-        ctx.response.status = 404;
-        ctx.response.body = { message: this.$t.notFound };
+      if (!account.length) {
+        return json(ctx, { message: this.$t.notFound }, 404);
       }
+
+      json(ctx, account[0]);
     } catch (error) {
-      ctx.response.status = 500;
-      ctx.response.body = { message: this.$t.baseError };
+      json(ctx, { message: this.$t.baseError }, 500);
     }
   }
 
@@ -124,25 +117,21 @@ export default class AccountController extends Controller {
       const parsed = parseInt(id);
 
       if (isNaN(parsed)) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: this.$t.baseError };
-        return;
+        return json(ctx, { message: this.$t.baseError }, 400);
       }
 
       if (accountId !== parsed) {
-        ctx.response.status = 401;
-        ctx.response.body = { message: this.$t.unauthorized };
-        return;
+        return json(ctx, { message: this.$t.unauthorized }, 401);
       }
 
       try {
         await Account
           .where("id", id)
           .delete();
-        ctx.response.body = { ok: true };
+
+        success(ctx);
       } catch (error) {
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.baseError }, 500;
+        json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
@@ -156,51 +145,46 @@ export default class AccountController extends Controller {
         .get() as Array<Account>;
 
       if (account.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: this.$t.wrongAccount };
-        return;
+        return json(ctx, { message: this.$t.wrongAccount }, 400);
       }
 
       if (account[0].registrationCode === null) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: this.$t.alreadyConfirmed };
-        return;
+        return json(ctx, { message: this.$t.alreadyConfirmed }, 400);
       }
 
       const code = parseInt(confirmDto.registrationCode);
 
-      if (account[0].registrationCode === code) {
-        await Account
-          .where("email", confirmDto.email)
-          .update("registrationCode", null);
-
-        const token = await jwt.create(
-          { alg: "HS512", typ: "JWT" },
-          {
-            exp: jwt.getNumericDate(60 * 60 * 48), // 48h
-            account_id: account[0].id,
-          },
-          this.jwtKey,
-        );
-
-        ctx.response.body = { token };
-        return;
+      if (isNaN(code) || account[0].registrationCode !== code) {
+        return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
-      ctx.response.status = 400;
-      ctx.response.body = { message: this.$t.wrongRegistrationCode };
+      await Account
+        .where("email", confirmDto.email)
+        .update("registrationCode", null);
+
+      const token = await jwt.create(
+        { alg: "HS512", typ: "JWT" },
+        {
+          exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+          account_id: account[0].id,
+        },
+        this.jwtKey,
+      );
+
+      json(ctx, { token });
     } catch (error) {
-      ctx.response.status = 500;
-      ctx.response.body = { message: this.$t.baseError };
+      json(ctx, { message: this.$t.baseError }, 500);
     }
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
-    return (await Account.where("email", email).count()) == 0;
+    return (await Account.where("email", email).count()) === 0;
   }
 
-  private hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password);
+  private hashPassword(password: string): string {
+    // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
+    // See https://github.com/denoland/deploy_feedback/issues/171
+    return bcrypt.hashSync(password);
   }
 
   private async sendConfirmMail(

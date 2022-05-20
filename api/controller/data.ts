@@ -15,6 +15,7 @@ import { HistoryXFriend } from "../model/history-x-friend.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
+import { json, success } from "../util/api-response.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -38,9 +39,7 @@ export default class DataController extends Controller {
       const objects = await ctx.request.body().value;
 
       if (!(objects instanceof Array)) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: this.$t.missingParameters };
-        return;
+        return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
       objects.forEach((object: any) => object.accountId = accountId);
@@ -56,11 +55,11 @@ export default class DataController extends Controller {
           await dao
             .create(objects);
         });
-        ctx.response.body = { ok: true };
+
+        success(ctx);
       } catch (error) {
         console.log(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.baseError };
+        json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
@@ -75,11 +74,10 @@ export default class DataController extends Controller {
 
         objects.forEach((obj: any) => delete obj["accountId"]);
 
-        ctx.response.body = objects;
+        json(ctx, objects);
       } catch (error) {
         console.log(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.baseError };
+        json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
@@ -92,11 +90,10 @@ export default class DataController extends Controller {
           .where("accountId", accountId)
           .delete();
 
-        ctx.response.body = { ok: true };
+        success(ctx);
       } catch (error) {
         console.log(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: this.$t.baseError };
+        json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
