@@ -13,8 +13,6 @@ import { Review } from "../model/review.ts";
 import { Tasting } from "../model/tasting.ts";
 import { TastingAction } from "../model/tasting-action.ts";
 import { TastingXFriend } from "../model/tasting-x-friend.ts";
-import { WineImage } from "../model/wine-image.ts";
-import { BottlePdf } from "../model/bottle-pdf.ts";
 
 export default class Database {
   private client: Client;
@@ -64,8 +62,6 @@ export default class Database {
       TastingAction,
       HistoryXFriend,
       TastingXFriend,
-      BottlePdf,
-      WineImage,
     ]);
     return this.client.sync();
   }
