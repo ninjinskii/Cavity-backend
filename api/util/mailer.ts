@@ -29,7 +29,8 @@ export default async function sendConfirmationMail(
     body: JSON.stringify(mail),
   });
 
-  if (response.status >= 200 && response.status < 300) {
-    throw new Error(await response.json());
+  if (response.status < 200 && response.status >= 300) {
+    console.log(await response.json());
+    throw new Error("Unable to send confirmation mail");
   }
 }
