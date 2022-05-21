@@ -1,10 +1,4 @@
-import {
-  bcrypt,
-  Context,
-  getQuery,
-  jwt,
-  Router
-} from "../../deps.ts";
+import { bcrypt, Context, getQuery, jwt, Router } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
