@@ -24,15 +24,15 @@ export default class AccountController extends Controller {
 
   handleRequests(): void {
     this.router
-      .post(this.default, async (ctx: Context) => this.postAccount(ctx))
-      .get(this.default, async (ctx: Context) => this.getAccount(ctx))
+      .post(this.default, (ctx: Context) => this.postAccount(ctx))
+      .get(this.default, (ctx: Context) => this.getAccount(ctx))
       .delete(
         `${this.default}/:id`,
-        async (ctx: Context) => this.deleteAccount(ctx),
+        (ctx: Context) => this.deleteAccount(ctx),
       );
 
     this.router
-      .post(this.confirm, async (ctx: Context) => this.confirmAccount(ctx));
+      .post(this.confirm, (ctx: Context) => this.confirmAccount(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -84,28 +84,24 @@ export default class AccountController extends Controller {
   // }
 
   async getAccount(ctx: Context): Promise<void> {
-    inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         const account = await Account
           .where("id", accountId)
-          .get() as Array<Account>;
-  
-        if (!account.length) {
-          return json(ctx, { message: this.$t.notFound }, 404);
-        }
-  
-        let result: any = account[0]
+          .get();
+
+        let result: any = account;
         result.password = undefined;
 
-        json(ctx, result);
+        json(ctx, account);
       } catch (error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
-    })
+    });
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
-    inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const { id } = getQuery(ctx, { mergeParams: true });
       const parsed = parseInt(id);
 
