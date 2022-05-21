@@ -20,8 +20,7 @@ services:
       - 5000:5000
     environment:
       - DATABASE_URL=postgres://postgres:plout@db/cavity
-      - MAIL=cavity.app@gmail.com
-      - MAIL_PASSWORD=bruh
+      - SENDINBLUE_API_KEY=:D
     depends_on:
       - db
 

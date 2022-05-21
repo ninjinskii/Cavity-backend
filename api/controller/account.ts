@@ -1,15 +1,9 @@
-import {
-  bcrypt,
-  Context,
-  getQuery,
-  jwt,
-  Router,
-  SmtpClient,
-} from "../../deps.ts";
+import { bcrypt, Context, getQuery, jwt, Router } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
+import sendConfirmationMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
@@ -192,27 +186,6 @@ export default class AccountController extends Controller {
     registrationCode: number,
     email: string,
   ): Promise<void> {
-    const client = new SmtpClient();
-    const { MAIL, MAIL_PASSWORD } = Deno.env.toObject();
-
-    if (!registrationCode) {
-      throw new Error(`No registration code for account ${email}`);
-    }
-
-    await client.connect({
-      hostname: "smtp.gmail.com",
-      port: 465,
-      username: MAIL,
-      password: MAIL_PASSWORD,
-    });
-
-    await client.send({
-      from: MAIL,
-      to: email as string,
-      subject: this.$t.emailSubject,
-      content: this.$t.emailContent + registrationCode,
-    });
-
-    await client.close();
+    await sendConfirmationMail(email, registrationCode, this.$t);
   }
 }
