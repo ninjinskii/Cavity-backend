@@ -84,26 +84,24 @@ export default class AccountController extends Controller {
   // }
 
   async getAccount(ctx: Context): Promise<void> {
-    const { id } = getQuery(ctx, { mergeParams: true });
-    const parsed = parseInt(id);
+    inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      try {
+        const account = await Account
+          .where("id", accountId)
+          .get() as Array<Account>;
+  
+        if (!account.length) {
+          return json(ctx, { message: this.$t.notFound }, 404);
+        }
+  
+        let result: any = account[0]
+        result.password = undefined;
 
-    if (isNaN(parsed)) {
-      return json(ctx, { message: this.$t.baseError }, 400);
-    }
-
-    try {
-      const account = await Account
-        .where("id", id)
-        .get() as Array<Account>;
-
-      if (!account.length) {
-        return json(ctx, { message: this.$t.notFound }, 404);
+        json(ctx, result);
+      } catch (error) {
+        json(ctx, { message: this.$t.baseError }, 500);
       }
-
-      json(ctx, account[0]);
-    } catch (error) {
-      json(ctx, { message: this.$t.baseError }, 500);
-    }
+    })
   }
 
   async deleteAccount(ctx: Context): Promise<void> {

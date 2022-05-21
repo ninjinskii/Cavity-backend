@@ -1,5 +1,6 @@
 import { Context, jwt } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
+import { json } from "./api-response.ts";
 
 export default async function inAuthentication(
   ctx: Context,
@@ -10,9 +11,7 @@ export default async function inAuthentication(
   const authorization = ctx.request.headers.get("Authorization");
 
   if (!authorization || authorization.split(" ").length !== 2) {
-    ctx.response.status = 401;
-    ctx.response.body = { message: t.unauthorized };
-    return;
+    return json(ctx, { message: t.unauthorized }, 401);
   }
 
   const [_, token] = authorization!.split(" ");
@@ -27,11 +26,9 @@ export default async function inAuthentication(
     if (accountId !== NaN) {
       return await block(accountId);
     } else {
-      ctx.response.status = 401;
-      ctx.response.body = { message: t.unauthorized };
+      json(ctx, { message: t.unauthorized }, 401);
     }
   } catch (error) {
-    ctx.response.status = 401;
-    ctx.response.body = { message: t.unauthorized };
+    json(ctx, { message: t.unauthorized }, 401);
   }
 }
