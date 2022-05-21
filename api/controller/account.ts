@@ -88,12 +88,16 @@ export default class AccountController extends Controller {
       try {
         const account = await Account
           .where("id", accountId)
-          .get();
+          .get() as Array<Account>;
 
-        let result: any = account;
+        if (!account.length) {
+          return json(ctx, { message: this.$t.notFound }, 404);
+        }
+
+        let result: any = account[0];
         result.password = undefined;
 
-        json(ctx, account);
+        json(ctx, result);
       } catch (error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
