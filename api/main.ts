@@ -33,8 +33,19 @@ app.use((ctx, next) => {
   return next();
 });
 
-router.get("/", async (ctx: Context) => {
-  ctx.response.body = `<h1>Cavity api</h1>`;
+// router.get("/", async (ctx: Context) => {
+//   ctx.response.body = `<h1>Cavity api</h1>`;
+// });
+
+app.use(async (context, next) => {
+  try {
+    await context.send({
+      root: `${Deno.cwd()}/public`,
+      index: "index.html",
+    });
+  } catch {
+    next();
+  }
 });
 
 const accountController = new AccountController(router, repository, jwtKey);
