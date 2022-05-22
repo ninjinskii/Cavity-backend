@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300&family=Roboto&display=swap");
 
-html, body, .container {
+html,
+body,
+.container {
   height: 100%;
   overflow: hidden;
 }
@@ -14,17 +16,26 @@ body {
 h1 {
   font-family: "Josefin Sans", sans-serif;
   text-transform: uppercase;
-  letter-spacing: 18px;
+  letter-spacing: 16px;
   margin-bottom: 18px;
-  font-size: 4rem;
+  font-size: 3.5rem;
+  font-weight: 600;
   width: 100%;
   text-align: center;
-  margin-right: -14px;
+  direction: rtl;
+  text-indent: -14px;
 }
 
 img {
   display: block;
   margin: auto;
+}
+
+input {
+  position: relative;
+  width: 280px;
+  margin: 8px;
+  background-color: #522d5b;
 }
 
 .container {
@@ -37,6 +48,7 @@ img {
   -webkit-align-items: center;
   align-items: center;
   justify-content: center;
+  text-align: center;
   animation-name: slideInFromTop;
   animation-duration: 500ms;
 }
@@ -46,6 +58,7 @@ img {
     transform: translateY(-20%);
     opacity: 0.2;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -71,7 +84,7 @@ img {
   width: 24px;
   height: 24px;
   background-repeat: no-repeat;
-  scale: 450%;
+  transform: scale(4.5);
   margin: 0 auto;
 }
 
