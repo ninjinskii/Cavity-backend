@@ -1,16 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300&family=Roboto&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Forum&family=Josefin+Sans:wght@300&display=swap');
 
 html,
 body,
 .container {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 body {
   background-color: #121212;
   color: rgba(255, 255, 255, 0.86);
   margin: 0;
+  font-family: 'Forum', cursive;
+  font-size: 18px;
 }
 
 h1 {
@@ -33,9 +36,41 @@ img {
 
 input {
   position: relative;
+  padding: 4px 16px;
+  display: block;
   width: 280px;
-  margin: 8px;
-  background-color: #522d5b;
+  height: 32px;
+  margin: 32px 8px;
+  overflow: hidden;
+  background: #242424;
+  font-family: 'Forum', cursive;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.86);
+  border: none;
+  border-bottom: solid #363636 2px;
+  outline: none;
+}
+
+input:focus {
+  border-bottom: solid #a37e2c 2px;
+}
+
+button {
+  border: solid #a37e2c 1px;
+  font-family: 'Forum', cursive;
+  font-size: 18px;
+  color: #a37e2c;
+  padding: 4px 16px;
+  margin: 4px 4px;
+  width: 300px;
+  height: 32px;
+  background-color: #121212;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.top-notched {
+  clip-path: polygon(3% 0, 97% 0, 100% 25%, 100% 100%, 100% 100%, 0 100%, 0 100%, 0 25%);
 }
 
 .container {
