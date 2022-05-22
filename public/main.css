@@ -37,6 +37,19 @@ img {
   -webkit-align-items: center;
   align-items: center;
   justify-content: center;
+  animation-name: slideInFromTop;
+  animation-duration: 500ms;
+}
+
+@keyframes slideInFromTop {
+  0% {
+    transform: translateY(-20%);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes play180 {
@@ -52,6 +65,8 @@ img {
 .shapeshifter {
   animation-duration: 3000ms;
   animation-timing-function: steps(180);
+  animation-fill-mode: forwards;
+  animation-delay: 250ms;
   padding-top: 24px;
   width: 24px;
   height: 24px;
