@@ -1,6 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300&family=Roboto&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Forum&family=Josefin+Sans:wght@300&display=swap');
 
+:root {
+  --headings-font: "Josefin Sans", sans-serif;
+  --body-font: 'Forum', cursive;
+  --text-color: rgba(255, 255, 255, 0.86);
+}
+
 html,
 body,
 .container {
@@ -10,14 +16,18 @@ body,
 
 body {
   background-color: #121212;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--text-color);
   margin: 0;
-  font-family: 'Forum', cursive;
+  font-family: var(--body-font);
   font-size: 18px;
 }
 
+main {
+  width: 328px;
+}
+
 h1 {
-  font-family: "Josefin Sans", sans-serif;
+  font-family: var(--headings-font);
   text-transform: uppercase;
   letter-spacing: 16px;
   margin-bottom: 18px;
@@ -36,16 +46,15 @@ img {
 
 input {
   position: relative;
-  padding: 4px 16px;
   display: block;
-  width: 280px;
+  width: 85%;
   height: 32px;
-  margin: 32px 8px;
-  overflow: hidden;
+  margin: 16px auto;
+  padding: 4px 16px;
   background: #242424;
-  font-family: 'Forum', cursive;
+  font-family: var(--body-font);
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--text-color);
   border: none;
   border-bottom: solid #363636 2px;
   outline: none;
@@ -57,16 +66,16 @@ input:focus {
 
 button {
   border: solid #a37e2c 1px;
-  font-family: 'Forum', cursive;
+  font-family: var(--body-font);
   font-size: 18px;
   color: #a37e2c;
-  padding: 4px 16px;
-  margin: 4px 4px;
-  width: 300px;
+  width: calc(100% - 18px);
   height: 32px;
+  margin: 4px 9px;
   background-color: #121212;
   text-transform: uppercase;
   letter-spacing: 2px;
+  outline: none;
 }
 
 .top-notched {
