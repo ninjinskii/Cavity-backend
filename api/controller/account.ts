@@ -3,11 +3,12 @@ import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
-import sendConfirmationMail from "../util/mailer.ts";
+import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
+  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm
 
   constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
     super(router, repository);
@@ -22,6 +23,14 @@ export default class AccountController extends Controller {
     return "/account/confirm";
   }
 
+  get recover() {
+    return "/account/recover";
+  }
+
+  get changePassword() {
+    return "/account/resetpassword";
+  }
+
   handleRequests(): void {
     this.router
       .post(this.default, (ctx: Context) => this.postAccount(ctx))
@@ -32,7 +41,9 @@ export default class AccountController extends Controller {
       );
 
     this.router
-      .post(this.confirm, (ctx: Context) => this.confirmAccount(ctx));
+      .post(this.confirm, (ctx: Context) => this.confirmAccount(ctx))
+      .post(this.recover, (ctx: Context) => this.recoverAccount(ctx))
+      .post(this.changePassword, (ctx: Context) => this.resetPassword(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -40,7 +51,17 @@ export default class AccountController extends Controller {
       email: string;
       password: string;
     };
-    const hash = this.hashPassword(password);
+
+    const securePassword = (password as string).match(this.securePwdRegex);
+    const isSecure = securePassword?.length;
+
+    if (!isSecure) {
+      return json(ctx, { message: this.$t.weakPassword }, 400)
+    }
+
+    // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
+    // See https://github.com/denoland/deploy_feedback/issues/171
+    const hash = bcrypt.hashSync(password);
 
     try {
       if (!await this.isAccountUnique(email)) {
@@ -56,7 +77,10 @@ export default class AccountController extends Controller {
       await Account
         .create(account);
 
-      await this.sendConfirmMail(account.registrationCode, account.email);
+      const subject = this.$t.emailSubject;
+      const content = this.$t.emailContent + account.registrationCode;
+
+      await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
       console.log(error);
@@ -170,20 +194,74 @@ export default class AccountController extends Controller {
     }
   }
 
+  async recoverAccount(ctx: Context): Promise<void> {
+    try {
+      const { email } = await ctx.request.body().value;
+      const subject = this.$t.emailSubjectRecover;
+      const exists = await Account
+        .where("email", email)
+        .count();
+
+      if (!exists) {
+        // We dirty lier. We do not want a hacker know that this particular address does not exists
+        return success(ctx);
+      }
+
+      const token = await jwt.create(
+        { alg: "HS512", typ: "JWT" },
+        {
+          exp: jwt.getNumericDate(60 * 15), // 15min
+          reset_password: true,
+        },
+        this.jwtKey,
+      );
+      const content =
+        `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
+
+      await Account
+        .where("email", email)
+        .update("resetToken", token);
+
+      await sendMail(email, subject, content, true);
+
+      success(ctx);
+    } catch (error) {
+      json(ctx, { message: this.$t.baseError }, 500);
+    }
+  }
+
+  async resetPassword(ctx: Context) {
+    const { token, password } = await ctx.request.body().value;
+
+    try {
+      const { reset_password } = await jwt.verify(token, this.jwtKey) as {
+        reset_password: boolean;
+      };
+
+      if (!reset_password) {
+        return success(ctx);
+      }
+
+      const securePassword = (password as string).match(this.securePwdRegex);
+      const isSecure = securePassword?.length;
+
+      if (!isSecure) {
+        return json(ctx, { message: this.$t.weakPassword }, 400)
+      }
+
+      const hash = bcrypt.hashSync(password);
+
+      await Account
+        .where("resetToken", token)
+        .update({ password: hash, resetToken: null });
+
+      success(ctx);
+    } catch (error) {
+      json(ctx, { message: this.$t.unauthorized }, 401);
+    }
+  }
+
   private async isAccountUnique(email: string): Promise<boolean> {
     return (await Account.where("email", email).count()) === 0;
-  }
-
-  private hashPassword(password: string): string {
-    // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
-    // See https://github.com/denoland/deploy_feedback/issues/171
-    return bcrypt.hashSync(password);
-  }
-
-  private async sendConfirmMail(
-    registrationCode: number,
-    email: string,
-  ): Promise<void> {
-    await sendConfirmationMail(email, registrationCode, this.$t);
   }
 }

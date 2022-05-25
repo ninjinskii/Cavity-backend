@@ -76,6 +76,7 @@ button {
   text-transform: uppercase;
   letter-spacing: 2px;
   outline: none;
+  cursor: pointer;
 }
 
 .top-notched {
@@ -95,6 +96,17 @@ button {
   text-align: center;
   animation-name: slideInFromTop;
   animation-duration: 500ms;
+}
+
+#alert {
+  display: none;
+  animation-name: slideInFromTop;
+  animation-duration: 500ms;
+  text-align: center;
+  width: calc(100% -18px);
+  margin: 12px 9px;
+  padding: 8px;
+  border: solid #a37e2c 1px;
 }
 
 @keyframes slideInFromTop {

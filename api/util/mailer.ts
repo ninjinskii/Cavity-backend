@@ -1,9 +1,8 @@
-import { Translatable } from "../i18n/translatable.ts";
-
-export default async function sendConfirmationMail(
+export default async function sendMail(
   to: string,
-  registrationCode: number,
-  $t: Translatable,
+  subject: string,
+  content: string,
+  html: boolean = false,
 ) {
   const { SENDINBLUE_API_KEY } = Deno.env.toObject();
 
@@ -13,8 +12,9 @@ export default async function sendConfirmationMail(
       email: "cavity.app@gmail.com",
     },
     to: [{ email: to }],
-    subject: $t.emailSubject,
-    textContent: $t.emailContent + registrationCode,
+    subject: subject,
+    textContent: html ? undefined : content,
+    htmlContent: html ? content : undefined,
   };
 
   const headers = new Headers({

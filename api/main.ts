@@ -22,7 +22,7 @@ const jwtKey = await crypto.subtle.importKey(
   ["sign", "verify"],
 );
 
-app.use((ctx, next) => {
+app.use(async (ctx, next) => {
   const language = ctx.request.headers.get("Accept-Language");
   const $t = language?.includes("fr-")
     ? new FrTranslations()
@@ -30,23 +30,26 @@ app.use((ctx, next) => {
 
   manager.updateControllersTranslator($t);
 
-  return next();
-});
-
-// router.get("/", async (ctx: Context) => {
-//   ctx.response.body = `<h1>Cavity api</h1>`;
-// });
-
-app.use(async (context, next) => {
   try {
-    await context.send({
+    await ctx.send({
       root: `${Deno.cwd()}/public`,
       index: "index.html",
     });
-  } catch {
-    next();
+  } finally {
+    return next();
   }
 });
+
+// app.use(async (context, next) => {
+//   try {
+//     await context.send({
+//       root: `${Deno.cwd()}/public`,
+//       index: "index.html",
+//     });
+//   } catch {
+//     return next();
+//   }
+// });
 
 const accountController = new AccountController(router, repository, jwtKey);
 const authController = new AuthController(router, repository, jwtKey);

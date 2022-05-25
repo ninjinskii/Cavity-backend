@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="main.css">
     <title>Cavity | Récupération de mot de passe</title>
+    <script src="recover.js"></script>
   </head>
 
   <body>
@@ -13,9 +14,10 @@
         <div class="shapeshifter play" style="background-image: url(./assets/sprite_60fps.svg)"></div>
         <h1>Cavity</h1>
         <p>Saisissez votre nouveau mot de passe:</p>
-        <input type="password" class="top-notched" placeholder="Mot de passe" />
-        <input type="password" placeholder="Vérifier le mot de passe" />
-        <button class="bottom-notched">Valider</button>
+        <input id="pwd" type="password" class="top-notched" placeholder="Mot de passe" />
+        <input id="pwdconf" type="password" placeholder="Vérifier le mot de passe" />
+        <button id="submit" onclick="submit()">Valider</button>
+        <p id="alert"></p>
       </div>
     </main>
   </body>
