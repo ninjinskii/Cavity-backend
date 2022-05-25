@@ -15,6 +15,11 @@ export class Account extends Model {
       as: "registration_code",
       allowNull: true,
     },
+    resetToken: {
+      type: DataTypes.STRING,
+      as: "reset_token",
+      allowNull: true,
+    },
   };
 
   static generateRegistrationCode(): number {

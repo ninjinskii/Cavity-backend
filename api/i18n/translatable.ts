@@ -7,12 +7,15 @@ export interface Translatable {
   wrongRegistrationCode: string;
   alreadyConfirmed: string;
   emailSubject: string;
+  emailSubjectRecover: string;
   emailContent: string;
+  emailContentRecover: string;
   wrongCredentials: string;
   unauthorized: string;
   missingParameters: string;
   confirmAccount: string;
   invalidEmail: string;
+  weakPassword: string;
   // accountResgistrationFailed: string
 }
 
@@ -25,12 +28,15 @@ export class FrTranslations implements Translatable {
   wrongRegistrationCode = "Le code n'est pas bon.";
   alreadyConfirmed = "Ce compte est déjà confirmé.";
   emailSubject = "Validation de votre compte Cavity";
+  emailSubjectRecover = "Récupération du mot de passe de votre compte Cavity";
   emailContent = "Voici le code de confirmation de votre compte: ";
+  emailContentRecover = `Cliquez sur ce lien pour réinitialiser votre mot de passe: `;
   wrongCredentials = "Identifiants erronés.";
   unauthorized = "Session expirée.";
   missingParameters = "Paramètres manquants.";
   confirmAccount = "Confirmez votre compte avant de vous connecter.";
   invalidEmail = "Email non valide."
+  weakPassword = "Mot de passe trop faible."
 }
 
 export class EnTranslations implements Translatable {
@@ -42,10 +48,13 @@ export class EnTranslations implements Translatable {
   wrongRegistrationCode = "Wrong code.";
   alreadyConfirmed = "Account already confirmed.";
   emailSubject = "Validate your Cavity account";
+  emailSubjectRecover = "Password recover for your Cavity account";
   emailContent = "Here is your account confirmation code: ";
+  emailContentRecover = `Follow this link to reset your password: `;
   wrongCredentials = "Wrong credentials.";
   unauthorized = "Session expired.";
   missingParameters = "Missing parameters.";
   confirmAccount = "Confirm your account creation before logging in.";
   invalidEmail = "Invalid email."
+  weakPassword = "Password is too weak.";
 }
