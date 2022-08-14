@@ -2,7 +2,7 @@ import { bcrypt, Context, jwt, Router } from "../../deps.ts";
 import { Account, AccountDTO } from "../model/account.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
-import { json, success } from "../util/api-response.ts";
+import { json } from "../util/api-response.ts";
 
 export default class AuthController extends Controller {
   private jwtKey: CryptoKey;
@@ -16,8 +16,8 @@ export default class AuthController extends Controller {
     return "/auth/login";
   }
 
-  async handleRequests(): Promise<void> {
-    this.router.post(this.default, async (ctx: Context) => this.login(ctx));
+  handleRequests(): void {
+    this.router.post(this.default, (ctx: Context) => this.login(ctx));
   }
 
   async login(ctx: Context): Promise<void> {
