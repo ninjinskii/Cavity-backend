@@ -13,7 +13,7 @@ function submit() {
   if (checkPassword()) {
     const password = pwdEl.value;
     const headers = new Headers({
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
     });
 
@@ -22,7 +22,7 @@ function submit() {
     const token = params.get("token");
     const body = { token, password };
 
-    fetch("http://localhost:5000/account/resetpassword", {
+    fetch(`${window.location.origin}/account/resetpassword`, {
       method: "POST",
       body: JSON.stringify(body),
       headers,
@@ -30,6 +30,16 @@ function submit() {
       .then((response) => {
         if (!response.ok) {
           alert.style.display = "block";
+          response.body
+            .getReader()
+            .read()
+            .then((bytes) => {
+              const message = JSON.parse(
+                String.fromCharCode(...bytes.value)
+              ).message;
+
+              alert.innerHTML = decodeURIComponent(escape(message));
+            });
         } else {
           alert.style.display = "block";
           alert.innerHTML = "Mot de passe mis à jour.";
