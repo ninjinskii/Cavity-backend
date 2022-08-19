@@ -6,8 +6,9 @@ CREATE TABLE IF NOT EXISTS wine (
   naming VARCHAR NOT NULL,
   color VARCHAR NOT NULL,
   cuvee VARCHAR NOT NULL,
-  is_organic INT NOT NULL,
+  is_oganic INT NOT NULL,
   img_path VARCHAR NOT NULL,
   county_id INT NOT NULL,
+  hidden INT NOT NULL,
   UNIQUE (account_id, id)
 );
