@@ -6,10 +6,11 @@ WORKDIR /app
 
 USER deno
 
+COPY deps.ts .
+RUN deno cache ./api/deps.ts
+
 ADD . .
 
-RUN ls api
-
-RUN deno cache ./api/main.ts
+RUN deno cache main.ts
 
 CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--watch", "./api/main.ts", "./api/main.ts"]
