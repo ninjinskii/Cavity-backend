@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS bottle (
   pdf_path VARCHAR NOT NULL,
   consumed INT NOT NULL,
   tasting_id INT,
-  is_selected BOOLEAN, NOT NULL,
+  is_selected BOOLEAN NOT NULL,
   UNIQUE (account_id, id)
 );
