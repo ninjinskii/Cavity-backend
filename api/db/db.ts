@@ -41,16 +41,16 @@ export default class Database {
     return this.client.end();
   }
 
-  do<T>(query: string): Promise<QueryObjectResult<T>> {
-    return this.client.queryObject(query);
+  do<T>(query: string, t?: Transaction): Promise<QueryObjectResult<T>> {
+    return (t || this.client).queryObject(query);
   }
 
-  async doInTransaction(block: () => Promise<void>): Promise<void> {
+  async doInTransaction(block: (t: Transaction) => Promise<void>): Promise<void> {
     this.transaction = this.client.createTransaction("transaction");
     await this.transaction.begin();
 
     try {
-      await block();
+      await block(this.transaction);
       await this.transaction.commit();
     } finally {
       this.transaction = null;

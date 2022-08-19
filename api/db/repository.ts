@@ -1,4 +1,5 @@
-import { logger, QueryObjectResult } from "../../deps.ts";
+import { pathMatch } from "https://deno.land/x/oak@v10.6.0/deps.ts";
+import { logger, QueryObjectResult, Transaction } from "../../deps.ts";
 import Database from "./db.ts";
 
 let instance: Repository | null = null;
@@ -21,11 +22,11 @@ export default class Repository {
     }
   }
 
-  do<T>(query: string): Promise<QueryObjectResult<T>> {
-    return this.db.do(query);
+  do<T>(query: string, t?: Transaction): Promise<QueryObjectResult<T>> {
+    return this.db.do(this.patchQuery(query), t);
   }
 
-  doInTransaction(block: () => Promise<void>): Promise<void> {
+  doInTransaction(block: (t: Transaction) => Promise<void>): Promise<void> {
     return this.db.doInTransaction(block);
   }
 
@@ -33,5 +34,17 @@ export default class Repository {
     new Repository();
     await instance?.init();
     return instance!;
+  }
+
+  // The query builder is giving invalid syntax for postgres. We need to fix it
+  // by doing some magical moves
+  private patchQuery(query: string): string {
+    let step = query
+      .replaceAll('"', "'") // These quotes are not valid for fields
+      .replaceAll("`", '"') // These quote are not valid for values
+      .replaceAll(") (", "),("); // Missing comma between INSERT VALUSE parentheses
+    step += ";";
+
+    return step;
   }
 }
