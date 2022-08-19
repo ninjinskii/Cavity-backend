@@ -105,6 +105,35 @@ Deno.test("Update a record", async () => {
   assertEquals(response.rows[0].test_int, 1);
 });
 
+Deno.test("Partial update", async () => {
+  await repository.do(createTableQuery);
+
+  const newInt = { test_int: 100 };
+  const query = new Query()
+    .table("test")
+    .insert({ test_string: "Hi mom!", test_int: 1 })
+    .build();
+
+  const query2 = new Query()
+    .table("test")
+    .update(newInt)
+    .where(Where.field("test_string").eq("Hi mom!"))
+    .build();
+
+  const query3 = new Query()
+    .table("test")
+    .select("*")
+    .where(Where.field("test_int").eq(100))
+    .build();
+
+  await repository.do(query);
+  await repository.do(query2);
+  const response = await repository.do<TestObject>(query3);
+
+  assertEquals(response.rows[0].test_int, 100);
+  assertEquals(response.rows[0].test_string, "Hi mom!");
+})
+
 Deno.test("Use a transaction", async () => {
   await repository.do(createTableQuery);
 
