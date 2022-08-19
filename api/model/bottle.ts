@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class Bottle extends Model {
-  static table = "bottle";
-  static fields = {
+export class Bottle implements Model {
+  table = "bottle";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -61,7 +61,7 @@ export class Bottle extends Model {
     },
   };
 
-  static defaults = {
+  defaults = {
     pdfPath: "",
     isSelected: 0,
   };

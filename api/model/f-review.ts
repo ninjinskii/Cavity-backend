@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { Model, DataTypes } from "./model.ts";
 
-export class FReview extends Model {
-  static table = "f_review";
-  static fields = {
+export class FReview implements Model {
+  table = "f_review";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,

@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class Friend extends Model {
-  static table = "friend";
-  static fields = {
+export class Friend implements Model {
+  table = "friend";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -20,7 +20,7 @@ export class Friend extends Model {
     },
   };
 
-  static defaults = {
+  defaults = {
     imgPath: "",
   };
 }

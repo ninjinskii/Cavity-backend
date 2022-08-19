@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class Wine extends Model {
-  static table = "wine";
-  static fields = {
+export class Wine implements Model {
+  table = "wine";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -32,7 +32,7 @@ export class Wine extends Model {
     },
   };
 
-  static defaults = {
+  defaults = {
     imgPath: "",
   };
 }

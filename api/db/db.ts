@@ -1,21 +1,8 @@
-import { Bottle } from "../model/bottle.ts";
-import { Account } from "../model/account.ts";
-import { Client, PostgresClient, PostgresConnector } from "../../deps.ts";
-import { County } from "../model/county.ts";
-import { Wine } from "../model/wine.ts";
-import { FReview } from "../model/f-review.ts";
-import { Friend } from "../model/friend.ts";
-import { Grape } from "../model/grape.ts";
-import { HistoryEntry } from "../model/history-entry.ts";
-import { HistoryXFriend } from "../model/history-x-friend.ts";
-import { QGrape } from "../model/q-grape.ts";
-import { Review } from "../model/review.ts";
-import { Tasting } from "../model/tasting.ts";
-import { TastingAction } from "../model/tasting-action.ts";
-import { TastingXFriend } from "../model/tasting-x-friend.ts";
+import { PostgresClient, SQLBuilder, Transaction } from "../../deps.ts";
 
 export default class Database {
-  private client: Client;
+  private client: PostgresClient;
+  private transaction: Transaction | null = null;
   private DATABASE_URL = Deno.env.get("DATABASE_URL");
 
   constructor() {
@@ -25,8 +12,7 @@ export default class Database {
       );
     }
 
-    const connector = new PostgresConnector({ uri: this.DATABASE_URL });
-    this.client = new Client(connector);
+    this.client = new PostgresClient(this.DATABASE_URL);
 
     // const cert = Deno.readTextFileSync(
     //   new URL("../../prod-ca-2021.crt", import.meta.url),
@@ -47,44 +33,55 @@ export default class Database {
   }
 
   async init(): Promise<void> {
-    await this.client.link([
-      Account,
-      County,
-      Wine,
-      Bottle,
-      Friend,
-      Grape,
-      Review,
-      QGrape,
-      FReview,
-      HistoryEntry,
-      Tasting,
-      TastingAction,
-      HistoryXFriend,
-      TastingXFriend,
-    ]);
-    return this.client.sync();
+    await this.client.connect();
+    await this.createTables();
   }
 
   close(): Promise<void> {
-    return this.client.close();
+    return this.client.end();
   }
 
   async doInTransaction(block: () => Promise<void>): Promise<void> {
-    const client = this.client["_connector"]["_client"] as PostgresClient;
-    const transaction = client.createTransaction("transaction");
+    this.transaction = this.client.createTransaction("transaction");
+    await this.transaction.begin();
 
-    this.client["_connector"]["_client"] = transaction;
-
-    await transaction.begin();
     try {
       await block();
-      await transaction.commit();
+      await this.transaction.commit();
     } finally {
-      this.client["_connector"]["_client"] = client;
+      this.transaction = null;
     }
+  }
 
-    // Waiting for a fix of DenoDB
-    //return this.client.transaction(block) as Promise<void>;
+  private async createTables(): Promise<void> {
+    const checkTableQuery =
+      "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = $1);";
+    const tables = [
+      "account",
+      "county",
+      "wine",
+      "bottle",
+      "friend",
+      "grape",
+      "review",
+      "q_grape",
+      "f_review",
+      "history_entry",
+      "tasting",
+      "tasting_action",
+      "history_x_friend",
+      "tasting_x_friend",
+    ];
+
+    for (const table of tables) {
+      const result = await this.client.queryObject(checkTableQuery, [table]);
+      
+      if (!result.rows[0]) {
+        await this.createTable(table)
+      }
+    }
+  }
+
+  private async createTable(table: string): Promise<void> {
   }
 }

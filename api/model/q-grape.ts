@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class QGrape extends Model {
-  static table = "q_grape";
-  static fields = {
+export class QGrape implements Model {
+  table = "q_grape";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,

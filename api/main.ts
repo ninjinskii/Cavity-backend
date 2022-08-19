@@ -36,6 +36,8 @@ app.use(async (ctx, next) => {
       index: "index.html",
     });
   } finally {
+    // May be causing an error in Deno deploy, not sure.
+    // deno-lint-ignore no-unsafe-finally
     return next();
   }
 });

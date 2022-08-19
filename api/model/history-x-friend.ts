@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class HistoryXFriend extends Model {
-  static table = "history_x_friend";
-  static fields = {
+export class HistoryXFriend implements Model {
+  table = "history_x_friend";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,

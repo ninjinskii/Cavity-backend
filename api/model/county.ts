@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../deps.ts";
+import { DataTypes, Model } from "./model.ts";
 
-export class County extends Model {
-  static table = "county";
-  static fields = {
+export class County implements Model {
+  table = "county";
+  fields = {
     _id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
