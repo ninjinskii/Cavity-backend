@@ -23,12 +23,12 @@ export default async function inAuthentication(
 
     const accountId = parseInt(account_id);
 
-    if (accountId !== NaN) {
+    if (!isNaN(accountId)) {
       return await block(accountId);
     } else {
       json(ctx, { message: t.unauthorized }, 401);
     }
-  } catch (error) {
+  } catch (_error) {
     json(ctx, { message: t.unauthorized }, 401);
   }
 }

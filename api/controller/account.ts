@@ -1,4 +1,4 @@
-import { bcrypt, Context, getQuery, jwt, Router } from "../../deps.ts";
+import { bcrypt, Context, getQuery, jwt, logger, Router } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
@@ -83,7 +83,7 @@ export default class AccountController extends Controller {
       await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
-      console.log(error);
+      logger.error(error)
       try {
         // Mail sending has probably gone wrong. Remove the account.
         Account
@@ -91,7 +91,7 @@ export default class AccountController extends Controller {
           .delete();
 
         json(ctx, { message: this.$t.invalidEmail }, 400);
-      } catch (error) {
+      } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
     }
@@ -118,11 +118,11 @@ export default class AccountController extends Controller {
           return json(ctx, { message: this.$t.notFound }, 404);
         }
 
-        let result: any = account[0];
+        const result: any = account[0];
         result.password = undefined;
 
         json(ctx, result);
-      } catch (error) {
+      } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -147,7 +147,7 @@ export default class AccountController extends Controller {
           .delete();
 
         success(ctx);
-      } catch (error) {
+      } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -189,7 +189,7 @@ export default class AccountController extends Controller {
       );
 
       json(ctx, { token });
-    } catch (error) {
+    } catch (_error) {
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -225,7 +225,7 @@ export default class AccountController extends Controller {
       await sendMail(email, subject, content, true);
 
       success(ctx);
-    } catch (error) {
+    } catch (_error) {
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -256,7 +256,7 @@ export default class AccountController extends Controller {
         .update({ password: hash, resetToken: null });
 
       success(ctx);
-    } catch (error) {
+    } catch (_error) {
       json(ctx, { message: this.$t.unauthorized }, 401);
     }
   }

@@ -1,4 +1,4 @@
-import { Application, Router } from "../../deps.ts"
+import { Router } from "../../deps.ts"
 import Repository from "../db/repository.ts";
 import { EnTranslations, Translatable } from "../i18n/translatable.ts";
 

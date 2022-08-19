@@ -1,3 +1,4 @@
+import { logger } from "../../deps.ts";
 import Database from "./db.ts";
 
 let instance: Repository | null = null;
@@ -15,8 +16,8 @@ export default class Repository {
   private async init() {
     try {
       await this.db.init();
-    } catch (error) {
-      console.error("Cannot connect to database");
+    } catch (_error) {
+      logger.error("Cannot connect to database");
     }
   }
 

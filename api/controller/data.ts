@@ -1,4 +1,4 @@
-import { Context, Model, Router } from "../../deps.ts";
+import { Context, logger, Model, Router } from "../../deps.ts";
 import { County } from "../model/county.ts";
 import { Wine } from "../model/wine.ts";
 import { Bottle } from "../model/bottle.ts";
@@ -42,7 +42,7 @@ export default class DataController extends Controller {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
-      objects.forEach((object: any) => object.accountId = accountId);
+      objects.forEach((object) => object.accountId = accountId);
 
       try {
         await this.repository.doInTransaction(async () => {
@@ -58,7 +58,7 @@ export default class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -72,11 +72,11 @@ export default class DataController extends Controller {
           .where("accountId", accountId)
           .get() as Array<Model>;
 
-        objects.forEach((obj: any) => delete obj["accountId"]);
+        objects.forEach((obj) => delete obj["accountId"]);
 
         json(ctx, objects);
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -92,7 +92,7 @@ export default class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });

@@ -6,6 +6,8 @@ function checkPassword() {
   return pwd === pwdConf;
 }
 
+// This is used by the html page
+// deno-lint-ignore no-unused-vars
 function submit() {
   const pwdEl = document.getElementById("pwd");
   const alert = document.getElementById("alert");

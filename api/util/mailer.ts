@@ -1,8 +1,10 @@
+import { logger } from "../../deps.ts";
+
 export default async function sendMail(
   to: string,
   subject: string,
   content: string,
-  html: boolean = false,
+  html = false,
 ) {
   const { SENDINBLUE_API_KEY } = Deno.env.toObject();
 
@@ -30,7 +32,7 @@ export default async function sendMail(
   });
 
   if (response.status < 200 && response.status >= 300) {
-    console.log(await response.json());
+    logger.error(await response.json());
     throw new Error("Unable to send the mail");
   }
 }

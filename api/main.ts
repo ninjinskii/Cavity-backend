@@ -1,4 +1,4 @@
-import { Application, Context, Router } from "../deps.ts";
+import { Application, Router } from "../deps.ts";
 import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -36,7 +36,7 @@ app.use(async (ctx, next) => {
       index: "index.html",
     });
   } finally {
-    return next();
+    next(); // Watch for it
   }
 });
 

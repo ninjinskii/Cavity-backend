@@ -71,11 +71,9 @@ export default class Database {
   }
 
   async doInTransaction(block: () => Promise<void>): Promise<void> {
-    // deno-lint-ignore no-explicit-any
     const client = this.client["_connector"]["_client"] as PostgresClient;
     const transaction = client.createTransaction("transaction");
 
-    // deno-lint-ignore no-explicit-any
     this.client["_connector"]["_client"] = transaction;
 
     await transaction.begin();
@@ -83,7 +81,6 @@ export default class Database {
       await block();
       await transaction.commit();
     } finally {
-      // deno-lint-ignore no-explicit-any
       this.client["_connector"]["_client"] = client;
     }
 
