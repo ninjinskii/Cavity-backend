@@ -36,7 +36,7 @@ app.use(async (ctx, next) => {
       index: "index.html",
     });
   } finally {
-    next(); // Watch for it
+    return next();
   }
 });
 
