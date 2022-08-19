@@ -1,32 +1,15 @@
-import { Model, DataTypes } from "./model.ts";
+export interface Account {
+  id?: number;
+  email: string;
+  password: string;
+  registrationCode: number | null;
+  resetToken?: string;
+}
 
-export class Account implements Model {
-  table = "account";
-  fields = {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    email: DataTypes.STRING,
-    password: DataTypes.STRING,
-    registrationCode: {
-      type: DataTypes.INTEGER,
-      as: "registration_code",
-      allowNull: true,
-    },
-    resetToken: {
-      type: DataTypes.STRING,
-      as: "reset_token",
-      allowNull: true,
-    },
-  };
-
-  static generateRegistrationCode(): number {
-    const max = 999999;
-    const min = 100000;
-    return Math.floor(Math.random() * (max - min + 1) + min);
-  }
+export function generateRegistrationCode(): number {
+  const max = 999999;
+  const min = 100000;
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 export interface AccountDTO {
