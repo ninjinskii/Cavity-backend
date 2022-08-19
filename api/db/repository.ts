@@ -1,4 +1,4 @@
-import { logger } from "../../deps.ts";
+import { logger, QueryObjectResult } from "../../deps.ts";
 import Database from "./db.ts";
 
 let instance: Repository | null = null;
@@ -19,6 +19,10 @@ export default class Repository {
     } catch (_error) {
       logger.error("Cannot connect to database");
     }
+  }
+
+  do<T>(query: string): Promise<QueryObjectResult<T>> {
+    return this.db.do(query);
   }
 
   doInTransaction(block: () => Promise<void>): Promise<void> {

@@ -1,4 +1,4 @@
-import { logger, PostgresClient, Transaction } from "../../deps.ts";
+import { logger, PostgresClient, QueryObjectResult, Transaction } from "../../deps.ts";
 
 export default class Database {
   private client: PostgresClient;
@@ -39,6 +39,10 @@ export default class Database {
 
   close(): Promise<void> {
     return this.client.end();
+  }
+
+  do<T>(query: string): Promise<QueryObjectResult<T>> {
+    return this.client.queryObject(query);
   }
 
   async doInTransaction(block: () => Promise<void>): Promise<void> {
