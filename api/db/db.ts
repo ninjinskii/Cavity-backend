@@ -1,4 +1,4 @@
-import { PostgresClient, SQLBuilder, Transaction } from "../../deps.ts";
+import { logger, PostgresClient, Transaction } from "../../deps.ts";
 
 export default class Database {
   private client: PostgresClient;
@@ -54,34 +54,15 @@ export default class Database {
   }
 
   private async createTables(): Promise<void> {
-    const checkTableQuery =
-      "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = $1);";
-    const tables = [
-      "account",
-      "county",
-      "wine",
-      "bottle",
-      "friend",
-      "grape",
-      "review",
-      "q_grape",
-      "f_review",
-      "history_entry",
-      "tasting",
-      "tasting_action",
-      "history_x_friend",
-      "tasting_x_friend",
-    ];
-
-    for (const table of tables) {
-      const result = await this.client.queryObject(checkTableQuery, [table]);
-      
-      if (!result.rows[0]) {
-        await this.createTable(table)
+    for await (const entry of Deno.readDir("./api/db/sql")) {
+      if (entry.isFile) {
+        try {
+          const query = await Deno.readTextFile(`./api/db/sql/${entry.name}`);
+          await this.client.queryObject(query);
+        } catch (error) {
+          logger.error(error);
+        }
       }
     }
-  }
-
-  private async createTable(table: string): Promise<void> {
   }
 }
