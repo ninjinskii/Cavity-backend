@@ -1,4 +1,3 @@
-import { pathMatch } from "https://deno.land/x/oak@v10.6.0/deps.ts";
 import { logger, QueryObjectResult, Transaction } from "../../deps.ts";
 import Database from "./db.ts";
 
@@ -42,7 +41,7 @@ export default class Repository {
     let step = query
       .replaceAll('"', "'") // These quotes are not valid for fields
       .replaceAll("`", '"') // These quote are not valid for values
-      .replaceAll(") (", "),("); // Missing comma between INSERT VALUSE parentheses
+      .replaceAll(") (", "),("); // Missing comma between INSERT VALUES parentheses
     step += ";";
 
     return step;
