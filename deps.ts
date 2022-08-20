@@ -7,4 +7,4 @@ export { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/qu
 export * as jwt from "https://deno.land/x/djwt@v2.7/mod.ts";
 export * as bcrypt from "https://deno.land/x/bcrypt@v0.4.0/mod.ts";
 export * as logger from "https://deno.land/std@0.152.0/log/mod.ts";
-export { assertEquals } from "https://deno.land/std@0.137.0/testing/asserts.ts";
+export { assertEquals, assert } from "https://deno.land/std@0.137.0/testing/asserts.ts";

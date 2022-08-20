@@ -13,7 +13,7 @@ const router = new Router();
 const repository: Repository = await Repository.getInstance();
 
 const encoder = new TextEncoder();
-const keyBuffer = encoder.encode("mySuperSecret");
+const keyBuffer = encoder.encode(Deno.env.get("TOKEN_SECRET"));
 const jwtKey = await crypto.subtle.importKey(
   "raw",
   keyBuffer,
