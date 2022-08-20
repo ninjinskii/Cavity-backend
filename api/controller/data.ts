@@ -1,21 +1,9 @@
-import { Context, logger, Model, Router } from "../../deps.ts";
-import { County } from "../model/county.ts";
-import { Wine } from "../model/wine.ts";
-import { Bottle } from "../model/bottle.ts";
-import { HistoryEntry } from "../model/history-entry.ts";
-import { Friend } from "../model/friend.ts";
-import { Grape } from "../model/grape.ts";
-import { Review } from "../model/review.ts";
-import { FReview } from "../model/f-review.ts";
-import { QGrape } from "../model/q-grape.ts";
-import { Tasting } from "../model/tasting.ts";
-import { TastingAction } from "../model/tasting-action.ts";
-import { TastingXFriend } from "../model/tasting-x-friend.ts";
-import { HistoryXFriend } from "../model/history-x-friend.ts";
+import { Context, logger, Query, Router, Where } from "../../deps.ts";
 import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
+import { pascalToSnake } from "../util/string-util.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
@@ -26,7 +14,7 @@ export default class DataController extends Controller {
   }
 
   handleRequests(): void {
-    for (const path of Object.keys(mapper)) {
+    for (const path of routes) {
       this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))
         .get(path, (ctx: Context) => this.handleGet(ctx))
@@ -42,18 +30,24 @@ export default class DataController extends Controller {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
-      objects.forEach((object) => object.accountId = accountId);
+      objects.forEach((object) => object.account_id = accountId);
 
       try {
-        await this.repository.doInTransaction(async () => {
-          const dao = mapper[this.getMapperEntry(ctx)];
+        await this.repository.doInTransaction(async (t) => {
+          const table = this.getTargetDbTableName(ctx);
 
-          await dao
-            .where("accountId", accountId)
-            .delete();
+          const query = new Query()
+            .delete(table)
+            .where(Where.field("account_id").eq(accountId))
+            .build();
 
-          await dao
-            .create(objects);
+          const query2 = new Query()
+            .table(table)
+            .insert(objects.map((o) => pascalToSnake(o as never)))
+            .build();
+
+          await this.repository.do(query, t);
+          await this.repository.do(query2, t);
         });
 
         success(ctx);
@@ -67,12 +61,18 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
-        const objects = await dao
-          .where("accountId", accountId)
-          .get() as Array<Model>;
+        const table = this.getTargetDbTableName(ctx);
 
-        objects.forEach((obj) => delete obj["accountId"]);
+        const query = new Query()
+          .table(table)
+          .select("*")
+          .where(Where.field("account_id").eq(accountId))
+          .build();
+
+        const result = await this.repository.do(query);
+        const objects = result.rows as Array<never>;
+
+        objects.forEach((obj) => delete obj["account_id"]);
 
         json(ctx, objects);
       } catch (error) {
@@ -85,10 +85,14 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
-        await dao
-          .where("accountId", accountId)
-          .delete();
+        const table = this.getTargetDbTableName(ctx);
+
+        const query = new Query()
+          .delete(table)
+          .where(Where.field("account_id").eq(accountId))
+          .build();
+
+        await this.repository.do(query);
 
         success(ctx);
       } catch (error) {
@@ -98,28 +102,24 @@ export default class DataController extends Controller {
     });
   }
 
-  private getMapperEntry(ctx: Context): string {
-    return "/" + ctx.request.url.pathname.split("/").pop() || "";
+  private getTargetDbTableName(ctx: Context): string {
+    return ctx.request.url.pathname.split("/").pop() || "";
   }
 }
 
-interface PathMapper {
-  [path: string]: typeof Model;
-}
-
-// Remember to also add Class name in link() in db.ts
-const mapper: PathMapper = {
-  "/county": County,
-  "/wine": Wine,
-  "/bottle": Bottle,
-  "/friend": Friend,
-  "/grape": Grape,
-  "/review": Review,
-  "/qgrape": QGrape,
-  "/freview": FReview,
-  "/history": HistoryEntry,
-  "/tasting": Tasting,
-  "/tasting-action": TastingAction,
-  "/history-x-friend": HistoryXFriend,
-  "/tasting-x-friend": TastingXFriend,
-};
+// TODO rename freview to f_review and qgrape to q_grape
+const routes = [
+  "/county",
+  "/wine",
+  "/bottle",
+  "/friend",
+  "/grape",
+  "/review",
+  "/qgrape",
+  "/freview",
+  "/history",
+  "/tasting",
+  "/tasting-action",
+  "/history-x-friend",
+  "/tasting-x-friend",
+];

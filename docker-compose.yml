@@ -21,6 +21,7 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:plout@db/cavity
       - SENDINBLUE_API_KEY=:D
+      - TOKEN_SECRET="mySuperSecret"
     depends_on:
       - db
 

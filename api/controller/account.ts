@@ -1,14 +1,28 @@
-import { bcrypt, Context, getQuery, jwt, logger, Router } from "../../deps.ts";
+import { Where } from "https://deno.land/x/sql_builder@v1.9.1/where.ts";
+import {
+  bcrypt,
+  Context,
+  getQuery,
+  jwt,
+  logger,
+  Query,
+  Router,
+} from "../../deps.ts";
 import Repository from "../db/repository.ts";
-import { Account, ConfirmAccountDTO } from "../model/account.ts";
+import {
+  Account,
+  ConfirmAccountDTO,
+  generateRegistrationCode,
+} from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
+import { pascalToSnake } from "../util/string-util.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
-  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm
+  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
 
   constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
     super(router, repository);
@@ -56,7 +70,7 @@ export default class AccountController extends Controller {
     const isSecure = securePassword?.length;
 
     if (!isSecure) {
-      return json(ctx, { message: this.$t.weakPassword }, 400)
+      return json(ctx, { message: this.$t.weakPassword }, 400);
     }
 
     // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
@@ -68,27 +82,32 @@ export default class AccountController extends Controller {
         return json(ctx, { message: this.$t.accountAlreadyExists }, 400);
       }
 
-      const account = {
+      const account: Account = {
         email,
         password: hash,
-        registrationCode: Account.generateRegistrationCode(),
+        registrationCode: generateRegistrationCode(),
       };
-
-      await Account
-        .create(account);
 
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
+      const query = new Query()
+        .table("account")
+        .insert(pascalToSnake(account as never))
+        .build();
 
+      await this.repository.do(query);
       await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       try {
         // Mail sending has probably gone wrong. Remove the account.
-        Account
-          .where("email", email)
-          .delete();
+        const query = new Query()
+          .delete("account")
+          .where(Where.field("email").eq(email))
+          .build();
+
+        await this.repository.do(query);
 
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (_error) {
@@ -110,18 +129,20 @@ export default class AccountController extends Controller {
   async getAccount(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const account = await Account
-          .where("id", accountId)
-          .get() as Array<Account>;
+        const query = new Query()
+          .table("account")
+          .select("id", "email", "registration_code")
+          .where(Where.field("id").eq(accountId))
+          .build();
 
-        if (!account.length) {
+        const result = await this.repository.do<Account>(query);
+
+        if (!result.rows.length) {
           return json(ctx, { message: this.$t.notFound }, 404);
         }
 
-        const result: any = account[0];
-        result.password = undefined;
-
-        json(ctx, result);
+        const account = result.rows[0];
+        json(ctx, account);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
       }
@@ -142,9 +163,12 @@ export default class AccountController extends Controller {
       }
 
       try {
-        await Account
-          .where("id", id)
-          .delete();
+        const query = new Query()
+          .delete("account")
+          .where(Where.field("id").eq(id))
+          .build();
+
+        await this.repository.do(query);
 
         success(ctx);
       } catch (_error) {
@@ -157,33 +181,43 @@ export default class AccountController extends Controller {
     const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
 
     try {
-      const account = await Account
-        .where("email", confirmDto.email)
-        .get() as Array<Account>;
+      const query = new Query()
+        .table("account")
+        .select("*")
+        .where(Where.field("email").eq(confirmDto.email))
+        .build();
 
-      if (account.length === 0) {
+      const response = await this.repository.do<Account>(query);
+
+      if (response.rows.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);
       }
 
-      if (account[0].registrationCode === null) {
+      const account = response.rows[0];
+
+      if (account.registration_code === null) {
         return json(ctx, { message: this.$t.alreadyConfirmed }, 400);
       }
 
       const code = parseInt(confirmDto.registrationCode);
 
-      if (isNaN(code) || account[0].registrationCode !== code) {
+      if (isNaN(code) || account.registration_code !== code) {
         return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
-      await Account
-        .where("email", confirmDto.email)
-        .update("registrationCode", null);
+      const query2 = new Query()
+        .table("account")
+        .update({ registration_code: null })
+        .where(Where.field("email").eq(confirmDto.email))
+        .build();
+
+      await this.repository.do(query2);
 
       const token = await jwt.create(
         { alg: "HS512", typ: "JWT" },
         {
           exp: jwt.getNumericDate(60 * 60 * 48), // 48h
-          account_id: account[0].id,
+          account_id: account.id,
         },
         this.jwtKey,
       );
@@ -198,9 +232,13 @@ export default class AccountController extends Controller {
     try {
       const { email } = await ctx.request.body().value;
       const subject = this.$t.emailSubjectRecover;
-      const exists = await Account
-        .where("email", email)
-        .count();
+      const query = new Query()
+        .table("account")
+        .where(Where.field("email").eq(email))
+        .build();
+
+      const response = await this.repository.do<Account>(query);
+      const exists = response.rows.length;
 
       if (!exists) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
@@ -218,10 +256,13 @@ export default class AccountController extends Controller {
       const content =
         `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
 
-      await Account
-        .where("email", email)
-        .update("resetToken", token);
+      const query2 = new Query()
+        .table("account")
+        .where(Where.field("email").eq(email))
+        .update({ reset_token: token })
+        .build();
 
+      await this.repository.do(query2);
       await sendMail(email, subject, content, true);
 
       success(ctx);
@@ -246,14 +287,18 @@ export default class AccountController extends Controller {
       const isSecure = securePassword?.length;
 
       if (!isSecure) {
-        return json(ctx, { message: this.$t.weakPassword }, 400)
+        return json(ctx, { message: this.$t.weakPassword }, 400);
       }
 
       const hash = bcrypt.hashSync(password);
 
-      await Account
-        .where("resetToken", token)
-        .update({ password: hash, resetToken: null });
+      const query = new Query()
+        .table("account")
+        .where(Where.field("reset_token").eq(token))
+        .update({ password: hash, reset_token: null })
+        .build();
+
+      await this.repository.do(query);
 
       success(ctx);
     } catch (_error) {
@@ -262,6 +307,13 @@ export default class AccountController extends Controller {
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
-    return (await Account.where("email", email).count()) === 0;
+    const query = new Query()
+      .table("account")
+      .select("email")
+      .where(Where.field("email").eq(email))
+      .build();
+
+    const response = await this.repository.do(query);
+    return response.rows.length === 0;
   }
 }

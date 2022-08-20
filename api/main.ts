@@ -13,7 +13,7 @@ const router = new Router();
 const repository: Repository = await Repository.getInstance();
 
 const encoder = new TextEncoder();
-const keyBuffer = encoder.encode("mySuperSecret");
+const keyBuffer = encoder.encode(Deno.env.get("TOKEN_SECRET"));
 const jwtKey = await crypto.subtle.importKey(
   "raw",
   keyBuffer,
@@ -36,6 +36,8 @@ app.use(async (ctx, next) => {
       index: "index.html",
     });
   } finally {
+    // May be causing an error in Deno deploy, not sure.
+    // deno-lint-ignore no-unsafe-finally
     return next();
   }
 });
