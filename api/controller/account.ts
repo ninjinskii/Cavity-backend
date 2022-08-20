@@ -143,7 +143,7 @@ export default class AccountController extends Controller {
           return json(ctx, { message: this.$t.notFound }, 404);
         }
 
-        const account: Account = result.rows[0];
+        const account = result.rows[0];
         json(ctx, account);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
