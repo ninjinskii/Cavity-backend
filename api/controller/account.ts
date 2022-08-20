@@ -88,16 +88,14 @@ export default class AccountController extends Controller {
         registrationCode: generateRegistrationCode(),
       };
 
+      const subject = this.$t.emailSubject;
+      const content = this.$t.emailContent + account.registrationCode;
       const query = new Query()
         .table("account")
         .insert(pascalToSnake(account as never))
         .build();
 
       await this.repository.do(query);
-
-      const subject = this.$t.emailSubject;
-      const content = this.$t.emailContent + account.registrationCode;
-
       await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
@@ -197,13 +195,13 @@ export default class AccountController extends Controller {
 
       const account = response.rows[0];
 
-      if (account.registrationCode === null) {
+      if (account.registration_code === null) {
         return json(ctx, { message: this.$t.alreadyConfirmed }, 400);
       }
 
       const code = parseInt(confirmDto.registrationCode);
 
-      if (isNaN(code) || account.registrationCode !== code) {
+      if (isNaN(code) || account.registration_code !== code) {
         return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
@@ -239,7 +237,7 @@ export default class AccountController extends Controller {
         .where(Where.field("email").eq(email))
         .build();
 
-      const response = await this.repository.do(query);
+      const response = await this.repository.do<Account>(query);
       const exists = response.rows.length;
 
       if (!exists) {

@@ -3,6 +3,7 @@ export interface Account {
   email: string;
   password: string;
   registrationCode: number | null;
+  registration_code?: number | null;
   resetToken?: string;
 }
 
