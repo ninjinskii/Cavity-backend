@@ -17,7 +17,7 @@ import {
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
-import pascalToSnake from "../util/pascal-to-snake.js";
+import { pascalToSnake } from "../util/string-util.ts";
 import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
@@ -90,7 +90,7 @@ export default class AccountController extends Controller {
 
       const query = new Query()
         .table("account")
-        .insert(pascalToSnake(account))
+        .insert(pascalToSnake(account as never))
         .build();
 
       await this.repository.do(query);

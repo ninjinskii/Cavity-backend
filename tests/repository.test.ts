@@ -1,7 +1,6 @@
-import { assertEquals } from "https://deno.land/std@0.137.0/testing/asserts.ts";
 import Repository from "../api/db/repository.ts";
-import pascalToSnake from "../api/util/pascal-to-snake.js";
-import { Query, Transaction, Where } from "../deps.ts";
+import { pascalToSnake } from "../api/util/string-util.ts";
+import { Query, Transaction, Where, assertEquals } from "../deps.ts";
 
 interface TestObject {
   id: number;
@@ -187,7 +186,7 @@ Deno.test("Use a transaction", async () => {
 Deno.test("Pascal case to snake case insert", async () => {
   // Typical client data
   const data = { testString: "Hi mom!", testInt: 1 };
-  const formattedData = pascalToSnake(data);
+  const formattedData = pascalToSnake(data as never);
 
   const query = new Query()
     .table("test")
