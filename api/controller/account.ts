@@ -1,5 +1,12 @@
-import { bcrypt, Context, getQuery, jwt, logger, Router } from "../../deps.ts";
-import Repository from "../db/repository.ts";
+import {
+  bcrypt,
+  Context,
+  getQuery,
+  jwt,
+  logger,
+  QueryBuilder,
+  Router,
+} from "../../deps.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
@@ -8,10 +15,10 @@ import Controller from "./controller.ts";
 
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
-  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm
+  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
 
-  constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
-    super(router, repository);
+  constructor(router: Router, builder: QueryBuilder, jwtKey: CryptoKey) {
+    super(router, builder);
     this.jwtKey = jwtKey;
   }
 
@@ -56,7 +63,7 @@ export default class AccountController extends Controller {
     const isSecure = securePassword?.length;
 
     if (!isSecure) {
-      return json(ctx, { message: this.$t.weakPassword }, 400)
+      return json(ctx, { message: this.$t.weakPassword }, 400);
     }
 
     // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
@@ -74,8 +81,9 @@ export default class AccountController extends Controller {
         registrationCode: Account.generateRegistrationCode(),
       };
 
-      await Account
-        .create(account);
+      await this.builder
+        .insert("account", [account])
+        .execute();
 
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
@@ -83,12 +91,14 @@ export default class AccountController extends Controller {
       await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       try {
         // Mail sending has probably gone wrong. Remove the account.
-        Account
-          .where("email", email)
-          .delete();
+        this.builder
+          .delete()
+          .from("account")
+          .where({ field: "email", equals: email })
+          .execute();
 
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (_error) {
@@ -110,15 +120,17 @@ export default class AccountController extends Controller {
   async getAccount(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const account = await Account
-          .where("id", accountId)
-          .get() as Array<Account>;
+        const account = await this.builder
+          .select("*")
+          .from("account")
+          .where({ field: "id", equals: accountId })
+          .execute<>();
 
         if (!account.length) {
           return json(ctx, { message: this.$t.notFound }, 404);
         }
 
-        const result: any = account[0];
+        const result = account[0];
         result.password = undefined;
 
         json(ctx, result);
@@ -142,9 +154,11 @@ export default class AccountController extends Controller {
       }
 
       try {
-        await Account
-          .where("id", id)
-          .delete();
+        await this.builder
+          .delete()
+          .from("account")
+          .where({ field: "id", equals: id })
+          .execute();
 
         success(ctx);
       } catch (_error) {
@@ -157,9 +171,11 @@ export default class AccountController extends Controller {
     const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
 
     try {
-      const account = await Account
-        .where("email", confirmDto.email)
-        .get() as Array<Account>;
+      const account = await this.builder
+        .select("*")
+        .from("account")
+        .where({ field: "email", equals: confirmDto.email })
+        .execute<>();
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);
@@ -175,9 +191,10 @@ export default class AccountController extends Controller {
         return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
-      await Account
-        .where("email", confirmDto.email)
-        .update("registrationCode", null);
+      await this.builder
+        .update("account", { registration_code: null })
+        .where({ field: "email", equals: confirmDto.email })
+        .execute();
 
       const token = await jwt.create(
         { alg: "HS512", typ: "JWT" },
@@ -198,9 +215,11 @@ export default class AccountController extends Controller {
     try {
       const { email } = await ctx.request.body().value;
       const subject = this.$t.emailSubjectRecover;
-      const exists = await Account
-        .where("email", email)
-        .count();
+      const exists = await this.builder
+        .select("*")
+        .from("account")
+        .where({ field: "email", equals: email })
+        .executeAndGetFirst();
 
       if (!exists) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
@@ -218,9 +237,10 @@ export default class AccountController extends Controller {
       const content =
         `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
 
-      await Account
-        .where("email", email)
-        .update("resetToken", token);
+      await this.builder
+        .update("account", { reset_token: token })
+        .where({ field: "email", equals: email })
+        .execute();
 
       await sendMail(email, subject, content, true);
 
@@ -246,14 +266,15 @@ export default class AccountController extends Controller {
       const isSecure = securePassword?.length;
 
       if (!isSecure) {
-        return json(ctx, { message: this.$t.weakPassword }, 400)
+        return json(ctx, { message: this.$t.weakPassword }, 400);
       }
 
       const hash = bcrypt.hashSync(password);
 
-      await Account
-        .where("resetToken", token)
-        .update({ password: hash, resetToken: null });
+      await this.builder
+        .update("account", { password: hash, reset_token: null })
+        .where({ field: "reset_token", equals: null })
+        .execute();
 
       success(ctx);
     } catch (_error) {
@@ -262,6 +283,9 @@ export default class AccountController extends Controller {
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
-    return (await Account.where("email", email).count()) === 0;
+    return ((await this.builder
+      .select("*")
+      .from("account")
+      .where({ field: "email", equals: email }).execute()).length) === 0;
   }
 }

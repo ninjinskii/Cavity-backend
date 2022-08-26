@@ -1,16 +1,16 @@
-import { Application, Router } from "../deps.ts";
+import { Application, logger, QueryBuilder, Router } from "../deps.ts";
 import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
-import Repository from "./db/repository.ts";
 import AccountController from "./controller/account.ts";
 
 applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
-const repository: Repository = await Repository.getInstance();
+const databaseUrl = Deno.env.get("DATABASE_URL");
+const queryBuilder = new QueryBuilder(databaseUrl || "");
 
 const encoder = new TextEncoder();
 const keyBuffer = encoder.encode("mySuperSecret");
@@ -35,16 +35,16 @@ app.use(async (ctx, next) => {
       root: `${Deno.cwd()}/public`,
       index: "index.html",
     });
-  } finally {
-    // May be causing an error in Deno deploy, not sure.
-    // deno-lint-ignore no-unsafe-finally
-    return next();
+  } catch(error) {
+    logger.error(error)
   }
+
+  return next();
 });
 
-const accountController = new AccountController(router, repository, jwtKey);
-const authController = new AuthController(router, repository, jwtKey);
-const dataController = new DataController(router, repository, jwtKey);
+const accountController = new AccountController(router, queryBuilder, jwtKey);
+const authController = new AuthController(router, queryBuilder, jwtKey);
+const dataController = new DataController(router, queryBuilder, jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(
   accountController,

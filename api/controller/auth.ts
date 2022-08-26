@@ -1,14 +1,13 @@
-import { bcrypt, Context, jwt, Router } from "../../deps.ts";
+import { bcrypt, Context, jwt, QueryBuilder, Router } from "../../deps.ts";
 import { Account, AccountDTO } from "../model/account.ts";
-import Repository from "../db/repository.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
 
 export default class AuthController extends Controller {
   private jwtKey: CryptoKey;
 
-  constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
-    super(router, repository);
+  constructor(router: Router, builder: QueryBuilder, jwtKey: CryptoKey) {
+    super(router, builder);
     this.jwtKey = jwtKey;
   }
 
@@ -23,9 +22,11 @@ export default class AuthController extends Controller {
   async login(ctx: Context): Promise<void> {
     const { email, password } = await ctx.request.body().value as AccountDTO;
 
-    const account = await Account
-      .where("email", email)
-      .get() as Array<Account>;
+    const account = await this.builder
+      .select("*")
+      .from("account")
+      .where({ field: "email", equals: email })
+      .execute<>();
 
     if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons

@@ -1,18 +1,10 @@
-import { Context, logger, Model, Router } from "../../deps.ts";
-import { County } from "../model/county.ts";
-import { Wine } from "../model/wine.ts";
-import { Bottle } from "../model/bottle.ts";
-import { HistoryEntry } from "../model/history-entry.ts";
-import { Friend } from "../model/friend.ts";
-import { Grape } from "../model/grape.ts";
-import { Review } from "../model/review.ts";
-import { FReview } from "../model/f-review.ts";
-import { QGrape } from "../model/q-grape.ts";
-import { Tasting } from "../model/tasting.ts";
-import { TastingAction } from "../model/tasting-action.ts";
-import { TastingXFriend } from "../model/tasting-x-friend.ts";
-import { HistoryXFriend } from "../model/history-x-friend.ts";
-import Repository from "../db/repository.ts";
+import {
+  Context,
+  logger,
+  QueryBuilder,
+  Router,
+  transaction,
+} from "../../deps.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
@@ -20,8 +12,8 @@ import { json, success } from "../util/api-response.ts";
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
 
-  constructor(router: Router, repository: Repository, jwtKey: CryptoKey) {
-    super(router, repository);
+  constructor(router: Router, builder: QueryBuilder, jwtKey: CryptoKey) {
+    super(router, builder);
     this.jwtKey = jwtKey;
   }
 
@@ -45,18 +37,22 @@ export default class DataController extends Controller {
       objects.forEach((object) => object.accountId = accountId);
 
       try {
-        await this.repository.doInTransaction(async () => {
-          const dao = mapper[this.getMapperEntry(ctx)];
+        const ok = await transaction(this.builder, async () => {
+          const table = mapper[this.getMapperEntry(ctx)];
 
-          await dao
-            .where("accountId", accountId)
-            .delete();
+          await this.builder
+            .delete()
+            .from(table)
+            .where({ field: "account_id", equals: accountId })
+            .execute();
 
-          await dao
-            .create(objects);
+          await this.builder
+            .insert(table, objects);
         });
 
-        success(ctx);
+        ok
+          ? success(ctx)
+          : json(ctx, { message: this.$t.missingParameters }, 400);
       } catch (error) {
         logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
@@ -67,10 +63,12 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
-        const objects = await dao
-          .where("accountId", accountId)
-          .get() as Array<Model>;
+        const table = mapper[this.getMapperEntry(ctx)];
+        const objects = await this.builder
+          .select("*")
+          .from(table)
+          .where({ field: "account_id", equals: accountId })
+          .execute<>();
 
         objects.forEach((obj) => delete obj["accountId"]);
 
@@ -85,10 +83,11 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
-        await dao
-          .where("accountId", accountId)
-          .delete();
+        const table = mapper[this.getMapperEntry(ctx)];
+        await this.builder
+          .delete()
+          .from(table)
+          .where({ field: "account_id", equals: accountId });
 
         success(ctx);
       } catch (error) {
@@ -103,23 +102,23 @@ export default class DataController extends Controller {
   }
 }
 
-interface PathMapper {
-  [path: string]: typeof Model;
+interface RouteMapper {
+  [route: string]: string;
 }
 
-// Remember to also add Class name in link() in db.ts
-const mapper: PathMapper = {
-  "/county": County,
-  "/wine": Wine,
-  "/bottle": Bottle,
-  "/friend": Friend,
-  "/grape": Grape,
-  "/review": Review,
-  "/qgrape": QGrape,
-  "/freview": FReview,
-  "/history": HistoryEntry,
-  "/tasting": Tasting,
-  "/tasting-action": TastingAction,
-  "/history-x-friend": HistoryXFriend,
-  "/tasting-x-friend": TastingXFriend,
+// Maps route to DB table
+const mapper: RouteMapper = {
+  "/county": "county",
+  "/wine": "wine",
+  "/bottle": "bottle",
+  "/friend": "friend",
+  "/grape": "grape",
+  "/review": "review",
+  "/qgrape": "q_grape",
+  "/freview": "f_review",
+  "/history": "history_entry",
+  "/tasting": "tasting",
+  "/tasting-action": "tasting_acation",
+  "/history-x-friend": "history_x_friend",
+  "/tasting-x-friend": "tasting_x_friend",
 };
