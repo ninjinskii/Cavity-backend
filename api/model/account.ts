@@ -9,7 +9,7 @@ export class Account {
     @Field("INT", Nullable.YES, "registration_code") public registrationCode:
       | number
       | null,
-    @SizedField("VARCHAR", 300) public resetToken: string | null,
+    @SizedField("VARCHAR", 300, Nullable.YES, "reset_token") public resetToken: string | null,
   ) {
   }
 

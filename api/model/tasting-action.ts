@@ -6,7 +6,7 @@ export class TastingAction {
     @PrimaryKey("SERIAL") public _id: number,
     @Field("INT", Nullable.NO, "account_id") public accountId: number,
     @Field("INT") public id: number,
-    @Field("INT") public type: number,
+    @Field("VARCHAR") public type: string,
     @Field("INT", Nullable.NO, "bottle_id") public bottleId: number,
     @Field("INT") public done: number,
   ) {

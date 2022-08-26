@@ -22,7 +22,7 @@ export class Bottle {
     ) public tastingTasteComment: string,
     @Field("VARCHAR", Nullable.NO, "bottle_size") public bottleSize: string,
     @Field("INT") public consumed: number,
-    @Field("INT", Nullable.NO, "tasting_id") public tastingId: number | null,
+    @Field("INT", Nullable.YES, "tasting_id") public tastingId: number | null,
     @Field("BOOL", Nullable.NO, "is_selected") public isSelected: boolean,
     @Field("VARCHAR", Nullable.NO, "pdf_path") public pdfPath: string,
   ) {
