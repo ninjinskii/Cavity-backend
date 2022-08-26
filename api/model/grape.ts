@@ -1,18 +1,12 @@
-import { DataTypes, Model } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
 
-export class Grape implements Model {
-  table = "grape";
-  fields = {
-    _id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    id: DataTypes.INTEGER,
-    accountId: {
-      type: DataTypes.INTEGER,
-      as: "account_id",
-    },
-    name: DataTypes.STRING,
-  };
+@Entity("grape")
+export class Grape {
+  constructor(
+    @PrimaryKey("SERIAL") public _id: number,
+    @Field("INT", Nullable.NO, "account_id") public accountId: number,
+    @Field("INT") public id: number,
+    @Field("VARCHAR") public name: string,
+  ) {
+  }
 }

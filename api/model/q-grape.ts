@@ -1,25 +1,13 @@
-import { DataTypes, Model } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
 
-export class QGrape implements Model {
-  table = "q_grape";
-  fields = {
-    _id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    accountId: {
-      type: DataTypes.INTEGER,
-      as: "account_id",
-    },
-    bottleId: {
-      type: DataTypes.INTEGER,
-      as: "bottle_id",
-    },
-    grapeId: {
-      type: DataTypes.INTEGER,
-      as: "grape_id",
-    },
-    percentage: DataTypes.INTEGER,
-  };
+@Entity("q_grape")
+export class QGrape {
+  constructor(
+    @PrimaryKey("SERIAL") public _id: number,
+    @Field("INT", Nullable.NO, "account_id") public accountId: number,
+    @Field("INT", Nullable.NO, "bottle_id") public bottleId: number,
+    @Field("INT", Nullable.NO, "grape_id") public grapeId: number,
+    @Field("INT") public percentage: number,
+  ) {
+  }
 }

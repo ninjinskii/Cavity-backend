@@ -1,26 +1,17 @@
-import { Model, DataTypes } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey, SizedField } from "../../deps.ts";
 
-export class Account implements Model {
-  table = "account";
-  fields = {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    email: DataTypes.STRING,
-    password: DataTypes.STRING,
-    registrationCode: {
-      type: DataTypes.INTEGER,
-      as: "registration_code",
-      allowNull: true,
-    },
-    resetToken: {
-      type: DataTypes.STRING,
-      as: "reset_token",
-      allowNull: true,
-    },
-  };
+@Entity("account")
+export class Account {
+  constructor(
+    @PrimaryKey("SERIAL") public id: number,
+    @SizedField("VARCHAR", 255) public email: string,
+    @Field("VARCHAR") public password: string,
+    @Field("INT", Nullable.YES, "registration_code") public registrationCode:
+      | number
+      | null,
+    @SizedField("VARCHAR", 300) public resetToken: string | null,
+  ) {
+  }
 
   static generateRegistrationCode(): number {
     const max = 999999;

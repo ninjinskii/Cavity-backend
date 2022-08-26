@@ -1,23 +1,14 @@
-import { DataTypes, Model } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
 
-export class TastingAction implements Model {
-  table = "tasting_action";
-  fields = {
-    _id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    id: DataTypes.INTEGER,
-    accountId: {
-      type: DataTypes.INTEGER,
-      as: "account_id",
-    },
-    type: DataTypes.STRING,
-    bottleId: {
-      type: DataTypes.INTEGER,
-      as: "bottle_id",
-    },
-    done: DataTypes.INTEGER,
-  };
+@Entity("tasting_action")
+export class TastingAction {
+  constructor(
+    @PrimaryKey("SERIAL") public _id: number,
+    @Field("INT", Nullable.NO, "account_id") public accountId: number,
+    @Field("INT") public id: number,
+    @Field("INT") public type: number,
+    @Field("INT", Nullable.NO, "bottle_id") public bottleId: number,
+    @Field("INT") public done: number,
+  ) {
+  }
 }

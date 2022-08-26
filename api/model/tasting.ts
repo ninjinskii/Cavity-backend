@@ -1,24 +1,15 @@
-import { DataTypes, Model } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
 
-export class Tasting implements Model {
-  table = "tasting";
-  fields = {
-    _id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    id: DataTypes.INTEGER,
-    accountId: {
-      type: DataTypes.INTEGER,
-      as: "account_id",
-    },
-    date: DataTypes.BIG_INTEGER,
-    isMidday: {
-      type: DataTypes.BOOLEAN,
-      as: "is_midday",
-    },
-    opportunity: DataTypes.STRING,
-    done: DataTypes.BOOLEAN,
-  };
+@Entity("tasting")
+export class Tasting {
+  constructor(
+    @PrimaryKey("SERIAL") public _id: number,
+    @Field("INT", Nullable.NO, "account_id") public accountId: number,
+    @Field("INT") public id: number,
+    @Field("INT") public date: number,
+    @Field("BOOL") public isMidday: boolean,
+    @Field("VARCHAR") public opportunity: string,
+    @Field("BOOL") public done: boolean,
+  ) {
+  }
 }

@@ -1,22 +1,13 @@
-import { DataTypes, Model } from "./model.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
 
-export class Review implements Model {
-  table = "review";
-  fields = {
-    _id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    id: DataTypes.INTEGER,
-    accountId: {
-      type: DataTypes.INTEGER,
-      as: "account_id",
-    },
-    contestName: {
-      type: DataTypes.STRING,
-      as: "contest_name",
-    },
-    type: DataTypes.INTEGER,
-  };
+@Entity("review")
+export class Review {
+  constructor(
+    @PrimaryKey("SERIAL") public _id: number,
+    @Field("INT", Nullable.NO, "account_id") public accountId: number,
+    @Field("INT") public id: number,
+    @Field("VARCHAR", Nullable.NO, "contest_name") public contestName: string,
+    @Field("VARCHAR") public type: number,
+  ) {
+  }
 }
