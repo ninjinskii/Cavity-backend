@@ -16,4 +16,5 @@ export {
   QueryBuilder,
   SizedField,
   transaction,
+  initTables,
 } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts";

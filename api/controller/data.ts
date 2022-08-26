@@ -64,11 +64,13 @@ export default class DataController extends Controller {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         const table = mapper[this.getMapperEntry(ctx)];
-        const objects = await this.builder
+        // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
+        // deno-lint-ignore no-explicit-any
+        const objects: any[] = await this.builder
           .select("*")
           .from(table)
           .where({ field: "account_id", equals: accountId })
-          .execute<>();
+          .execute();
 
         objects.forEach((obj) => delete obj["accountId"]);
 

@@ -1,16 +1,54 @@
-import { Application, logger, QueryBuilder, Router } from "../deps.ts";
+import { Application, initTables, QueryBuilder, Router } from "../deps.ts";
 import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import AccountController from "./controller/account.ts";
+import { Account } from "./model/account.ts";
+import { Bottle } from "./model/bottle.ts";
+import { County } from "./model/county.ts";
+import { FReview } from "./model/f-review.ts";
+import { Friend } from "./model/friend.ts";
+import { Grape } from "./model/grape.ts";
+import { HistoryEntry } from "./model/history-entry.ts";
+import { HistoryXFriend } from "./model/history-x-friend.ts";
+import { QGrape } from "./model/q-grape.ts";
+import { Review } from "./model/review.ts";
+import { TastingAction } from "./model/tasting-action.ts";
+import { TastingXFriend } from "./model/tasting-x-friend.ts";
+import { Tasting } from "./model/tasting.ts";
+import { Wine } from "./model/wine.ts";
 
 applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
-const databaseUrl = Deno.env.get("DATABASE_URL");
-const queryBuilder = new QueryBuilder(databaseUrl || "");
+const databaseUrl = Deno.env.get("DATABASE_URL") || "";
+const queryBuilder = new QueryBuilder(databaseUrl);
+
+await initTables(
+  databaseUrl,
+  [
+    Account,
+    Bottle,
+    County,
+    FReview,
+    Friend,
+    Grape,
+    HistoryEntry,
+    HistoryXFriend,
+    QGrape,
+    Review,
+    TastingAction,
+    TastingXFriend,
+    Tasting,
+    Wine
+  ],
+);
+
+await queryBuilder["executor"]["init"]()
+const a  = await queryBuilder["executor"]["client"]?.queryObject("Select * FROM account");
+console.log(a);
 
 const encoder = new TextEncoder();
 const keyBuffer = encoder.encode("mySuperSecret");
@@ -35,11 +73,9 @@ app.use(async (ctx, next) => {
       root: `${Deno.cwd()}/public`,
       index: "index.html",
     });
-  } catch(error) {
-    logger.error(error)
+  } finally {
+    return next();
   }
-
-  return next();
 });
 
 const accountController = new AccountController(router, queryBuilder, jwtKey);

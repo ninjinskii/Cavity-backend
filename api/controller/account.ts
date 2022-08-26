@@ -78,7 +78,7 @@ export default class AccountController extends Controller {
       const account = {
         email,
         password: hash,
-        registrationCode: Account.generateRegistrationCode(),
+        registration_code: Account.generateRegistrationCode(),
       };
 
       await this.builder
@@ -86,7 +86,7 @@ export default class AccountController extends Controller {
         .execute();
 
       const subject = this.$t.emailSubject;
-      const content = this.$t.emailContent + account.registrationCode;
+      const content = this.$t.emailContent + account.registration_code;
 
       await sendMail(account.email, subject, content);
       success(ctx);
@@ -121,17 +121,16 @@ export default class AccountController extends Controller {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
         const account = await this.builder
-          .select("*")
+          .select("id", "email", "registration_code")
           .from("account")
           .where({ field: "id", equals: accountId })
-          .execute<>();
+          .execute<Account>();
 
         if (!account.length) {
           return json(ctx, { message: this.$t.notFound }, 404);
         }
 
         const result = account[0];
-        result.password = undefined;
 
         json(ctx, result);
       } catch (_error) {
@@ -172,10 +171,10 @@ export default class AccountController extends Controller {
 
     try {
       const account = await this.builder
-        .select("*")
+        .select("id", "registration_code")
         .from("account")
         .where({ field: "email", equals: confirmDto.email })
-        .execute<>();
+        .execute<Account>();
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);

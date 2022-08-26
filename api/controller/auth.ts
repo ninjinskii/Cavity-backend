@@ -23,10 +23,10 @@ export default class AuthController extends Controller {
     const { email, password } = await ctx.request.body().value as AccountDTO;
 
     const account = await this.builder
-      .select("*")
+      .select("id", "registration_code", "password")
       .from("account")
       .where({ field: "email", equals: email })
-      .execute<>();
+      .execute<Account>();
 
     if (account.length === 0) {
       // Not mentionning the fact that the account doesn't exists for security reasons
