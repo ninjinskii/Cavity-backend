@@ -78,7 +78,7 @@ export default class AccountController extends Controller {
       const account = {
         email,
         password: hash,
-        registration_code: Account.generateRegistrationCode(),
+        registrationCode: Account.generateRegistrationCode(),
       };
 
       await this.builder
@@ -86,7 +86,7 @@ export default class AccountController extends Controller {
         .execute();
 
       const subject = this.$t.emailSubject;
-      const content = this.$t.emailContent + account.registration_code;
+      const content = this.$t.emailContent + account.registrationCode;
 
       await sendMail(account.email, subject, content);
       success(ctx);
@@ -272,7 +272,7 @@ export default class AccountController extends Controller {
 
       await this.builder
         .update("account", { password: hash, reset_token: null })
-        .where({ field: "reset_token", equals: null })
+        .where({ field: "reset_token", equals: token })
         .execute();
 
       success(ctx);
