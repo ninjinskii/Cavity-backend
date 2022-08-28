@@ -34,20 +34,27 @@ export default class DataController extends Controller {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
-      objects.forEach((object) => object.accountId = accountId);
+      if (objects.length === 0) {
+        return success(ctx);
+      }
 
+      objects.forEach((object) => object.accountId = accountId);
       try {
         const ok = await transaction(this.builder, async () => {
-          const table = mapper[this.getMapperEntry(ctx)];
+          try {
+            const table = mapper[this.getMapperEntry(ctx)];
+            await this.builder
+              .delete()
+              .from(table)
+              .where({ field: "account_id", equals: accountId })
+              .execute();
 
-          await this.builder
-            .delete()
-            .from(table)
-            .where({ field: "account_id", equals: accountId })
-            .execute();
-
-          await this.builder
-            .insert(table, objects);
+            await this.builder
+              .insert(table, objects)
+              .execute();
+          } catch (error) {
+            console.log(error)
+          }
         });
 
         ok
@@ -120,7 +127,7 @@ const mapper: RouteMapper = {
   "/freview": "f_review",
   "/history": "history_entry",
   "/tasting": "tasting",
-  "/tasting-action": "tasting_acation",
+  "/tasting-action": "tasting_action",
   "/history-x-friend": "history_x_friend",
   "/tasting-x-friend": "tasting_x_friend",
 };
