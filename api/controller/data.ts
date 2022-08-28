@@ -29,19 +29,30 @@ export default class DataController extends Controller {
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const objects = await ctx.request.body().value;
+      const table = mapper[this.getMapperEntry(ctx)];
 
       if (!(objects instanceof Array)) {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
       if (objects.length === 0) {
+        try {
+          await this.builder
+            .delete()
+            .from(table)
+            .where({ field: "account_id", equals: accountId })
+            .execute();
+        } catch (error) {
+          logger.error(error);
+          json(ctx, { message: this.$t.baseError }, 500);
+        }
+        
         return success(ctx);
       }
 
       objects.forEach((object) => object.accountId = accountId);
       try {
         const ok = await transaction(this.builder, async () => {
-          const table = mapper[this.getMapperEntry(ctx)];
           await this.builder
             .delete()
             .from(table)
