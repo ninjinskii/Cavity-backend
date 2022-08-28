@@ -7,7 +7,7 @@ export class Friend {
     @Field("INT", Nullable.NO, "account_id") public accountId: number,
     @Field("INT") public id: number,
     @Field("VARCHAR") public name: string,
-    @Field("VARCHAR") public imgPath: string,
+    @Field("VARCHAR", Nullable.NO, "img_path") public imgPath: string,
   ) {
   }
 }

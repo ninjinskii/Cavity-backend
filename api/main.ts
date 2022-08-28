@@ -18,6 +18,7 @@ import { TastingAction } from "./model/tasting-action.ts";
 import { TastingXFriend } from "./model/tasting-x-friend.ts";
 import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
+import { aliasTracker } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/src/orm/annotations.ts";
 
 applyBigIntSerializer();
 
@@ -42,7 +43,7 @@ await initTables(
     TastingAction,
     TastingXFriend,
     Tasting,
-    Wine
+    Wine,
   ],
 );
 
