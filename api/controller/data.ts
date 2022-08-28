@@ -41,20 +41,16 @@ export default class DataController extends Controller {
       objects.forEach((object) => object.accountId = accountId);
       try {
         const ok = await transaction(this.builder, async () => {
-          try {
-            const table = mapper[this.getMapperEntry(ctx)];
-            await this.builder
-              .delete()
-              .from(table)
-              .where({ field: "account_id", equals: accountId })
-              .execute();
+          const table = mapper[this.getMapperEntry(ctx)];
+          await this.builder
+            .delete()
+            .from(table)
+            .where({ field: "account_id", equals: accountId })
+            .execute();
 
-            await this.builder
-              .insert(table, objects)
-              .execute();
-          } catch (error) {
-            console.log(error)
-          }
+          await this.builder
+            .insert(table, objects)
+            .execute();
         });
 
         ok

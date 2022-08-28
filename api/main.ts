@@ -46,10 +46,6 @@ await initTables(
   ],
 );
 
-await queryBuilder["executor"]["init"]()
-const a  = await queryBuilder["executor"]["client"]?.queryObject("Select * FROM account");
-console.log(a);
-
 const encoder = new TextEncoder();
 const keyBuffer = encoder.encode("mySuperSecret");
 const jwtKey = await crypto.subtle.importKey(
