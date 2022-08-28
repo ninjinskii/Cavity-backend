@@ -13,5 +13,6 @@ export class Wine {
     @Field("INT", Nullable.NO, "is_organic") public isOrganic: number,
     @Field("VARCHAR", Nullable.NO, "img_path") public imgPath: string,
     @Field("INT", Nullable.NO, "county_id") public countyId: number,
+    @Field("INT") public hidden: number,
   ) {}
 }
