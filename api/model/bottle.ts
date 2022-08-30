@@ -10,7 +10,7 @@ export class Bottle {
     @Field("INT") public vintage: number,
     @Field("INT") public apogee: number,
     @Field("INT", Nullable.NO, "is_favorite") public isFavorite: number,
-    @Field("INT") public price: number,
+    @Field("FLOAT4") public price: number,
     @Field("VARCHAR") public currency: string,
     @Field("VARCHAR", Nullable.NO, "other_info") public otherInfo: string,
     @Field("VARCHAR", Nullable.NO, "buy_location") public buyLocation: string,
