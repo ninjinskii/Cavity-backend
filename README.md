@@ -26,3 +26,20 @@ Access the app from http://ip:5000
 docker-compose up -d
 docker-compose exec web deno test --allow-env /app/tests
 ```
+
+## Backup the database
+Go to supabase and run the "Before backup" SQL command. Then:
+```bash
+cd Cavity-backend
+backup/backup.sh
+```
+
+Go to supabase and run the "After backup" SQL command.
+
+Now you have backup.sql
+
+To restore it use:
+```bash
+docker-compose run --rm db bash
+pg_restore -d <DB connection string> backup.sql
+```
