@@ -31,12 +31,12 @@ docker-compose exec web deno test --allow-env /app/tests
 Go to supabase and run the "Before backup" SQL command. Then:
 ```bash
 cd Cavity-backend
-backup/backup.sh
+./backup.sh
 ```
 
 Go to supabase and run the "After backup" SQL command.
 
-Now you have backup.sql
+Now you have backup.sql in ./backup/backup.sql
 
 To restore it use:
 ```bash
