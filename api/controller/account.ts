@@ -1,12 +1,13 @@
 import {
   bcrypt,
+  Client,
   Context,
   getQuery,
   jwt,
   logger,
-  QueryBuilder,
   Router,
 } from "../../deps.ts";
+import { AccountDao } from "../dao/account-dao.ts";
 import { Account, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
@@ -16,9 +17,10 @@ import Controller from "./controller.ts";
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
   private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
+  private accountDao = new AccountDao(super.client);
 
-  constructor(router: Router, builder: QueryBuilder, jwtKey: CryptoKey) {
-    super(router, builder);
+  constructor(router: Router, client: Client, jwtKey: CryptoKey) {
+    super(router, client);
     this.jwtKey = jwtKey;
   }
 
@@ -81,9 +83,7 @@ export default class AccountController extends Controller {
         registrationCode: Account.generateRegistrationCode(),
       };
 
-      await this.builder
-        .insert("account", [account])
-        .execute();
+      await this.accountDao.insert([account]);
 
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
@@ -94,12 +94,7 @@ export default class AccountController extends Controller {
       logger.error(error);
       try {
         // Mail sending has probably gone wrong. Remove the account.
-        this.builder
-          .delete()
-          .from("account")
-          .where({ field: "email", equals: email })
-          .execute();
-
+        this.accountDao.deleteByEmail(email); // We dont wait for the mail to send itself
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
@@ -120,11 +115,7 @@ export default class AccountController extends Controller {
   async getAccount(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const account = await this.builder
-          .select("id", "email", "registration_code")
-          .from("account")
-          .where({ field: "id", equals: accountId })
-          .execute<Account>();
+        const account = await this.accountDao.selectById(accountId);
 
         if (!account.length) {
           return json(ctx, { message: this.$t.notFound }, 404);
@@ -153,12 +144,7 @@ export default class AccountController extends Controller {
       }
 
       try {
-        await this.builder
-          .delete()
-          .from("account")
-          .where({ field: "id", equals: id })
-          .execute();
-
+        await this.accountDao.deleteById(parsed);
         success(ctx);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
@@ -170,11 +156,7 @@ export default class AccountController extends Controller {
     const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
 
     try {
-      const account = await this.builder
-        .select("id", "registration_code")
-        .from("account")
-        .where({ field: "email", equals: confirmDto.email })
-        .execute<Account>();
+      const account = await this.accountDao.selectByEmail(confirmDto.email);
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);
@@ -190,10 +172,7 @@ export default class AccountController extends Controller {
         return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
-      await this.builder
-        .update("account", { registration_code: null })
-        .where({ field: "email", equals: confirmDto.email })
-        .execute();
+      await this.accountDao.register(confirmDto.email);
 
       const token = await jwt.create(
         { alg: "HS512", typ: "JWT" },
@@ -214,13 +193,8 @@ export default class AccountController extends Controller {
     try {
       const { email } = await ctx.request.body().value;
       const subject = this.$t.emailSubjectRecover;
-      const exists = await this.builder
-        .select("*")
-        .from("account")
-        .where({ field: "email", equals: email })
-        .executeAndGetFirst();
 
-      if (!exists) {
+      if (!(await this.isAccountUnique(email))) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
         return success(ctx);
       }
@@ -236,11 +210,7 @@ export default class AccountController extends Controller {
       const content =
         `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
 
-      await this.builder
-        .update("account", { reset_token: token })
-        .where({ field: "email", equals: email })
-        .execute();
-
+      await this.accountDao.setPendingRecovery(email, token);
       await sendMail(email, subject, content, true);
 
       success(ctx);
@@ -269,11 +239,7 @@ export default class AccountController extends Controller {
       }
 
       const hash = bcrypt.hashSync(password);
-
-      await this.builder
-        .update("account", { password: hash, reset_token: null })
-        .where({ field: "reset_token", equals: token })
-        .execute();
+      await this.accountDao.recover(hash, token);
 
       success(ctx);
     } catch (_error) {
@@ -282,9 +248,6 @@ export default class AccountController extends Controller {
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
-    return ((await this.builder
-      .select("*")
-      .from("account")
-      .where({ field: "email", equals: email }).execute()).length) === 0;
+    return ((await this.accountDao.selectByEmail(email)).length) === 0;
   }
 }

@@ -1,4 +1,4 @@
-import { Application, initTables, QueryBuilder, Router } from "../deps.ts";
+import { Application, Client, initTables, Router } from "../deps.ts";
 import AuthController from "./controller/auth.ts";
 import DataController from "./controller/data.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -24,10 +24,10 @@ applyBigIntSerializer();
 const app = new Application();
 const router = new Router();
 const databaseUrl = Deno.env.get("DATABASE_URL") || "";
-const queryBuilder = new QueryBuilder(databaseUrl);
+const client = new Client(databaseUrl);
 
 await initTables(
-  databaseUrl,
+  client,
   [
     Account,
     Bottle,
@@ -74,9 +74,9 @@ app.use(async (ctx, next) => {
   }
 });
 
-const accountController = new AccountController(router, queryBuilder, jwtKey);
-const authController = new AuthController(router, queryBuilder, jwtKey);
-const dataController = new DataController(router, queryBuilder, jwtKey);
+const accountController = new AccountController(router, client, jwtKey);
+const authController = new AuthController(router, client, jwtKey);
+const dataController = new DataController(router, client, jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(
   accountController,
