@@ -17,4 +17,4 @@ export {
   SizedField,
   transaction,
   initTables,
-} from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts";
+} from "https://raw.githubusercontent.com/ninjinskii/denorm/1.0.0/mod.ts";
