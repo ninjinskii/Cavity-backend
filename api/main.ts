@@ -1,6 +1,6 @@
 import { Application, Client, initTables, Router } from "../deps.ts";
 import AuthController from "./controller/auth.ts";
-import DataController from "./controller/data.ts";
+import DataController from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import AccountController from "./controller/account.ts";

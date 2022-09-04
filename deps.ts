@@ -23,4 +23,5 @@ export {
   SizedField,
   transaction,
   Update,
-} from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.0/mod.ts";
+  Where,
+} from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.2/mod.ts";

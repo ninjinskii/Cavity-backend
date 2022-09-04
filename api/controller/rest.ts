@@ -1,24 +1,36 @@
-import {
-  Context,
-  logger,
-  QueryBuilder,
-  Router,
-  transaction,
-} from "../../deps.ts";
+import { Client, Context, logger, Router, transaction } from "../../deps.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
+import { DataDao } from "../dao/rest-dao.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
 
-  constructor(router: Router, builder: QueryBuilder, jwtKey: CryptoKey) {
-    super(router, builder);
+  // Maps route to DB table
+  private mapper: DaoMapper = {
+    "/county": new DataDao(this.client, "county"),
+    "/wine": new DataDao(this.client, "wine"),
+    "/bottle": new DataDao(this.client, "bottle"),
+    "/friend": new DataDao(this.client, "friend"),
+    "/grape": new DataDao(this.client, "grape"),
+    "/review": new DataDao(this.client, "review"),
+    "/qgrape": new DataDao(this.client, "q_grape"),
+    "/freview": new DataDao(this.client, "f_review"),
+    "/history": new DataDao(this.client, "history_entry"),
+    "/tasting": new DataDao(this.client, "tasting"),
+    "/tasting-action": new DataDao(this.client, "tasting_action"),
+    "/history-x-friend": new DataDao(this.client, "history_x_friend"),
+    "/tasting-x-friend": new DataDao(this.client, "tasting_x_friend"),
+  };
+
+  constructor(router: Router, client: Client, jwtKey: CryptoKey) {
+    super(router, client);
     this.jwtKey = jwtKey;
   }
 
   handleRequests(): void {
-    for (const path of Object.keys(mapper)) {
+    for (const path of Object.keys(this.mapper)) {
       this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))
         .get(path, (ctx: Context) => this.handleGet(ctx))
@@ -29,7 +41,7 @@ export default class DataController extends Controller {
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const objects = await ctx.request.body().value;
-      const table = mapper[this.getMapperEntry(ctx)];
+      const dao = this.mapper[this.getMapperEntry(ctx)];
 
       if (!(objects instanceof Array)) {
         return json(ctx, { message: this.$t.missingParameters }, 400);
@@ -37,31 +49,21 @@ export default class DataController extends Controller {
 
       if (objects.length === 0) {
         try {
-          await this.builder
-            .delete()
-            .from(table)
-            .where({ field: "account_id", equals: accountId })
-            .execute();
+          await dao.deleteAllForAccount(accountId);
         } catch (error) {
           logger.error(error);
           json(ctx, { message: this.$t.baseError }, 500);
         }
-        
+
         return success(ctx);
       }
 
       objects.forEach((object) => object.accountId = accountId);
-      try {
-        const ok = await transaction(this.builder, async () => {
-          await this.builder
-            .delete()
-            .from(table)
-            .where({ field: "account_id", equals: accountId })
-            .execute();
 
-          await this.builder
-            .insert(table, objects)
-            .execute();
+      try {
+        const ok = await transaction([dao], async () => {
+          await dao.deleteAllForAccount(accountId);
+          await dao.insert(objects);
         });
 
         ok
@@ -77,15 +79,10 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const table = mapper[this.getMapperEntry(ctx)];
+        const dao = this.mapper[this.getMapperEntry(ctx)];
         // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
         // deno-lint-ignore no-explicit-any
-        const objects: any[] = await this.builder
-          .select("*")
-          .from(table)
-          .where({ field: "account_id", equals: accountId })
-          .execute();
-
+        const objects = await dao.selectByAccountId(accountId) as any[];
         objects.forEach((obj) => delete obj["accountId"]);
 
         json(ctx, objects);
@@ -99,11 +96,8 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const table = mapper[this.getMapperEntry(ctx)];
-        await this.builder
-          .delete()
-          .from(table)
-          .where({ field: "account_id", equals: accountId });
+        const dao = this.mapper[this.getMapperEntry(ctx)];
+        await dao.deleteAllForAccount(accountId);
 
         success(ctx);
       } catch (error) {
@@ -118,23 +112,6 @@ export default class DataController extends Controller {
   }
 }
 
-interface RouteMapper {
-  [route: string]: string;
+interface DaoMapper {
+  [route: string]: DataDao<unknown>;
 }
-
-// Maps route to DB table
-const mapper: RouteMapper = {
-  "/county": "county",
-  "/wine": "wine",
-  "/bottle": "bottle",
-  "/friend": "friend",
-  "/grape": "grape",
-  "/review": "review",
-  "/qgrape": "q_grape",
-  "/freview": "f_review",
-  "/history": "history_entry",
-  "/tasting": "tasting",
-  "/tasting-action": "tasting_action",
-  "/history-x-friend": "history_x_friend",
-  "/tasting-x-friend": "tasting_x_friend",
-};

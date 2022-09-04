@@ -1,11 +1,7 @@
-import { Client, Dao, Delete, Insert, Query, Where } from "../../deps.ts";
+import { Dao, Delete, Insert, Query, Where } from "../../deps.ts";
 import { Account } from "../model/account.ts";
 
-export class AccountDao extends Dao {
-  constructor(client: Client) {
-    super(client, "account");
-  }
-
+export class AuthDao extends Dao {
   @Query(
     "SELECT id, email, registration_code AS registrationCode FROM account WHERE id = $1;",
   )
@@ -17,17 +13,6 @@ export class AccountDao extends Dao {
     "SELECT id, registration_code AS registrationCode FROM account WHERE email = $1;",
   )
   selectByEmail(_email: string): Promise<Account[]> {
-    throw new Error();
-  }
-
-  @Query(
-    "SELECT id, registration_code AS registrationCode, password FROM account WHERE email = $1;",
-  )
-  selectByEmailWithPassword(
-    _email: string,
-  ): Promise<
-    { id: number; registrationCode: number | null; password: string }[]
-  > {
     throw new Error();
   }
 
