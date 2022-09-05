@@ -24,9 +24,21 @@ applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
-const databaseUrl = Deno.env.get("DATABASE_URL") || "";
-const secret = Deno.env.get("TOKEN_SECRET") || "mySuperSecret";
-const client = new Client(databaseUrl);
+const { DATABASE_URL, TOKEN_SECRET } = Deno.env.toObject();
+const secret = TOKEN_SECRET;
+const [user, password, hostname, port, database] = DATABASE_URL.split(",");
+const client = new Client({
+  user,
+  hostname,
+  database,
+  port,
+  password,
+  tls: {
+    caCertificates: [
+      await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
+    ],
+  },
+});
 
 export const mapper: DaoMapper = {
   "/county": new DataDao(client, "county"),
