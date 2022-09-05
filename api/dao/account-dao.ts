@@ -34,7 +34,7 @@ export class AccountDao extends Dao {
     throw new Error();
   }
 
-  @Query("UPDATE account SET registration_code = null WHERE email = $1;")
+  @Query("UPDATE account SET registration_code = NULL WHERE email = $1;")
   register(_email: string): Promise<never> {
     throw new Error();
   }
@@ -44,7 +44,7 @@ export class AccountDao extends Dao {
     throw new Error();
   }
 
-  @Query("UPDATE account SET password = $1 WHERE reset_token = $2;")
+  @Query("UPDATE account SET password = $1, reset_token = NULL WHERE reset_token = $2;")
   recover(_password: string, _token: string): Promise<never> {
     throw new Error();
   }
