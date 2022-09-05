@@ -158,8 +158,6 @@ export default class AccountController extends Controller {
 
     try {
       const account = await this.accountDao.selectByEmail(confirmDto.email);
-      console.log("account now")
-      console.log(account)
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);
@@ -197,7 +195,7 @@ export default class AccountController extends Controller {
       const { email } = await ctx.request.body().value;
       const subject = this.$t.emailSubjectRecover;
 
-      if (!(await this.isAccountUnique(email))) {
+      if ((await this.accountDao.selectByEmail(email)).length === 0) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
         return success(ctx);
       }

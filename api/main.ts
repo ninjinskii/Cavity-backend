@@ -96,7 +96,7 @@ app.use(async (ctx, next) => {
 
 const accountController = new AccountController(router, client, jwtKey);
 const authController = new AuthController(router, client, jwtKey);
-const dataController = new DataController(router, client, jwtKey, mapper);
+const dataController = new DataController(router, client, jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(
   accountController,
