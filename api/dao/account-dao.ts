@@ -7,21 +7,24 @@ export class AccountDao extends Dao {
   }
 
   @Query(
-    "SELECT id, email, registration_code AS registrationCode FROM account WHERE id = $1;",
+    "SELECT id, email, registration_code FROM account WHERE id = $1;", // `... AS "resgistrationCode" ...` for a quick fix
+    ["id", "email", "registrationCode"],
   )
   selectById(_id: number): Promise<Account[]> {
     throw new Error();
   }
 
   @Query(
-    "SELECT id, registration_code AS registrationCode FROM account WHERE email = $1;",
+    "SELECT id, registration_code FROM account WHERE email = $1;",
+    ["id", "registrationCode"],
   )
   selectByEmail(_email: string): Promise<Account[]> {
     throw new Error();
   }
 
   @Query(
-    "SELECT id, registration_code AS registrationCode, password FROM account WHERE email = $1;",
+    "SELECT id, registration_code, password FROM account WHERE email = $1;",
+    ["id", "registrationCode", "password"],
   )
   selectByEmailWithPassword(
     _email: string,

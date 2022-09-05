@@ -17,7 +17,7 @@ import Controller from "./controller.ts";
 export default class AccountController extends Controller {
   private jwtKey: CryptoKey;
   private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
-  private accountDao = new AccountDao(super.client);
+  private accountDao = new AccountDao(this.client);
 
   constructor(router: Router, client: Client, jwtKey: CryptoKey) {
     super(router, client);
@@ -81,6 +81,7 @@ export default class AccountController extends Controller {
         email,
         password: hash,
         registrationCode: Account.generateRegistrationCode(),
+        resetToken: null,
       };
 
       await this.accountDao.insert([account]);
@@ -157,6 +158,8 @@ export default class AccountController extends Controller {
 
     try {
       const account = await this.accountDao.selectByEmail(confirmDto.email);
+      console.log("account now")
+      console.log(account)
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);

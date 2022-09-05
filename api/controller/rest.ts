@@ -3,26 +3,10 @@ import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { DataDao } from "../dao/rest-dao.ts";
+import { mapper } from "../main.ts";
 
 export default class DataController extends Controller {
   private jwtKey: CryptoKey;
-
-  // Maps route to DB table
-  private mapper: DaoMapper = {
-    "/county": new DataDao(this.client, "county"),
-    "/wine": new DataDao(this.client, "wine"),
-    "/bottle": new DataDao(this.client, "bottle"),
-    "/friend": new DataDao(this.client, "friend"),
-    "/grape": new DataDao(this.client, "grape"),
-    "/review": new DataDao(this.client, "review"),
-    "/qgrape": new DataDao(this.client, "q_grape"),
-    "/freview": new DataDao(this.client, "f_review"),
-    "/history": new DataDao(this.client, "history_entry"),
-    "/tasting": new DataDao(this.client, "tasting"),
-    "/tasting-action": new DataDao(this.client, "tasting_action"),
-    "/history-x-friend": new DataDao(this.client, "history_x_friend"),
-    "/tasting-x-friend": new DataDao(this.client, "tasting_x_friend"),
-  };
 
   constructor(router: Router, client: Client, jwtKey: CryptoKey) {
     super(router, client);
@@ -30,7 +14,7 @@ export default class DataController extends Controller {
   }
 
   handleRequests(): void {
-    for (const path of Object.keys(this.mapper)) {
+    for (const path of Object.keys(mapper)) {
       this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))
         .get(path, (ctx: Context) => this.handleGet(ctx))
@@ -41,7 +25,7 @@ export default class DataController extends Controller {
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       const objects = await ctx.request.body().value;
-      const dao = this.mapper[this.getMapperEntry(ctx)];
+      const dao = mapper[this.getMapperEntry(ctx)];
 
       if (!(objects instanceof Array)) {
         return json(ctx, { message: this.$t.missingParameters }, 400);
@@ -79,7 +63,7 @@ export default class DataController extends Controller {
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = this.mapper[this.getMapperEntry(ctx)];
+        const dao = mapper[this.getMapperEntry(ctx)];
         // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
         // deno-lint-ignore no-explicit-any
         const objects = await dao.selectByAccountId(accountId) as any[];
@@ -96,7 +80,7 @@ export default class DataController extends Controller {
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
       try {
-        const dao = this.mapper[this.getMapperEntry(ctx)];
+        const dao = mapper[this.getMapperEntry(ctx)];
         await dao.deleteAllForAccount(accountId);
 
         success(ctx);
@@ -112,6 +96,6 @@ export default class DataController extends Controller {
   }
 }
 
-interface DaoMapper {
+export interface DaoMapper {
   [route: string]: DataDao<unknown>;
 }
