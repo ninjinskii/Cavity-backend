@@ -1,13 +1,10 @@
-import { QueryBuilder, Router } from "../../deps.ts";
+import { Client, Router } from "../../deps.ts";
 import { EnTranslations, Translatable } from "../i18n/translatable.ts";
 
 export default abstract class Controller {
   $t: Translatable = new EnTranslations();
 
-  constructor(
-    protected router: Router,
-    protected builder: QueryBuilder,
-  ) {
+  constructor(protected router: Router, protected client: Client) {
     this.handleRequests();
   }
 
