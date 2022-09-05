@@ -93,9 +93,10 @@ export default class AccountController extends Controller {
       success(ctx);
     } catch (error) {
       logger.error(error);
+      
       try {
         // Mail sending has probably gone wrong. Remove the account.
-        this.accountDao.deleteByEmail(email); // We dont wait for the mail to send itself
+        this.accountDao.deleteByEmail(email); // We dont wait for account deletion
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
