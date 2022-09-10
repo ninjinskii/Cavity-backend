@@ -48,6 +48,8 @@ export default class AuthController extends Controller {
       if (!isAuthenticated) {
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
+
+      logger.info(`User ${email} logged in (id: ${account[0].id})`)
       
       const token = await jwt.create(
         { alg: "HS512", typ: "JWT" },

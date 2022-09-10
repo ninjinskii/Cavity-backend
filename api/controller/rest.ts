@@ -24,6 +24,8 @@ export default class DataController extends Controller {
 
   async handlePost(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      logger.info(`POST: requested by ${accountId}`)
+
       const objects = await ctx.request.body().value;
       const dao = mapper[this.getMapperEntry(ctx)];
 
@@ -62,6 +64,8 @@ export default class DataController extends Controller {
 
   async handleGet(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      logger.info(`GET: requested by ${accountId}`)
+
       try {
         const dao = mapper[this.getMapperEntry(ctx)];
         // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
@@ -79,6 +83,8 @@ export default class DataController extends Controller {
 
   async handleDelete(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+      logger.info(`DELETE: requested by ${accountId}`)
+
       try {
         const dao = mapper[this.getMapperEntry(ctx)];
         await dao.deleteAllForAccount(accountId);

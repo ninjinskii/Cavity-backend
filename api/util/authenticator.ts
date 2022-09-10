@@ -1,4 +1,4 @@
-import { Context, jwt } from "../../deps.ts";
+import { Context, jwt, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
 import { json } from "./api-response.ts";
 
@@ -24,6 +24,7 @@ export default async function inAuthentication(
     const accountId = parseInt(account_id);
 
     if (!isNaN(accountId)) {
+      logger.info(`Authorized account ${accountId}`)
       return await block(accountId);
     } else {
       json(ctx, { message: t.unauthorized }, 401);
