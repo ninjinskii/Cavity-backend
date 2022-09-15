@@ -26,31 +26,28 @@ export default class AuthController extends Controller {
 
     try {
       const account = await this.accountDao.selectByEmailWithPassword(email);
-  
+
       if (account.length === 0) {
         // Not mentionning the fact that the account doesn't exists for security reasons
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
-      
+
       const isConfirmed = account[0].registrationCode === null;
-      
+
       // Using compareSync() instead of compare() because compare() is causing a crash on Deno deploy
       // See https://github.com/denoland/deploy_feedback/issues/171
-      const isAuthenticated = bcrypt.compareSync(
-        password,
-        account[0].password as string,
-        );
-        
+      const isAuthenticated = bcrypt.compareSync(password, account[0].password);
+
       if (!isConfirmed) {
         return json(ctx, { message: this.$t.confirmAccount }, 412);
       }
-      
+
       if (!isAuthenticated) {
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
-      logger.info(`User ${email} logged in (id: ${account[0].id})`)
-      
+      logger.info(`User ${email} logged in (id: ${account[0].id})`);
+
       const token = await jwt.create(
         { alg: "HS512", typ: "JWT" },
         {
@@ -58,12 +55,12 @@ export default class AuthController extends Controller {
           account_id: account[0].id,
         },
         this.jwtKey,
-        );
-        
-        json(ctx, { token, email });
-      } catch (error) {
-        logger.error(error);
-        json(ctx, { message: this.$t.baseError }, 500);
+      );
+
+      json(ctx, { token, email });
+    } catch (error) {
+      logger.error(error);
+      json(ctx, { message: this.$t.baseError }, 500);
     }
   }
 }

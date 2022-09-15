@@ -1,14 +1,6 @@
-import {
-  bcrypt,
-  Client,
-  Context,
-  getQuery,
-  jwt,
-  logger,
-  Router,
-} from "../../deps.ts";
+import { bcrypt, Client, Context, jwt, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
-import { Account, ConfirmAccountDTO } from "../model/account.ts";
+import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
@@ -56,11 +48,7 @@ export default class AccountController extends Controller {
   }
 
   async postAccount(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.request.body().value as {
-      email: string;
-      password: string;
-    };
-
+    const { email, password } = await ctx.request.body().value as AccountDTO;
     const securePassword = (password as string).match(this.securePwdRegex);
     const isSecure = securePassword?.length;
 
@@ -93,7 +81,7 @@ export default class AccountController extends Controller {
       success(ctx);
     } catch (error) {
       logger.error(error);
-      
+
       try {
         // Mail sending has probably gone wrong. Remove the account.
         this.accountDao.deleteByEmail(email); // We dont wait for account deletion
@@ -103,16 +91,6 @@ export default class AccountController extends Controller {
       }
     }
   }
-
-  // async getAccounts(ctx: Context): Promise<void> {
-  //   try {
-  //     const accounts = await Account.all();
-  //     ctx.response.body = accounts;
-  //   } catch (error) {
-  //     ctx.response.status = 500;
-  //     ctx.response.body = { message: this.$t.baseError };
-  //   }
-  // }
 
   async getAccount(ctx: Context): Promise<void> {
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
@@ -133,20 +111,31 @@ export default class AccountController extends Controller {
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
+    // Decision have been made: to delete account, we need token + password
     await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      const { id } = getQuery(ctx, { mergeParams: true });
-      const parsed = parseInt(id);
+      const { email, password } = await ctx.request.body().value as AccountDTO;
+      const account = await this.accountDao.selectByEmailWithPassword(email);
 
-      if (isNaN(parsed)) {
-        return json(ctx, { message: this.$t.baseError }, 400);
+      if (account.length === 0) {
+        // Not mentionning the fact that the account doesn't exists for security reasons
+        return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
-      if (accountId !== parsed) {
+      // Using compareSync() instead of compare() because compare() is causing a crash on Deno deploy
+      // See https://github.com/denoland/deploy_feedback/issues/171
+      const isAuthenticated = bcrypt.compareSync(password, account[0].password);
+
+      // Token accountId doesn't match database accountId
+      if (accountId !== account[0].id) {
         return json(ctx, { message: this.$t.unauthorized }, 401);
       }
 
+      if (!isAuthenticated) {
+        return json(ctx, { message: this.$t.wrongCredentials }, 400);
+      }
+
       try {
-        await this.accountDao.deleteById(parsed);
+        await this.accountDao.deleteById(accountId);
         success(ctx);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
