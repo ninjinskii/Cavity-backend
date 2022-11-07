@@ -24,4 +24,4 @@ export {
   transaction,
   Update,
   Where,
-} from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.5/mod.ts";
+} from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.6/mod.ts";

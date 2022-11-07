@@ -21,12 +21,6 @@ hostname -I | awk '{print $1}'
 
 Access the app from http://ip:5000
 
-## Run tests
-```bash
-docker-compose up -d
-docker-compose exec web deno test --allow-env /app/tests
-```
-
 ## Dependency code has been changed ?
 If you're not using a tag but a branch name (or latest), latest code fetching by Deno can be skipped because the URL stay the same.
 To ensure deno is not using cache on a modified dependance, run:
