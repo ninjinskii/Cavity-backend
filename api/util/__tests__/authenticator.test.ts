@@ -1,0 +1,148 @@
+import inAuthentication from "../authenticator.ts";
+import {
+  assertEquals,
+  assertSpyCall,
+  beforeEach,
+  Context,
+  createMockContext,
+  describe,
+  it,
+  returnsNext,
+  spy,
+  stub,
+} from "../../../deps.ts";
+import { FrTranslations } from "../../i18n/translatable.ts";
+import {
+  simpleStubAsync,
+  spyContext,
+  spyCount,
+} from "../../../mocks/test-utils.ts";
+import { JwtServiceImpl } from "../../service/jwt-service.ts";
+
+const $t = new FrTranslations();
+const jwtService = await JwtServiceImpl.newInstance("secret");
+
+let mockContext: Context;
+
+describe("inAuthentication", () => {
+  beforeEach(() => {
+    mockContext = createMockContext({
+      headers: [["Authorization", "Bearer zepuifgo"]],
+    });
+  });
+
+  it("can retrieve account id & pass it to execution block", async () => {
+    const verifySpy = simpleStubAsync(jwtService, "verify", {
+      account_id: "1",
+    });
+    const callbackSpy = spy(() => Promise.resolve());
+
+    await inAuthentication(
+      mockContext,
+      jwtService,
+      $t,
+      callbackSpy,
+    );
+
+    spyContext([verifySpy], () => {
+      assertSpyCall(verifySpy, spyCount(1), { args: ["zepuifgo"] });
+      assertSpyCall(callbackSpy, spyCount(1), { args: [1] });
+
+      // response should not be touched if everything is going ok
+      assertEquals(mockContext.response.status, 404);
+      assertEquals(mockContext.response.body, undefined);
+    });
+  });
+
+  it("should escape if authorization is wrongly formatted", async () => {
+    const verifySpy = simpleStubAsync(jwtService, "verify", {
+      account_id: "1",
+    });
+    const callbackSpy = spy(() => Promise.resolve());
+
+    mockContext = createMockContext({ headers: [["Authorization", "Bearer"]] });
+
+    await inAuthentication(
+      mockContext,
+      jwtService,
+      $t,
+      callbackSpy,
+    );
+
+    spyContext([verifySpy], () => {
+      assertSpyCall(verifySpy, spyCount(0));
+      assertSpyCall(callbackSpy, spyCount(0));
+      assertEquals(mockContext.response.status, 401);
+      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+    });
+  });
+
+  it("should escape if authorization header is missing", async () => {
+    const verifySpy = simpleStubAsync(jwtService, "verify", {
+      account_id: "1",
+    });
+    const callbackSpy = spy(() => Promise.resolve());
+
+    mockContext = createMockContext();
+
+    await inAuthentication(
+      mockContext,
+      jwtService,
+      $t,
+      callbackSpy,
+    );
+
+    spyContext([verifySpy], () => {
+      assertSpyCall(verifySpy, spyCount(0));
+      assertSpyCall(callbackSpy, spyCount(0));
+      assertEquals(mockContext.response.status, 401);
+      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+    });
+  });
+
+  it("should escape if accountId is not a number", async () => {
+    const verifySpy = simpleStubAsync(jwtService, "verify", "a");
+    const callbackSpy = spy(() => Promise.resolve());
+
+    await inAuthentication(
+      mockContext,
+      jwtService,
+      $t,
+      callbackSpy,
+    );
+
+    spyContext([verifySpy], () => {
+      assertSpyCall(verifySpy, spyCount(0));
+      assertSpyCall(callbackSpy, spyCount(0));
+      assertEquals(mockContext.response.status, 401);
+      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+    });
+  });
+
+  it("should escape if verify throws", async () => {
+    const verifySpy = stub(
+      jwtService,
+      "verify",
+      returnsNext([Promise.reject()]),
+    );
+    const callbackSpy = spy(() => Promise.resolve());
+
+    await inAuthentication(
+      mockContext,
+      jwtService,
+      $t,
+      callbackSpy,
+    );
+
+    spyContext([verifySpy], () => {
+      assertSpyCall(verifySpy, spyCount(1));
+      assertSpyCall(callbackSpy, spyCount(0));
+      assertEquals(mockContext.response.status, 401);
+      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+    });
+  });
+});
+
+// Vrai pour les transactions je crois
+// Deno.test("Return whathever 'block' returns", async () => {
+// });

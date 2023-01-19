@@ -1,10 +1,11 @@
-import { Context, jwt, logger } from "../../deps.ts";
+import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
+import { JwtService, } from "../service/jwt-service.ts";
 import { json } from "./api-response.ts";
 
 export default async function inAuthentication(
   ctx: Context,
-  jwtKey: CryptoKey,
+  jwtService: JwtService,
   t: Translatable,
   block: (accountId: number) => Promise<void>,
 ): Promise<void> {
@@ -17,7 +18,7 @@ export default async function inAuthentication(
   const [_, token] = authorization!.split(" ");
 
   try {
-    const { account_id } = await jwt.verify(token, jwtKey) as {
+    const { account_id } = await jwtService.verify(token) as {
       account_id: string;
     };
 

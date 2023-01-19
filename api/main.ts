@@ -3,7 +3,7 @@ import AuthController from "./controller/auth.ts";
 import DataController, { DaoMapper } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
-import AccountController from "./controller/account.ts";
+import { AccountController } from "./controller/account.ts";
 import { Account } from "./model/account.ts";
 import { Bottle } from "./model/bottle.ts";
 import { County } from "./model/county.ts";
@@ -19,13 +19,14 @@ import { TastingXFriend } from "./model/tasting-x-friend.ts";
 import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
 import { DataDao } from "./dao/rest-dao.ts";
+import { AccountDao } from "./dao/account-dao.ts";
+import { JwtServiceImpl } from "./service/jwt-service.ts";
 
 applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
 const { DATABASE_URL, TOKEN_SECRET } = Deno.env.toObject();
-const secret = TOKEN_SECRET;
 const [user, password, hostname, port, database] = DATABASE_URL.split(",");
 const client = new Client({
   user,
@@ -78,15 +79,7 @@ await initTables(
 
 await client.connect();
 
-const encoder = new TextEncoder();
-const keyBuffer = encoder.encode(secret);
-const jwtKey = await crypto.subtle.importKey(
-  "raw",
-  keyBuffer,
-  { name: "HMAC", hash: "SHA-512" },
-  true,
-  ["sign", "verify"],
-);
+const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET)
 
 app.use(async (ctx, next) => {
   const language = ctx.request.headers.get("Accept-Language");
@@ -106,9 +99,11 @@ app.use(async (ctx, next) => {
   }
 });
 
-const accountController = new AccountController(router, client, jwtKey);
-const authController = new AuthController(router, client, jwtKey);
-const dataController = new DataController(router, client, jwtKey);
+const accountDao = new AccountDao(client)
+
+const accountController = new AccountController({ router, client, jwtService, accountDao });
+const authController = new AuthController(router, client, jwtService.jwtKey);
+const dataController = new DataController(router, client, jwtService.jwtKey);
 const manager = new ControllerManager();
 manager.addControllers(
   accountController,

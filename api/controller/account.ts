@@ -1,19 +1,30 @@
-import { bcrypt, Client, Context, jwt, logger, Router } from "../../deps.ts";
+import { bcrypt, Client, Context, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
+import { JwtService } from "../service/jwt-service.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 
-export default class AccountController extends Controller {
-  private jwtKey: CryptoKey;
-  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
-  private accountDao = new AccountDao(this.client);
+export interface AccountControllerOptions {
+  router: Router;
+  client: Client;
+  jwtService: JwtService;
+  accountDao: AccountDao;
+}
 
-  constructor(router: Router, client: Client, jwtKey: CryptoKey) {
+export class AccountController extends Controller {
+  private jwtService: JwtService;
+  private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
+  private accountDao: AccountDao;
+
+  constructor(
+    { router, client, jwtService, accountDao }: AccountControllerOptions,
+  ) {
     super(router, client);
-    this.jwtKey = jwtKey;
+    this.jwtService = jwtService;
+    this.accountDao = accountDao;
   }
 
   get default() {
@@ -93,7 +104,7 @@ export default class AccountController extends Controller {
   }
 
   async getAccount(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
       try {
         const account = await this.accountDao.selectById(accountId);
 
@@ -112,7 +123,7 @@ export default class AccountController extends Controller {
 
   async deleteAccount(ctx: Context): Promise<void> {
     // Decision have been made: to delete account, we need token + password
-    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
       const { email, password } = await ctx.request.body().value as AccountDTO;
       const account = await this.accountDao.selectByEmailWithPassword(email);
 
@@ -165,14 +176,10 @@ export default class AccountController extends Controller {
 
       await this.accountDao.register(confirmDto.email);
 
-      const token = await jwt.create(
-        { alg: "HS512", typ: "JWT" },
-        {
-          exp: jwt.getNumericDate(60 * 60 * 48), // 48h
-          account_id: account[0].id,
-        },
-        this.jwtKey,
-      );
+      const token = await this.jwtService.create({
+        header: { alg: "HS512", typ: "JWT" },
+        payload: { account_id: account[0].id },
+      });
 
       json(ctx, { token });
     } catch (_error) {
@@ -190,14 +197,14 @@ export default class AccountController extends Controller {
         return success(ctx);
       }
 
-      const token = await jwt.create(
-        { alg: "HS512", typ: "JWT" },
-        {
-          exp: jwt.getNumericDate(60 * 15), // 15min
+      const token = await this.jwtService.create({
+        header: { alg: "HS512", typ: "JWT" },
+        payload: {
           reset_password: true,
         },
-        this.jwtKey,
-      );
+        expirationMinutes: 60 * 15, // 15 min
+      });
+
       const content =
         `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
 
@@ -214,7 +221,7 @@ export default class AccountController extends Controller {
     const { token, password } = await ctx.request.body().value;
 
     try {
-      const { reset_password } = await jwt.verify(token, this.jwtKey) as {
+      const { reset_password } = await this.jwtService.verify(token) as {
         reset_password: boolean;
       };
 
