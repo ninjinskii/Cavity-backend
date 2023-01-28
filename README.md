@@ -28,6 +28,12 @@ To ensure deno is not using cache on a modified dependance, run:
 docker-compose build --no-cache
 ```
 
+## Run unit tests
+```bash
+docker-compose up -d
+docker-compose exec web deno test --allow-env
+```
+
 ## Backup the database
 Go to supabase and run the "Before backup" SQL command. Then:
 ```bash
