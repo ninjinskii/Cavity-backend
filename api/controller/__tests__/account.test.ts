@@ -1,6 +1,7 @@
 import {
-  assertEquals,
+  afterAll,
   assertSpyCall,
+  assertSpyCalls,
   beforeEach,
   Client,
   Context,
@@ -11,32 +12,28 @@ import {
   spy,
   stub,
 } from "../../../deps.ts";
-import { FakeRouter } from "../../../mocks/test-fakes.ts";
 import { AccountController } from "../account.ts";
-import {
-  fakeRequestBody,
-  simpleStubAsync,
-  spyContext,
-  spyCount,
-} from "../../../mocks/test-utils.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
 import { JwtServiceImpl } from "../../service/jwt-service.ts";
 import { AccountDao } from "../../dao/account-dao.ts";
+import PasswordService from "../../service/password-service.ts";
+import {
+  assertBodyEquals,
+  assertStatusEquals,
+  fakeRequestBody,
+  FakeRouter,
+  simpleStub,
+  simpleStubAsync,
+  spyContext,
+} from "../../util/test-utils.ts";
 
 const $t = new EnTranslations();
 
 const client = {} as Client;
-
-// const JwtService = Spy(FakeBaseJwtService);
 const jwtService = await JwtServiceImpl.newInstance("secret");
-
-// const Router = Spy(FakeRouter);
 const router = new FakeRouter();
-
-// const AccountDao = Spy(FakeAccountDao);
 const accountDao = new AccountDao(client);
-
 const accountController = new AccountController({
   router,
   client,
@@ -64,24 +61,20 @@ describe("Account controller", () => {
   describe("getAccount", () => {
     it("can retrieve an account", async () => {
       const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
-      const daoSpy = stub(
-        accountDao,
-        "selectById",
-        returnsNext([Promise.resolve([fakeAccount])]),
-      );
+      const daoSpy = simpleStubAsync(accountDao, "selectById", [fakeAccount]);
 
       await accountController.getAccount(mockContext);
 
       spyContext([jwtSpy, daoSpy], () => {
-        assertSpyCall(jwtSpy, spyCount(1), { args: ["zepuifgo"] });
-        assertSpyCall(daoSpy, spyCount(1), { args: [1] });
-        assertEquals(mockContext.response.status, 200);
-        assertEquals(mockContext.response.body, fakeAccount);
+        assertSpyCall(jwtSpy, 0, { args: ["zepuifgo"] });
+        assertSpyCall(daoSpy, 0, { args: [1] });
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, fakeAccount);
       });
     });
 
     it("cannot retrieve account if not authenticated", async () => {
-      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const jwtSpy = spy(jwtService, "verify");
       const daoSpy = spy(accountDao, "selectById");
 
       mockContext = createMockContext();
@@ -89,30 +82,24 @@ describe("Account controller", () => {
       await accountController.getAccount(mockContext);
 
       spyContext([jwtSpy, daoSpy], () => {
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertSpyCall(daoSpy, spyCount(0));
-        assertEquals(mockContext.response.body, {
-          message: $t.unauthorized,
-        });
-        assertEquals(mockContext.response.status, 401);
+        assertSpyCalls(jwtSpy, 0);
+        assertSpyCalls(daoSpy, 0);
+        assertBodyEquals(mockContext, { message: $t.unauthorized });
+        assertStatusEquals(mockContext, 401);
       });
     });
 
     it("should return 404 if no account matched", async () => {
       const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
-      const daoSpy = stub(
-        accountDao,
-        "selectById",
-        returnsNext([Promise.resolve([])]),
-      );
+      const daoSpy = simpleStubAsync(accountDao, "selectById", []);
 
       await accountController.getAccount(mockContext);
 
       spyContext([jwtSpy, daoSpy], () => {
-        assertSpyCall(jwtSpy, spyCount(1));
-        assertSpyCall(daoSpy, spyCount(0));
-        assertEquals(mockContext.response.body, { message: $t.notFound });
-        assertEquals(mockContext.response.status, 404);
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(daoSpy, 1);
+        assertBodyEquals(mockContext, { message: $t.notFound });
+        assertStatusEquals(mockContext, 404);
       });
     });
 
@@ -127,16 +114,16 @@ describe("Account controller", () => {
       await accountController.getAccount(mockContext);
 
       spyContext([jwtSpy, daoSpy], () => {
-        assertSpyCall(jwtSpy, spyCount(1));
-        assertSpyCall(daoSpy, spyCount(1));
-        assertEquals(mockContext.response.body, { message: $t.baseError });
-        assertEquals(mockContext.response.status, 500);
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(daoSpy, 1);
+        assertBodyEquals(mockContext, { message: $t.baseError });
+        assertStatusEquals(mockContext, 500);
       });
     });
   });
 
   describe("confirmAccount", () => {
-    it("should be possible to fake data in request body", async () => {
+    it("can confirm an account & return token", async () => {
       const jwtSpy = simpleStubAsync(jwtService, "create", "token");
       const daoSelectSpy = simpleStubAsync(accountDao, "selectByEmail", [
         fakeAccount,
@@ -151,25 +138,23 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), { args: [fakeAccount.email] });
-        assertSpyCall(daoRegisterSpy, spyCount(1), {
-          args: [fakeAccount.email],
-        });
-        assertSpyCall(jwtSpy, spyCount(1), {
+        assertSpyCall(daoSelectSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCall(daoRegisterSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCall(jwtSpy, 0, {
           args: [{
             header: { alg: "HS512", typ: "JWT" },
             payload: { account_id: fakeAccount.id },
           }],
         });
-        assertEquals(mockContext.response.status, 200);
-        assertEquals(mockContext.response.body, { token: "token" });
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { token: "token" });
       });
     });
 
     it("should fail if no account matched", async () => {
-      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const jwtSpy = spy(jwtService, "create");
       const daoSelectSpy = simpleStubAsync(accountDao, "selectByEmail", []);
-      const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
+      const daoRegisterSpy = spy(accountDao, "register");
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
@@ -179,11 +164,11 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), { args: [fakeAccount.email] });
-        assertSpyCall(daoRegisterSpy, spyCount(0));
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertEquals(mockContext.response.status, 400);
-        assertEquals(mockContext.response.body, { message: $t.wrongAccount });
+        assertSpyCall(daoSelectSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCalls(daoRegisterSpy, 0);
+        assertSpyCalls(jwtSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, { message: $t.wrongAccount });
       });
     });
 
@@ -196,11 +181,11 @@ describe("Account controller", () => {
         resetToken: null,
       };
 
-      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const jwtSpy = spy(jwtService, "create");
+      const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = simpleStubAsync(accountDao, "selectByEmail", [
         confirmedfakeAccount,
       ]);
-      const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
 
       fakeRequestBody(mockContext, {
         email: "abcd@abcd.fr",
@@ -210,24 +195,20 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), {
-          args: [confirmedfakeAccount.email],
-        });
-        assertSpyCall(daoRegisterSpy, spyCount(0));
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertEquals(mockContext.response.status, 400);
-        assertEquals(mockContext.response.body, {
-          message: $t.alreadyConfirmed,
-        });
+        assertSpyCall(daoSelectSpy, 0, { args: [confirmedfakeAccount.email] });
+        assertSpyCalls(daoRegisterSpy, 0);
+        assertSpyCalls(jwtSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, { message: $t.alreadyConfirmed });
       });
     });
 
     it("should fail if registration code is not a number", async () => {
-      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const jwtSpy = spy(jwtService, "create");
+      const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = simpleStubAsync(accountDao, "selectByEmail", [
         fakeAccount,
       ]);
-      const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
@@ -237,22 +218,22 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), { args: [fakeAccount.email] });
-        assertSpyCall(daoRegisterSpy, spyCount(0));
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertEquals(mockContext.response.status, 400);
-        assertEquals(mockContext.response.body, {
+        assertSpyCall(daoSelectSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCalls(daoRegisterSpy, 0);
+        assertSpyCalls(jwtSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, {
           message: $t.wrongRegistrationCode,
         });
       });
     });
 
     it("should fail if registration code is wrong", async () => {
-      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const jwtSpy = spy(jwtService, "create");
+      const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = simpleStubAsync(accountDao, "selectByEmail", [
         fakeAccount,
       ]);
-      const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
@@ -262,24 +243,24 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), { args: [fakeAccount.email] });
-        assertSpyCall(daoRegisterSpy, spyCount(0));
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertEquals(mockContext.response.status, 400);
-        assertEquals(mockContext.response.body, {
+        assertSpyCall(daoSelectSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCalls(daoRegisterSpy, 0);
+        assertSpyCalls(jwtSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, {
           message: $t.wrongRegistrationCode,
         });
       });
     });
 
     it("should fail if database error occured", async () => {
-      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const jwtSpy = spy(jwtService, "create");
+      const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = stub(
         accountDao,
         "selectByEmail",
         returnsNext([Promise.reject()]),
       );
-      const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
@@ -289,11 +270,519 @@ describe("Account controller", () => {
       await accountController.confirmAccount(mockContext);
 
       spyContext([jwtSpy, daoSelectSpy, daoRegisterSpy], () => {
-        assertSpyCall(daoSelectSpy, spyCount(1), { args: [fakeAccount.email] });
-        assertSpyCall(daoRegisterSpy, spyCount(0));
-        assertSpyCall(jwtSpy, spyCount(0));
-        assertEquals(mockContext.response.status, 500);
-        assertEquals(mockContext.response.body, { message: $t.baseError });
+        assertSpyCall(daoSelectSpy, 0, { args: [fakeAccount.email] });
+        assertSpyCalls(daoRegisterSpy, 0);
+        assertSpyCalls(jwtSpy, 0);
+        assertStatusEquals(mockContext, 500);
+        assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+  });
+
+  describe("postAccount", () => {
+    const fetchTemp = globalThis.fetch;
+
+    afterAll(() => {
+      globalThis.fetch = fetchTemp;
+    });
+
+    beforeEach(() => {
+      accountController["isAccountUnique"] = () => Promise.resolve(true);
+      globalThis.fetch = () => Promise.resolve(Response.json({}));
+
+      fakeRequestBody(mockContext, {
+        email: "abc@abc.fr",
+        password: "sHht..2D4!",
+      });
+    });
+
+    it("can create an account", async () => {
+      const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
+      const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+      );
+
+      const expectedAccount = {
+        email: "abc@abc.fr",
+        registrationCode: 234567,
+        password:
+          "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+        resetToken: null,
+      };
+
+      await accountController.postAccount(mockContext);
+
+      spyContext([insertAccountSpy, codeSpy, passwordSpy], () => {
+        assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+        assertSpyCalls(codeSpy, 1);
+        assertSpyCall(insertAccountSpy, 0, { args: [[expectedAccount]] });
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { ok: true });
+      });
+    });
+
+    it("should fail if password not secure enough", async () => {
+      fakeRequestBody(mockContext, {
+        email: "abc@abc.fr",
+        password: "shhtshhtshht",
+      });
+      const insertAccountSpy = spy(accountDao, "insert");
+      const codeSpy = spy(Account, "generateRegistrationCode");
+      const passwordSpy = spy(PasswordService, "encrypt");
+
+      await accountController.postAccount(mockContext);
+
+      spyContext([insertAccountSpy, codeSpy, passwordSpy], () => {
+        assertSpyCalls(passwordSpy, 0);
+        assertSpyCalls(codeSpy, 0);
+        assertSpyCalls(insertAccountSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, { message: $t.weakPassword });
+      });
+    });
+
+    it("should fail if email already registered", async () => {
+      const insertAccountSpy = spy(accountDao, "insert");
+      const codeSpy = spy(Account, "generateRegistrationCode");
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+      );
+
+      accountController["isAccountUnique"] = () => Promise.resolve(false);
+
+      await accountController.postAccount(mockContext);
+
+      spyContext([insertAccountSpy, codeSpy, passwordSpy], () => {
+        assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+        assertSpyCalls(codeSpy, 0);
+        assertSpyCalls(insertAccountSpy, 0);
+        assertStatusEquals(mockContext, 400);
+        assertBodyEquals(mockContext, { message: $t.accountAlreadyExists });
+      });
+    });
+
+    it("should fail if database error occured", async () => {
+      const insertAccountSpy = simpleStub(
+        accountDao,
+        "insert",
+        Promise.reject("Fail for tests purposes"),
+      );
+      const deleteAccountSpy = simpleStub(
+        accountDao,
+        "deleteByEmail",
+        Promise.resolve(),
+      );
+      const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+      );
+
+      await accountController.postAccount(mockContext);
+
+      spyContext(
+        [insertAccountSpy, deleteAccountSpy, codeSpy, passwordSpy],
+        () => {
+          assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+          assertSpyCalls(codeSpy, 1);
+          assertSpyCalls(insertAccountSpy, 1);
+          assertStatusEquals(mockContext, 400);
+          assertBodyEquals(mockContext, { message: $t.invalidEmail });
+        },
+      );
+    });
+
+    it("should cleanup account if mail sending gone wrong", async () => {
+      const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
+      const deleteAccountSpy = simpleStubAsync(
+        accountDao,
+        "deleteByEmail",
+        undefined,
+      );
+      const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+      );
+
+      globalThis.fetch = () => Promise.reject("Fail for tests purposes");
+
+      await accountController.postAccount(mockContext);
+
+      spyContext(
+        [insertAccountSpy, deleteAccountSpy, codeSpy, passwordSpy],
+        () => {
+          assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+          assertSpyCalls(codeSpy, 1);
+          assertSpyCalls(insertAccountSpy, 1);
+          assertSpyCall(deleteAccountSpy, 0, { args: ["abc@abc.fr"] });
+          assertStatusEquals(mockContext, 400);
+          assertBodyEquals(mockContext, { message: $t.invalidEmail });
+        },
+      );
+    });
+
+    it("should fail if mail sending gone wrong and database error ocurred", async () => {
+      const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
+      const deleteAccountSpy = simpleStub(
+        accountDao,
+        "deleteByEmail",
+        Promise.reject("Fail for test purposes"),
+      );
+      const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "$2a$10$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
+      );
+
+      globalThis.fetch = () => Promise.reject("Fail for tests purposes");
+
+      await accountController.postAccount(mockContext);
+
+      spyContext(
+        [insertAccountSpy, deleteAccountSpy, codeSpy, passwordSpy],
+        () => {
+          assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+          assertSpyCalls(codeSpy, 1);
+          assertSpyCalls(insertAccountSpy, 1);
+          assertSpyCall(deleteAccountSpy, 0, { args: ["abc@abc.fr"] });
+          assertStatusEquals(mockContext, 500);
+          assertBodyEquals(mockContext, { message: $t.baseError });
+        },
+      );
+    });
+  });
+
+  describe("deleteAccount", () => {
+    beforeEach(() => {
+      fakeRequestBody(mockContext, {
+        email: "abcde@abcde.fr",
+        password: "shht",
+      });
+    });
+
+    it("can delete account", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [fakeAccount],
+      );
+      const passwordSpy = simpleStub(PasswordService, "compare", true);
+      const deleteAccountSpy = simpleStubAsync(
+        accountDao,
+        "deleteById",
+        undefined,
+      );
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCall(selectAccountSpy, 0, { args: ["abcde@abcde.fr"] });
+          assertSpyCall(passwordSpy, 0, { args: ["shht", "shht"] });
+          assertSpyCall(deleteAccountSpy, 0, { args: [fakeAccount.id] });
+        },
+      );
+    });
+
+    it("cannot delete account if not authenticated", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", {
+        account_id: "qsdf",
+      });
+      const selectAccountSpy = spy(accountDao, "selectByEmailWithPassword");
+      const passwordSpy = spy(PasswordService, "compare");
+      const deleteAccountSpy = spy(accountDao, "deleteById");
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCalls(selectAccountSpy, 0);
+          assertSpyCalls(passwordSpy, 0);
+          assertSpyCalls(deleteAccountSpy, 0);
+          assertBodyEquals(mockContext, { message: $t.unauthorized });
+          assertStatusEquals(mockContext, 401);
+        },
+      );
+    });
+
+    it("cannot delete account if account not found", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [],
+      );
+      const passwordSpy = spy(PasswordService, "compare");
+      const deleteAccountSpy = spy(accountDao, "deleteById");
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCalls(selectAccountSpy, 1);
+          assertSpyCalls(passwordSpy, 0);
+          assertSpyCalls(deleteAccountSpy, 0);
+        },
+      );
+    });
+
+    it("cannot delete account if passwords does not match", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [fakeAccount],
+      );
+      const passwordSpy = simpleStub(PasswordService, "compare", false);
+      const deleteAccountSpy = spy(accountDao, "deleteById");
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCalls(selectAccountSpy, 1);
+          assertSpyCalls(passwordSpy, 1);
+          assertSpyCalls(deleteAccountSpy, 0);
+          assertStatusEquals(mockContext, 400);
+          assertBodyEquals(mockContext, { message: $t.wrongCredentials });
+        },
+      );
+    });
+
+    it("cannot delete account if token id does not match db account id", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "2" });
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [fakeAccount],
+      );
+      const passwordSpy = simpleStub(PasswordService, "compare", true);
+      const deleteAccountSpy = spy(accountDao, "deleteById");
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCalls(selectAccountSpy, 1);
+          assertSpyCalls(passwordSpy, 1);
+          assertSpyCalls(deleteAccountSpy, 0);
+          assertStatusEquals(mockContext, 401);
+          assertBodyEquals(mockContext, { message: $t.unauthorized });
+        },
+      );
+    });
+
+    it("should handle db error when deleting account", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [fakeAccount],
+      );
+      const passwordSpy = simpleStub(PasswordService, "compare", true);
+      const deleteAccountSpy = simpleStub(
+        accountDao,
+        "deleteById",
+        Promise.reject("Fail for test purposes"),
+      );
+
+      await accountController.deleteAccount(mockContext);
+
+      spyContext(
+        [jwtSpy, selectAccountSpy, passwordSpy, deleteAccountSpy],
+        () => {
+          assertSpyCalls(jwtSpy, 1);
+          assertSpyCalls(selectAccountSpy, 1);
+          assertSpyCalls(passwordSpy, 1);
+          assertSpyCalls(deleteAccountSpy, 1);
+          assertStatusEquals(mockContext, 500);
+          assertBodyEquals(mockContext, { message: $t.baseError });
+        },
+      );
+    });
+  });
+
+  describe("recoverAccount", () => {
+    const fetchTemp = globalThis.fetch;
+
+    afterAll(() => {
+      globalThis.fetch = fetchTemp;
+    });
+
+    beforeEach(() => {
+      globalThis.fetch = () => Promise.resolve(Response.json({}));
+      fakeRequestBody(mockContext, { email: "abcdef@abcdef.fr" });
+    });
+
+    it("can send a mail to recover account", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmail",
+        [fakeAccount],
+      );
+      const updateAccountSpy = simpleStubAsync(
+        accountDao,
+        "setPendingRecovery",
+        [fakeAccount],
+      );
+
+      await accountController.recoverAccount(mockContext);
+
+      spyContext([jwtSpy, selectAccountSpy, updateAccountSpy], () => {
+        assertSpyCall(selectAccountSpy, 0, { args: ["abcdef@abcdef.fr"] });
+        assertSpyCall(jwtSpy, 0);
+        assertSpyCall(updateAccountSpy, 0, {
+          args: ["abcdef@abcdef.fr", "token"],
+        });
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { ok: true });
+      });
+    });
+
+    it("should fail silently if no account match the given email", async () => {
+      const jwtSpy = spy(jwtService, "create");
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmail",
+        [],
+      );
+      const updateAccountSpy = spy(accountDao, "setPendingRecovery");
+
+      await accountController.recoverAccount(mockContext);
+
+      spyContext([jwtSpy, selectAccountSpy, updateAccountSpy], () => {
+        assertSpyCalls(selectAccountSpy, 1);
+        assertSpyCalls(jwtSpy, 0);
+        assertSpyCalls(updateAccountSpy, 0);
+
+        // We want a positive feedback to not leak the fact that the account does not exists
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { ok: true });
+      });
+    });
+
+    it("cannot send mail if db error occured", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmail",
+        [fakeAccount],
+      );
+      const updateAccountSpy = simpleStub(
+        accountDao,
+        "setPendingRecovery",
+        Promise.reject(),
+      );
+
+      await accountController.recoverAccount(mockContext);
+
+      spyContext([jwtSpy, selectAccountSpy, updateAccountSpy], () => {
+        assertSpyCalls(selectAccountSpy, 1);
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(updateAccountSpy, 1);
+
+        // We want a positive feedback to not leak the fact that the account does not exists
+        assertStatusEquals(mockContext, 500);
+        assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+
+    it("should fail if mail sending gone wrong", async () => {
+      globalThis.fetch = () => Promise.reject(Response.error());
+
+      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmail",
+        [fakeAccount],
+      );
+      const updateAccountSpy = simpleStubAsync(
+        accountDao,
+        "setPendingRecovery",
+        [fakeAccount],
+      );
+
+      await accountController.recoverAccount(mockContext);
+
+      spyContext([jwtSpy, selectAccountSpy, updateAccountSpy], () => {
+        assertSpyCalls(selectAccountSpy, 1);
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(updateAccountSpy, 1);
+        assertStatusEquals(mockContext, 500);
+        assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+  });
+
+  describe("resetPassword", () => {
+    beforeEach(() => {
+      fakeRequestBody(mockContext, { token: "token", password: "sHht..2D4!" });
+    });
+
+    it("can reset password", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", {
+        reset_password: true,
+      });
+      const passwordSpy = simpleStub(
+        PasswordService,
+        "encrypt",
+        "encryptedpassword",
+      );
+      const updateAccountSpy = simpleStub(
+        accountDao,
+        "recover",
+        Promise.resolve(),
+      );
+
+      await accountController.resetPassword(mockContext);
+
+      spyContext([jwtSpy, passwordSpy, updateAccountSpy], () => {
+        assertSpyCall(jwtSpy, 0, { args: ["token"] });
+        assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
+        assertSpyCall(updateAccountSpy, 0, {
+          args: ["encryptedpassword", "token"],
+        });
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { ok: true });
+      });
+    });
+
+    it("should fail silently if token seems incorrect/fake", async () => {
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const passwordSpy = spy(PasswordService, "encrypt");
+      const updateAccountSpy = spy(accountDao, "recover");
+
+      await accountController.resetPassword(mockContext);
+
+      spyContext([jwtSpy, passwordSpy, updateAccountSpy], () => {
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(passwordSpy, 0);
+        assertSpyCalls(updateAccountSpy, 0);
+
+        // Positive feedback to not leak any sensitive information
+        assertStatusEquals(mockContext, 200);
+        assertBodyEquals(mockContext, { ok: true });
       });
     });
   });

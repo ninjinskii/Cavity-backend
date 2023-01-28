@@ -1,7 +1,7 @@
 import inAuthentication from "../authenticator.ts";
 import {
-  assertEquals,
   assertSpyCall,
+  assertSpyCalls,
   beforeEach,
   Context,
   createMockContext,
@@ -12,12 +12,13 @@ import {
   stub,
 } from "../../../deps.ts";
 import { FrTranslations } from "../../i18n/translatable.ts";
+import { JwtServiceImpl } from "../../service/jwt-service.ts";
 import {
+  assertBodyEquals,
+  assertStatusEquals,
   simpleStubAsync,
   spyContext,
-  spyCount,
-} from "../../../mocks/test-utils.ts";
-import { JwtServiceImpl } from "../../service/jwt-service.ts";
+} from "../test-utils.ts";
 
 const $t = new FrTranslations();
 const jwtService = await JwtServiceImpl.newInstance("secret");
@@ -45,19 +46,17 @@ describe("inAuthentication", () => {
     );
 
     spyContext([verifySpy], () => {
-      assertSpyCall(verifySpy, spyCount(1), { args: ["zepuifgo"] });
-      assertSpyCall(callbackSpy, spyCount(1), { args: [1] });
+      assertSpyCall(verifySpy, 0, { args: ["zepuifgo"] });
+      assertSpyCall(callbackSpy, 0, { args: [1] });
 
       // response should not be touched if everything is going ok
-      assertEquals(mockContext.response.status, 404);
-      assertEquals(mockContext.response.body, undefined);
+      assertStatusEquals(mockContext, 404);
+      assertBodyEquals(mockContext, undefined);
     });
   });
 
   it("should escape if authorization is wrongly formatted", async () => {
-    const verifySpy = simpleStubAsync(jwtService, "verify", {
-      account_id: "1",
-    });
+    const verifySpy = spy(jwtService, "verify");
     const callbackSpy = spy(() => Promise.resolve());
 
     mockContext = createMockContext({ headers: [["Authorization", "Bearer"]] });
@@ -70,10 +69,10 @@ describe("inAuthentication", () => {
     );
 
     spyContext([verifySpy], () => {
-      assertSpyCall(verifySpy, spyCount(0));
-      assertSpyCall(callbackSpy, spyCount(0));
-      assertEquals(mockContext.response.status, 401);
-      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+      assertSpyCalls(verifySpy, 0);
+      assertSpyCalls(callbackSpy, 0);
+      assertStatusEquals(mockContext, 401);
+      assertBodyEquals(mockContext, { message: $t.unauthorized });
     });
   });
 
@@ -93,10 +92,10 @@ describe("inAuthentication", () => {
     );
 
     spyContext([verifySpy], () => {
-      assertSpyCall(verifySpy, spyCount(0));
-      assertSpyCall(callbackSpy, spyCount(0));
-      assertEquals(mockContext.response.status, 401);
-      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+      assertSpyCalls(verifySpy, 0);
+      assertSpyCalls(callbackSpy, 0);
+      assertStatusEquals(mockContext, 401);
+      assertBodyEquals(mockContext, { message: $t.unauthorized });
     });
   });
 
@@ -112,10 +111,10 @@ describe("inAuthentication", () => {
     );
 
     spyContext([verifySpy], () => {
-      assertSpyCall(verifySpy, spyCount(0));
-      assertSpyCall(callbackSpy, spyCount(0));
-      assertEquals(mockContext.response.status, 401);
-      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+      assertSpyCalls(verifySpy, 1);
+      assertSpyCalls(callbackSpy, 0);
+      assertStatusEquals(mockContext, 401);
+      assertBodyEquals(mockContext, { message: $t.unauthorized });
     });
   });
 
@@ -135,10 +134,10 @@ describe("inAuthentication", () => {
     );
 
     spyContext([verifySpy], () => {
-      assertSpyCall(verifySpy, spyCount(1));
-      assertSpyCall(callbackSpy, spyCount(0));
-      assertEquals(mockContext.response.status, 401);
-      assertEquals(mockContext.response.body, { message: $t.unauthorized });
+      assertSpyCalls(verifySpy, 1);
+      assertSpyCalls(callbackSpy, 0);
+      assertStatusEquals(mockContext, 401);
+      assertBodyEquals(mockContext, { message: $t.unauthorized });
     });
   });
 });

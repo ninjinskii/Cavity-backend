@@ -1,16 +1,28 @@
-import { bcrypt, Client, Context, jwt, logger, Router } from "../../deps.ts";
+import { Client, Context, logger, Router } from "../../deps.ts";
 import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
+import { JwtService } from "../service/jwt-service.ts";
+import PasswordService from "../service/password-service.ts";
 
-export default class AuthController extends Controller {
-  private jwtKey: CryptoKey;
-  private accountDao = new AccountDao(this.client);
+interface AuthControllerOptions {
+  router: Router;
+  client: Client;
+  jwtService: JwtService;
+  accountDao: AccountDao;
+}
 
-  constructor(router: Router, client: Client, jwtKey: CryptoKey) {
+export class AuthController extends Controller {
+  private jwtService: JwtService;
+  private accountDao: AccountDao;
+
+  constructor(
+    { router, client, jwtService, accountDao }: AuthControllerOptions,
+  ) {
     super(router, client);
-    this.jwtKey = jwtKey;
+    this.jwtService = jwtService;
+    this.accountDao = accountDao;
   }
 
   get default() {
@@ -33,10 +45,10 @@ export default class AuthController extends Controller {
       }
 
       const isConfirmed = account[0].registrationCode === null;
-
-      // Using compareSync() instead of compare() because compare() is causing a crash on Deno deploy
-      // See https://github.com/denoland/deploy_feedback/issues/171
-      const isAuthenticated = bcrypt.compareSync(password, account[0].password);
+      const isAuthenticated = PasswordService.compare(
+        password,
+        account[0].password,
+      );
 
       if (!isConfirmed) {
         return json(ctx, { message: this.$t.confirmAccount }, 412);
@@ -48,14 +60,12 @@ export default class AuthController extends Controller {
 
       logger.info(`User ${email} logged in (id: ${account[0].id})`);
 
-      const token = await jwt.create(
-        { alg: "HS512", typ: "JWT" },
-        {
-          exp: jwt.getNumericDate(60 * 60 * 48), // 48h
+      const token = await this.jwtService.create({
+        header: { alg: "HS512", typ: "JWT" },
+        payload: {
           account_id: account[0].id,
         },
-        this.jwtKey,
-      );
+      });
 
       json(ctx, { token, email });
     } catch (error) {

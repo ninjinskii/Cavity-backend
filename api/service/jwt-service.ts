@@ -36,7 +36,7 @@ export interface JwtService {
 }
 
 export class JwtServiceImpl implements JwtService {
-  public jwtKey: CryptoKey; // Todo: private when other controller use jwtSerice instead of jwtKey
+  private jwtKey: CryptoKey;
   private readonly DEFAULT_JWT_EXPIRATION_DELAY = 60 * 60 * 48; // 48h
 
   private constructor(jwtKey: CryptoKey) {

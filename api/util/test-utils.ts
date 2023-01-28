@@ -1,10 +1,13 @@
-import { JwtService } from "../api/service/jwt-service.ts";
-import { BodyJson, Context, returnsNext, Spy, Stub, stub } from "../deps.ts";
-
-// When using assertSpyCall() and not assertSpyCalls(), call count assertion are 0 based, which might be misleading
-export function spyCount(count: number): number {
-  return count - 1;
-}
+import {
+  assertEquals,
+  BodyJson,
+  Context,
+  returnsNext,
+  Router,
+  Spy,
+  Stub,
+  stub,
+} from "../../deps.ts";
 
 export function spyContext(spies: Spy[], block: () => void): void {
   try {
@@ -45,4 +48,24 @@ export function fakeRequestBody(
   );
 }
 
-// export type Constructor = new (...args: any[]) => {};
+export function assertBodyEquals(mockContext: Context, body: unknown) {
+  assertEquals(mockContext.response.body, body);
+}
+
+export function assertStatusEquals(mockContext: Context, status: number) {
+  assertEquals(mockContext.response.status, status);
+}
+
+export class FakeRouter extends Router {
+  post() {
+    return this;
+  }
+
+  delete() {
+    return this;
+  }
+
+  get() {
+    return this;
+  }
+}

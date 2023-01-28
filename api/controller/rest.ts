@@ -3,18 +3,42 @@ import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { DataDao } from "../dao/rest-dao.ts";
-import { mapper } from "../main.ts";
+import { JwtService } from "../service/jwt-service.ts";
 
-export default class DataController extends Controller {
-  private jwtKey: CryptoKey;
+interface DataControllerOptions {
+  router: Router;
+  client: Client;
+  jwtService: JwtService;
+}
 
-  constructor(router: Router, client: Client, jwtKey: CryptoKey) {
+export class DataController extends Controller {
+  private jwtService: JwtService;
+  private mapper: DaoMapper;
+
+  constructor({ router, client, jwtService }: DataControllerOptions) {
     super(router, client);
-    this.jwtKey = jwtKey;
+    this.jwtService = jwtService;
+    this.mapper = {};
   }
 
   handleRequests(): void {
-    for (const path of Object.keys(mapper)) {
+    this.mapper = {
+      "/county": new DataDao(this.client, "county"),
+      "/wine": new DataDao(this.client, "wine"),
+      "/bottle": new DataDao(this.client, "bottle"),
+      "/friend": new DataDao(this.client, "friend"),
+      "/grape": new DataDao(this.client, "grape"),
+      "/review": new DataDao(this.client, "review"),
+      "/qgrape": new DataDao(this.client, "q_grape"),
+      "/freview": new DataDao(this.client, "f_review"),
+      "/history": new DataDao(this.client, "history_entry"),
+      "/tasting": new DataDao(this.client, "tasting"),
+      "/tasting-action": new DataDao(this.client, "tasting_action"),
+      "/history-x-friend": new DataDao(this.client, "history_x_friend"),
+      "/tasting-x-friend": new DataDao(this.client, "tasting_x_friend"),
+    };
+
+    for (const path of Object.keys(this.mapper)) {
       this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))
         .get(path, (ctx: Context) => this.handleGet(ctx))
@@ -23,11 +47,11 @@ export default class DataController extends Controller {
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      logger.info(`POST: requested by ${accountId}`)
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+      logger.info(`POST: requested by ${accountId}`);
 
       const objects = await ctx.request.body().value;
-      const dao = mapper[this.getMapperEntry(ctx)];
+      const dao = this.getDao(ctx);
 
       if (!(objects instanceof Array)) {
         return json(ctx, { message: this.$t.missingParameters }, 400);
@@ -38,7 +62,7 @@ export default class DataController extends Controller {
           await dao.deleteAllForAccount(accountId);
         } catch (error) {
           logger.error(error);
-          json(ctx, { message: this.$t.baseError }, 500);
+          return json(ctx, { message: this.$t.baseError }, 500);
         }
 
         return success(ctx);
@@ -63,11 +87,11 @@ export default class DataController extends Controller {
   }
 
   async handleGet(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      logger.info(`GET: requested by ${accountId}`)
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+      logger.info(`GET: requested by ${accountId}`);
 
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
+        const dao = this.getDao(ctx);
         // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
         // deno-lint-ignore no-explicit-any
         const objects = await dao.selectByAccountId(accountId) as any[];
@@ -82,11 +106,11 @@ export default class DataController extends Controller {
   }
 
   async handleDelete(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtKey, this.$t, async (accountId) => {
-      logger.info(`DELETE: requested by ${accountId}`)
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+      logger.info(`DELETE: requested by ${accountId}`);
 
       try {
-        const dao = mapper[this.getMapperEntry(ctx)];
+        const dao = this.getDao(ctx);
         await dao.deleteAllForAccount(accountId);
 
         success(ctx);
@@ -97,11 +121,12 @@ export default class DataController extends Controller {
     });
   }
 
-  private getMapperEntry(ctx: Context): string {
-    return "/" + ctx.request.url.pathname.split("/").pop() || "";
+  private getDao(ctx: Context): DataDao<unknown> {
+    const tableName = "/" + ctx.request.url.pathname.split("/").pop() || "";
+    return this.mapper[tableName];
   }
 }
 
-export interface DaoMapper {
+interface DaoMapper {
   [route: string]: DataDao<unknown>;
 }

@@ -1,13 +1,14 @@
-import { bcrypt, Client, Context, logger, Router } from "../../deps.ts";
+import { Client, Context, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { JwtService } from "../service/jwt-service.ts";
+import PasswordService from "../service/password-service.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 
-export interface AccountControllerOptions {
+interface AccountControllerOptions {
   router: Router;
   client: Client;
   jwtService: JwtService;
@@ -67,9 +68,7 @@ export class AccountController extends Controller {
       return json(ctx, { message: this.$t.weakPassword }, 400);
     }
 
-    // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy
-    // See https://github.com/denoland/deploy_feedback/issues/171
-    const hash = bcrypt.hashSync(password);
+    const hash = PasswordService.encrypt(password);
 
     try {
       if (!await this.isAccountUnique(email)) {
@@ -95,7 +94,7 @@ export class AccountController extends Controller {
 
       try {
         // Mail sending has probably gone wrong. Remove the account.
-        this.accountDao.deleteByEmail(email); // We dont wait for account deletion
+        await this.accountDao.deleteByEmail(email);
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (_error) {
         json(ctx, { message: this.$t.baseError }, 500);
@@ -132,9 +131,10 @@ export class AccountController extends Controller {
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
-      // Using compareSync() instead of compare() because compare() is causing a crash on Deno deploy
-      // See https://github.com/denoland/deploy_feedback/issues/171
-      const isAuthenticated = bcrypt.compareSync(password, account[0].password);
+      const isAuthenticated = PasswordService.compare(
+        password,
+        account[0].password,
+      );
 
       // Token accountId doesn't match database accountId
       if (accountId !== account[0].id) {
@@ -236,7 +236,7 @@ export class AccountController extends Controller {
         return json(ctx, { message: this.$t.weakPassword }, 400);
       }
 
-      const hash = bcrypt.hashSync(password);
+      const hash = PasswordService.encrypt(password);
       await this.accountDao.recover(hash, token);
 
       success(ctx);

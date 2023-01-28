@@ -1,6 +1,6 @@
 import { Application, Client, initTables, Router } from "../deps.ts";
-import AuthController from "./controller/auth.ts";
-import DataController, { DaoMapper } from "./controller/rest.ts";
+import { AuthController } from "./controller/auth.ts";
+import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import { AccountController } from "./controller/account.ts";
@@ -18,7 +18,6 @@ import { TastingAction } from "./model/tasting-action.ts";
 import { TastingXFriend } from "./model/tasting-x-friend.ts";
 import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
-import { DataDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { JwtServiceImpl } from "./service/jwt-service.ts";
 
@@ -40,22 +39,6 @@ const client = new Client({
     ],
   },
 });
-
-export const mapper: DaoMapper = {
-  "/county": new DataDao(client, "county"),
-  "/wine": new DataDao(client, "wine"),
-  "/bottle": new DataDao(client, "bottle"),
-  "/friend": new DataDao(client, "friend"),
-  "/grape": new DataDao(client, "grape"),
-  "/review": new DataDao(client, "review"),
-  "/qgrape": new DataDao(client, "q_grape"),
-  "/freview": new DataDao(client, "f_review"),
-  "/history": new DataDao(client, "history_entry"),
-  "/tasting": new DataDao(client, "tasting"),
-  "/tasting-action": new DataDao(client, "tasting_action"),
-  "/history-x-friend": new DataDao(client, "history_x_friend"),
-  "/tasting-x-friend": new DataDao(client, "tasting_x_friend"),
-};
 
 await initTables(
   client,
@@ -79,7 +62,7 @@ await initTables(
 
 await client.connect();
 
-const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET)
+const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
 
 app.use(async (ctx, next) => {
   const language = ctx.request.headers.get("Accept-Language");
@@ -99,12 +82,23 @@ app.use(async (ctx, next) => {
   }
 });
 
-const accountDao = new AccountDao(client)
+const accountDao = new AccountDao(client);
 
-const accountController = new AccountController({ router, client, jwtService, accountDao });
-const authController = new AuthController(router, client, jwtService.jwtKey);
-const dataController = new DataController(router, client, jwtService.jwtKey);
+const accountController = new AccountController({
+  router,
+  client,
+  jwtService,
+  accountDao,
+});
+const authController = new AuthController({
+  router,
+  client,
+  jwtService,
+  accountDao,
+});
+const dataController = new DataController({ router, client, jwtService });
 const manager = new ControllerManager();
+
 manager.addControllers(
   accountController,
   authController,
