@@ -1,4 +1,4 @@
-FROM denoland/deno:debian-1.24.3
+FROM denoland/deno:debian-1.30.3
 
 EXPOSE 5000
 
