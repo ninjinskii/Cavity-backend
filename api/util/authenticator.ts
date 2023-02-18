@@ -2,6 +2,7 @@ import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
 import { json } from "./api-response.ts";
+import * as Sentry from "npm:@sentry/node";
 
 export default async function inAuthentication(
   ctx: Context,
@@ -30,7 +31,8 @@ export default async function inAuthentication(
     } else {
       json(ctx, { message: t.unauthorized }, 401);
     }
-  } catch (_error) {
+  } catch (error) {
+    Sentry.captureException(error)
     json(ctx, { message: t.unauthorized }, 401);
   }
 }

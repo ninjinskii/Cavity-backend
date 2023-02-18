@@ -5,6 +5,7 @@ import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
 import PasswordService from "../infrastructure/password-service.ts";
+import * as Sentry from "npm:@sentry/node";
 
 interface AuthControllerOptions {
   router: Router;
@@ -72,7 +73,7 @@ export class AuthController extends Controller {
 
       json(ctx, { token, email, lastUser, lastUpdateTime });
     } catch (error) {
-      logger.error(error);
+      Sentry.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

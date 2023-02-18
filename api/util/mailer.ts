@@ -1,4 +1,4 @@
-import { logger } from "../../deps.ts";
+import * as Sentry from "npm:@sentry/node";
 
 export default async function sendMail(
   to: string,
@@ -32,7 +32,15 @@ export default async function sendMail(
   });
 
   if (response.status < 200 && response.status >= 300) {
-    logger.error(await response.json());
+    const errorResponse = await response.json();
+    Sentry.captureMessage(
+      `Error occured while sending mail to ${to} with status code ${response.status} 
+      and response is: ${JSON.stringify(errorResponse)}`,
+    );
     throw new Error("Unable to send the mail");
+  } else {
+    Sentry.captureMessage(
+      `Send mail to user ${to} with status code ${response.status}`,
+    );
   }
 }

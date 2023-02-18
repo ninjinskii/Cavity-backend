@@ -4,6 +4,7 @@ import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
+import * as Sentry from "npm:@sentry/node";
 
 interface DataControllerOptions {
   router: Router;
@@ -47,7 +48,7 @@ export class DataController extends Controller {
         try {
           await dao.deleteAllForAccount(accountId);
         } catch (error) {
-          logger.error(error);
+          Sentry.captureException(error)
           return json(ctx, { message: this.$t.baseError }, 500);
         }
 
@@ -69,7 +70,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        logger.error(error);
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -88,7 +89,7 @@ export class DataController extends Controller {
 
         json(ctx, objects);
       } catch (error) {
-        logger.error(error);
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -104,7 +105,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        logger.error(error);
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
