@@ -21,6 +21,7 @@ const SENTRY_DSN =
 Sentry.init({
   dsn: SENTRY_DSN,
   tracesSampleRate: SENTRY_SAMPLE_RATE,
+  release: "1.4.0",
   beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
     const { DEV_MODE } = Deno.env.toObject();
     const isProduction = DEV_MODE !== "1";
