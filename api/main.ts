@@ -9,8 +9,12 @@ import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
+import { SentryWrapper } from "./sentry.ts";
 
 applyBigIntSerializer();
+
+const sentry = new SentryWrapper();
+sentry.initSentry();
 
 const app = new Application();
 const router = new Router();

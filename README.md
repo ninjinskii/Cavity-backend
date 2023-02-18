@@ -62,6 +62,11 @@ Things to do to prepare a release:
   - Create and push a tag named `version name`
   - (May not be needed) Go to deno deploy, and promote the deployment to production
 
+## Sentry
+Sentry is configured for this project.
+Note however that it should not work if the app is run inside a docker container 
+(which isn't a problem since we're deploying on Deno Deploy)
+
 ## Run unit tests
 ```bash
 docker-compose up -d
