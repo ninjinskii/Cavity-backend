@@ -28,6 +28,21 @@ To ensure deno is not using cache on a modified dependance, run:
 docker-compose build --no-cache
 ```
 
+## Release process
+This project uses CI/CD. Workflows are triggered when pushing a tag, and deploy code to Deno Deploy.
+
+Things to do to prepare a release:
+
+  - Update sentry's release property to match upcoming `version name`
+  - Merge target code into master branch
+  - Create and push a tag named `version name`
+
+
+## Sentry
+Sentry is configured for this project.
+Note however that it should not work if the app is run inside a docker container 
+(which isn't a problem since we're deploying on Deno Deploy)
+
 ## Run unit tests
 ```bash
 docker-compose up -d

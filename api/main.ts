@@ -20,8 +20,30 @@ import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { JwtServiceImpl } from "./service/jwt-service.ts";
+import * as Sentry from "npm:@sentry/node";
 
 applyBigIntSerializer();
+
+const SENTRY_SAMPLE_RATE = 0.5;
+const SENTRY_DSN =
+  "https://510d13bb29e849568634a09f5f612234@o1364222.ingest.sentry.io/4504697605652480";
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  tracesSampleRate: SENTRY_SAMPLE_RATE,
+  release: "1.4.0",
+  beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
+    const { DEV_MODE } = Deno.env.toObject();
+    const isProduction = DEV_MODE !== "1";
+
+    if (isProduction) {
+      return event;
+    }
+
+    // Do not send the event to Sentry if the app is not in production
+    return null;
+  },
+});
 
 const app = new Application();
 const router = new Router();

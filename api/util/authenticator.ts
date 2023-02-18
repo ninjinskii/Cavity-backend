@@ -2,6 +2,7 @@ import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
 import { JwtService } from "../service/jwt-service.ts";
 import { json } from "./api-response.ts";
+import * as Sentry from "npm:@sentry/node";
 
 export default async function inAuthentication(
   ctx: Context,
@@ -26,11 +27,22 @@ export default async function inAuthentication(
 
     if (!isNaN(accountId)) {
       logger.info(`Authorized account ${accountId}`);
-      return await block(accountId);
+      Sentry.configureScope((scope) => {
+        scope.setTag("accountId", accountId);
+      });
+
+      const result = await block(accountId);
+
+      Sentry.configureScope((scope) => {
+        scope.setTag("accountId", undefined);
+      });
+
+      return result;
     } else {
       json(ctx, { message: t.unauthorized }, 401);
     }
-  } catch (_error) {
+  } catch (error) {
+    Sentry.captureException(error);
     json(ctx, { message: t.unauthorized }, 401);
   }
 }
