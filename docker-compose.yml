@@ -42,7 +42,10 @@ services:
       - ./backup:/home
 
   githooks:
-    image: Dockerfile.githooks
+    build: 
+      context: .
+      dockerfile: Dockerfile.githooks
+    container_name: githooks_installer
     volumes:
       - ./.git:/tmp/.git
       - ./.githooks:/tmp/.githooks
