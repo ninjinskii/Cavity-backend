@@ -1,4 +1,4 @@
-import { Client, Context, logger, Router } from "../../deps.ts";
+import { Client, Context, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { JwtService } from "../service/jwt-service.ts";
@@ -7,6 +7,7 @@ import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
+import * as Sentry from "npm:@sentry/node";
 
 interface AccountControllerOptions {
   router: Router;
@@ -90,13 +91,14 @@ export class AccountController extends Controller {
       await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
-      logger.error(error);
+      Sentry.captureException(error)
 
       try {
         // Mail sending has probably gone wrong. Remove the account.
         await this.accountDao.deleteByEmail(email);
         json(ctx, { message: this.$t.invalidEmail }, 400);
-      } catch (_error) {
+      } catch (error) {
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     }
@@ -114,7 +116,8 @@ export class AccountController extends Controller {
         const result = account[0];
 
         json(ctx, result);
-      } catch (_error) {
+      } catch (error) {
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -148,7 +151,8 @@ export class AccountController extends Controller {
       try {
         await this.accountDao.deleteById(accountId);
         success(ctx);
-      } catch (_error) {
+      } catch (error) {
+        Sentry.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -182,7 +186,8 @@ export class AccountController extends Controller {
       });
 
       json(ctx, { token });
-    } catch (_error) {
+    } catch (error) {
+      Sentry.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -212,7 +217,8 @@ export class AccountController extends Controller {
       await sendMail(email, subject, content, true);
 
       success(ctx);
-    } catch (_error) {
+    } catch (error) {
+      Sentry.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -240,7 +246,8 @@ export class AccountController extends Controller {
       await this.accountDao.recover(hash, token);
 
       success(ctx);
-    } catch (_error) {
+    } catch (error) {
+      Sentry.captureException(error)
       json(ctx, { message: this.$t.unauthorized }, 401);
     }
   }
