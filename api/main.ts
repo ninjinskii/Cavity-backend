@@ -1,4 +1,4 @@
-import { Application, Client, initTables, Router } from "../deps.ts";
+import { Application, Client, initTables, logger, Router } from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -108,6 +108,8 @@ manager.addControllers(
 app.use(router.routes());
 app.use(router.allowedMethods());
 await app.listen({ port: 5000 });
+
+logger.info(`Deno version: ${Deno.version.deno}`);
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
