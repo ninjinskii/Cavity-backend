@@ -27,12 +27,23 @@ export default async function inAuthentication(
 
     if (!isNaN(accountId)) {
       logger.info(`Authorized account ${accountId}`);
-      return await block(accountId, token);
+
+      Sentry.configureScope((scope) => {
+        scope.setTag("accountId", accountId);
+      });
+
+      const result = await block(accountId, token);
+
+      Sentry.configureScope((scope) => {
+        scope.setTag("accountId", undefined);
+      });
+
+      return result;
     } else {
       json(ctx, { message: t.unauthorized }, 401);
     }
   } catch (error) {
-    Sentry.captureException(error)
+    Sentry.captureException(error);
     json(ctx, { message: t.unauthorized }, 401);
   }
 }
