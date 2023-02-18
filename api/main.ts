@@ -78,6 +78,8 @@ app.use(async (ctx, next) => {
       index: "index.html",
     });
   } finally {
+    // This is not unsafe
+    // deno-lint-ignore no-unsafe-finally
     return next();
   }
 });
