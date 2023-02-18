@@ -28,6 +28,11 @@ To ensure deno is not using cache on a modified dependance, run:
 docker-compose build --no-cache
 ```
 
+## Sentry
+Sentry is configured for this project.
+Note however that it should not work if the app is run inside a docker container 
+(which isn't a problem since we're deploying on Deno Deploy)
+
 ## Run unit tests
 ```bash
 docker-compose up -d

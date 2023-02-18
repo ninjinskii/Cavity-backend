@@ -20,8 +20,12 @@ import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { JwtServiceImpl } from "./service/jwt-service.ts";
+import { SentryWrapper } from "./sentry.ts";
 
 applyBigIntSerializer();
+
+const sentry = new SentryWrapper();
+sentry.initSentry();
 
 const app = new Application();
 const router = new Router();

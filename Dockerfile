@@ -13,4 +13,4 @@ ADD . .
 
 RUN deno cache ./api/main.ts
 
-CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--watch", "./api/main.ts", "./api/main.ts"]
+CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--allow-sys", "--watch", "./api/main.ts", "./api/main.ts"]
