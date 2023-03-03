@@ -35,15 +35,17 @@ docker-compose exec web deno test --allow-env
 ```
 
 ## Backup the database
-Go to supabase and run the "Before backup" SQL command. Then:
+[Go to supabase and run the "Before backup" SQL command (ALTER USER postgres with superuser).] - Seems not to be mandatory from now on
+Replace `[password]` with actual password in `backup/backup.sh` connection string. Then:
 ```bash
 cd Cavity-backend
 ./backup.sh
+sudo chown [user] backup/backup.sql
 ```
 
-Go to supabase and run the "After backup" SQL command.
+[Go to supabase and run the "After backup" SQL command (ALTER USER postgres with nosuperuser).] ] - Seems not to be mandatory from now on
 
-Now you have backup.sql in ./backup/backup.sql
+Now you have `backup.sql` in `backup/backup.sql`
 
 To restore it use:
 ```bash
