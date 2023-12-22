@@ -18,10 +18,6 @@ export class DataController extends Controller {
   constructor({ router, client, jwtService }: DataControllerOptions) {
     super(router, client);
     this.jwtService = jwtService;
-    this.mapper = {};
-  }
-
-  handleRequests(): void {
     this.mapper = {
       "/county": new DataDao(this.client, "county"),
       "/wine": new DataDao(this.client, "wine"),
@@ -38,6 +34,10 @@ export class DataController extends Controller {
       "/tasting-x-friend": new DataDao(this.client, "tasting_x_friend"),
     };
 
+    this.handleRequests()
+  }
+
+  handleRequests(): void {
     for (const path of Object.keys(this.mapper)) {
       this.router
         .post(path, (ctx: Context) => this.handlePost(ctx))

@@ -26,6 +26,8 @@ export class AccountController extends Controller {
     super(router, client);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
+
+    this.handleRequests()
   }
 
   get default() {
@@ -44,12 +46,16 @@ export class AccountController extends Controller {
     return "/account/resetpassword";
   }
 
+  get delete() {
+    return "/account/delete";
+  }
+
   handleRequests(): void {
     this.router
       .post(this.default, (ctx: Context) => this.postAccount(ctx))
       .get(this.default, (ctx: Context) => this.getAccount(ctx))
-      .delete(
-        `${this.default}/:id`,
+      .post(
+        this.delete,
         (ctx: Context) => this.deleteAccount(ctx),
       );
 

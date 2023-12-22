@@ -41,12 +41,6 @@ services:
       - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
       - ./backup:/home
 
-  githooks:
-    image: githooks:latest
-    volumes:
-      - ./.git:/tmp/.git
-      - ./.githooks:/tmp/.githooks
-
 networks:
   proxy:
     external: true

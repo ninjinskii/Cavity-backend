@@ -5,7 +5,6 @@ export default abstract class Controller {
   $t: Translatable = new EnTranslations();
 
   constructor(protected router: Router, protected client: Client) {
-    this.handleRequests();
   }
 
   abstract handleRequests(): void;

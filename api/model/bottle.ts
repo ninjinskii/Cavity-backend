@@ -8,7 +8,7 @@ export class Bottle {
     @Field("INT") public id: number,
     @Field("INT", Nullable.NO, "wine_id") public wineId: number,
     @Field("INT") public vintage: number,
-    @Field("INT") public apogee: number,
+    @Field("INT", Nullable.YES) public apogee: number,
     @Field("INT", Nullable.NO, "is_favorite") public isFavorite: number,
     @Field("FLOAT4") public price: number,
     @Field("VARCHAR") public currency: string,

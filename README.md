@@ -28,6 +28,14 @@ To ensure deno is not using cache on a modified dependance, run:
 docker-compose build --no-cache
 ```
 
+## Release process
+This project uses CI/CD. Workflows are triggered when pushing a tag, and deploy code to Deno Deploy.
+
+Things to do to prepare a release:
+  - Merge target code into master branch
+  - Create and push a tag named `version name`
+  - (May not be needed) Go to deno deploy, and promote the deployment to production
+
 ## Run unit tests
 ```bash
 docker-compose up -d

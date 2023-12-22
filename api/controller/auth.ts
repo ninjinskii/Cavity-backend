@@ -23,6 +23,8 @@ export class AuthController extends Controller {
     super(router, client);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
+
+    this.handleRequests()
   }
 
   get default() {

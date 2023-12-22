@@ -17,8 +17,8 @@ export {
   returnsNext,
   spy,
   stub,
-} from "https://deno.land/std@0.173.0/testing/mock.ts";
-export type { Spy, Stub } from "https://deno.land/std@0.173.0/testing/mock.ts";
+} from "https://deno.land/std@0.196.0/testing/mock.ts";
+export type { Spy, Stub } from "https://deno.land/std@0.196.0/testing/mock.ts";
 export {
   assertEquals,
   assertNotEquals,
@@ -28,7 +28,7 @@ export {
   beforeEach,
   describe,
   it,
-} from "https://deno.land/std@0.168.0/testing/bdd.ts";
+} from "https://deno.land/std@0.196.0/testing/bdd.ts";
 export {
   Client,
   Dao,
