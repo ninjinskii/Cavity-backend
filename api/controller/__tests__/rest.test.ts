@@ -2,7 +2,7 @@ import {
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
-  Client,
+  SupabaseClient,
   Context,
   createMockContext,
   describe,
@@ -13,7 +13,7 @@ import {
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { JwtServiceImpl } from "../../service/jwt-service.ts";
 import { DataController } from "../rest.ts";
-import { DataDao } from "../../dao/rest-dao.ts";
+import { SupabaseRestDao } from "../../dao/rest-dao.ts";
 import { returnsNext } from "https://deno.land/std@0.173.0/testing/mock.ts";
 import {
   assertBodyEquals,
@@ -35,11 +35,28 @@ const client = {
       },
     };
   },
-} as unknown as Client;
+} as unknown as SupabaseClient;
+
+const mapper = {
+  "/county": new SupabaseRestDao(client, "county"),
+  "/wine": new SupabaseRestDao(client, "wine"),
+  "/bottle": new SupabaseRestDao(client, "bottle"),
+  "/friend": new SupabaseRestDao(client, "friend"),
+  "/grape": new SupabaseRestDao(client, "grape"),
+  "/review": new SupabaseRestDao(client, "review"),
+  "/qgrape": new SupabaseRestDao(client, "q_grape"),
+  "/freview": new SupabaseRestDao(client, "f_review"),
+  "/history": new SupabaseRestDao(client, "history_entry"),
+  "/tasting": new SupabaseRestDao(client, "tasting"),
+  "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
+  "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
+  "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
+}
+
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const router = new FakeRouter();
-const restController = new DataController({ router, client, jwtService });
-const restDao = new DataDao(client, "");
+const restController = new DataController({ router, jwtService, mapper });
+const restDao = new SupabaseRestDao(client, "");
 
 let mockContext: Context;
 
@@ -162,31 +179,32 @@ describe("Data controller", () => {
       });
     });
 
-    it("should fail if transaction error occured", async () => {
-      fakeRequestBody(mockContext, [{ a: "a", b: "b" }, { a: "c", b: "d" }]);
+    // TODO: supabase-js does not support transactions yet
+    // it("should fail if transaction error occured", async () => {
+    //   fakeRequestBody(mockContext, [{ a: "a", b: "b" }, { a: "c", b: "d" }]);
 
-      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
-      const deleteSpy = simpleStubAsync(
-        restDao,
-        "deleteAllForAccount",
-        undefined,
-      );
-      const insertSpy = stub(
-        restDao,
-        "insert",
-        returnsNext([Promise.reject("Fail for test purposes")]),
-      );
+    //   const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+    //   const deleteSpy = simpleStubAsync(
+    //     restDao,
+    //     "deleteAllForAccount",
+    //     undefined,
+    //   );
+    //   const insertSpy = stub(
+    //     restDao,
+    //     "insert",
+    //     returnsNext([Promise.reject("Fail for test purposes")]),
+    //   );
 
-      await restController.handlePost(mockContext);
+    //   await restController.handlePost(mockContext);
 
-      spyContext([jwtSpy, deleteSpy, insertSpy], () => {
-        assertSpyCalls(jwtSpy, 1);
-        assertSpyCalls(deleteSpy, 1);
-        assertSpyCalls(insertSpy, 1);
-        assertStatusEquals(mockContext, 400); // Not sure why 400 here
-        assertBodyEquals(mockContext, { message: $t.missingParameters });
-      });
-    });
+    //   spyContext([jwtSpy, deleteSpy, insertSpy], () => {
+    //     assertSpyCalls(jwtSpy, 1);
+    //     assertSpyCalls(deleteSpy, 1);
+    //     assertSpyCalls(insertSpy, 1);
+    //     assertStatusEquals(mockContext, 400); // Not sure why 400 here
+    //     assertBodyEquals(mockContext, { message: $t.missingParameters });
+    //   });
+    // });
   });
 
   describe("handleGet", () => {

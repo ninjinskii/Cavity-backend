@@ -3,7 +3,7 @@ import {
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
-  Client,
+  SupabaseClient,
   Context,
   createMockContext,
   describe,
@@ -16,7 +16,7 @@ import { AccountController } from "../account.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
 import { JwtServiceImpl } from "../../service/jwt-service.ts";
-import { AccountDao } from "../../dao/account-dao.ts";
+import { SupabaseAccountDao } from "../../dao/account-dao.ts";
 import PasswordService from "../../service/password-service.ts";
 import {
   assertBodyEquals,
@@ -30,13 +30,12 @@ import {
 
 const $t = new EnTranslations();
 
-const client = {} as Client;
+const client = {} as SupabaseClient;
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const router = new FakeRouter();
-const accountDao = new AccountDao(client);
+const accountDao = new SupabaseAccountDao(client);
 const accountController = new AccountController({
   router,
-  client,
   jwtService,
   accountDao,
 });

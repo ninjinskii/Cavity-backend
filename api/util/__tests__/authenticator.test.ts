@@ -141,7 +141,3 @@ describe("inAuthentication", () => {
     });
   });
 });
-
-// Vrai pour les transactions je crois
-// Deno.test("Return whathever 'block' returns", async () => {
-// });

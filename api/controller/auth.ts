@@ -1,4 +1,4 @@
-import { Client, Context, logger, Router } from "../../deps.ts";
+import { Context, logger, Router } from "../../deps.ts";
 import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
@@ -8,7 +8,6 @@ import PasswordService from "../service/password-service.ts";
 
 interface AuthControllerOptions {
   router: Router;
-  client: Client;
   jwtService: JwtService;
   accountDao: AccountDao;
 }
@@ -18,9 +17,9 @@ export class AuthController extends Controller {
   private accountDao: AccountDao;
 
   constructor(
-    { router, client, jwtService, accountDao }: AuthControllerOptions,
+    { router, jwtService, accountDao }: AuthControllerOptions,
   ) {
-    super(router, client);
+    super(router);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
 

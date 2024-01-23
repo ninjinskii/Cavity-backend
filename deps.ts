@@ -46,3 +46,4 @@ export {
   Update,
   Where,
 } from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.6/mod.ts";
+export { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";

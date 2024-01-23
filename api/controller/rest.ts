@@ -1,38 +1,40 @@
-import { Client, Context, logger, Router, transaction } from "../../deps.ts";
+import { Context, logger, Router } from "../../deps.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
-import { DataDao } from "../dao/rest-dao.ts";
+import { RestDao } from "../dao/rest-dao.ts";
 import { JwtService } from "../service/jwt-service.ts";
 
 interface DataControllerOptions {
   router: Router;
-  client: Client;
   jwtService: JwtService;
+  mapper: DaoMapper;
 }
 
 export class DataController extends Controller {
   private jwtService: JwtService;
   private mapper: DaoMapper;
 
-  constructor({ router, client, jwtService }: DataControllerOptions) {
-    super(router, client);
+  constructor({ router, jwtService, mapper }: DataControllerOptions) {
+    super(router);
     this.jwtService = jwtService;
-    this.mapper = {
-      "/county": new DataDao(this.client, "county"),
-      "/wine": new DataDao(this.client, "wine"),
-      "/bottle": new DataDao(this.client, "bottle"),
-      "/friend": new DataDao(this.client, "friend"),
-      "/grape": new DataDao(this.client, "grape"),
-      "/review": new DataDao(this.client, "review"),
-      "/qgrape": new DataDao(this.client, "q_grape"),
-      "/freview": new DataDao(this.client, "f_review"),
-      "/history": new DataDao(this.client, "history_entry"),
-      "/tasting": new DataDao(this.client, "tasting"),
-      "/tasting-action": new DataDao(this.client, "tasting_action"),
-      "/history-x-friend": new DataDao(this.client, "history_x_friend"),
-      "/tasting-x-friend": new DataDao(this.client, "tasting_x_friend"),
-    };
+    this.mapper = mapper;
+
+    // {
+    //   "/county": new SupabaseRestDao(this.client, "county"),
+    //   "/wine": new SupabaseRestDao(this.client, "wine"),
+    //   "/bottle": new SupabaseRestDao(this.client, "bottle"),
+    //   "/friend": new SupabaseRestDao(this.client, "friend"),
+    //   "/grape": new SupabaseRestDao(this.client, "grape"),
+    //   "/review": new SupabaseRestDao(this.client, "review"),
+    //   "/qgrape": new SupabaseRestDao(this.client, "q_grape"),
+    //   "/freview": new SupabaseRestDao(this.client, "f_review"),
+    //   "/history": new SupabaseRestDao(this.client, "history_entry"),
+    //   "/tasting": new SupabaseRestDao(this.client, "tasting"),
+    //   "/tasting-action": new SupabaseRestDao(this.client, "tasting_action"),
+    //   "/history-x-friend": new SupabaseRestDao(this.client, "history_x_friend"),
+    //   "/tasting-x-friend": new SupabaseRestDao(this.client, "tasting_x_friend"),
+    // };
 
     this.handleRequests()
   }
@@ -71,14 +73,17 @@ export class DataController extends Controller {
       objects.forEach((object) => object.accountId = accountId);
 
       try {
-        const ok = await transaction([dao], async () => {
-          await dao.deleteAllForAccount(accountId);
-          await dao.insert(objects);
-        });
+        // TODO: supabase-js does not support transactions yet
+        // const ok = await transaction([dao], async () => {
+        await dao.deleteAllForAccount(accountId);
+        await dao.insert(objects);
+        // });
 
-        ok
-          ? success(ctx)
-          : json(ctx, { message: this.$t.missingParameters }, 400);
+        // ok
+        //   ? success(ctx)
+        //   : json(ctx, { message: this.$t.missingParameters }, 400);
+
+        success(ctx)
       } catch (error) {
         logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
@@ -121,12 +126,12 @@ export class DataController extends Controller {
     });
   }
 
-  private getDao(ctx: Context): DataDao<unknown> {
+  private getDao(ctx: Context): RestDao<unknown> {
     const tableName = "/" + ctx.request.url.pathname.split("/").pop() || "";
     return this.mapper[tableName];
   }
 }
 
-interface DaoMapper {
-  [route: string]: DataDao<unknown>;
+export interface DaoMapper {
+  [route: string]: RestDao<unknown>;
 }

@@ -1,4 +1,4 @@
-import { Client, Context, logger, Router } from "../../deps.ts";
+import { Context, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { JwtService } from "../service/jwt-service.ts";
@@ -10,7 +10,6 @@ import Controller from "./controller.ts";
 
 interface AccountControllerOptions {
   router: Router;
-  client: Client;
   jwtService: JwtService;
   accountDao: AccountDao;
 }
@@ -21,9 +20,9 @@ export class AccountController extends Controller {
   private accountDao: AccountDao;
 
   constructor(
-    { router, client, jwtService, accountDao }: AccountControllerOptions,
+    { router, jwtService, accountDao }: AccountControllerOptions,
   ) {
-    super(router, client);
+    super(router);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
 

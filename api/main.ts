@@ -1,4 +1,4 @@
-import { Application, Client, initTables, logger, Router } from "../deps.ts";
+import { Application, logger, Router, createClient, Client, initTables } from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -18,49 +18,19 @@ import { TastingAction } from "./model/tasting-action.ts";
 import { TastingXFriend } from "./model/tasting-x-friend.ts";
 import { Tasting } from "./model/tasting.ts";
 import { Wine } from "./model/wine.ts";
-import { AccountDao } from "./dao/account-dao.ts";
 import { JwtServiceImpl } from "./service/jwt-service.ts";
+import { SupabaseAccountDao } from "./dao/account-dao.ts";
+import { DenormRestDao, SupabaseRestDao } from "./dao/rest-dao.ts";
+import { DenormAccountDao } from "./dao/account-dao.ts";
+import { AccountDao } from "./dao/account-dao.ts";
+import { DaoMapper } from "./controller/rest.ts";
 
 applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
-const { DATABASE_URL, TOKEN_SECRET } = Deno.env.toObject();
+const { DATABASE_URL, TOKEN_SECRET, DEVELOPMENT } = Deno.env.toObject();
 const [user, password, hostname, port, database] = DATABASE_URL.split(",");
-const client = new Client({
-  user,
-  hostname,
-  database,
-  port,
-  password,
-  tls: {
-    caCertificates: [
-      await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
-    ],
-  },
-});
-
-await initTables(
-  client,
-  [
-    Account,
-    Bottle,
-    County,
-    FReview,
-    Friend,
-    Grape,
-    HistoryEntry,
-    HistoryXFriend,
-    QGrape,
-    Review,
-    TastingAction,
-    TastingXFriend,
-    Tasting,
-    Wine,
-  ],
-);
-
-await client.connect();
 
 const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
 
@@ -84,21 +54,19 @@ app.use(async (ctx, next) => {
   }
 });
 
-const accountDao = new AccountDao(client);
+const { accountDao, mapper } = await getAccountDao()
 
 const accountController = new AccountController({
   router,
-  client,
   jwtService,
   accountDao,
 });
 const authController = new AuthController({
   router,
-  client,
   jwtService,
   accountDao,
 });
-const dataController = new DataController({ router, client, jwtService });
+const dataController = new DataController({ router, jwtService, mapper });
 const manager = new ControllerManager();
 
 manager.addControllers(
@@ -117,6 +85,83 @@ function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
     return parseInt(this.toString());
   };
+}
+
+function getRouteDaoMapper(client: any) {
+  if (DEVELOPMENT) {
+    return {
+      "/county": new DenormRestDao(client, "county"),
+      "/wine": new DenormRestDao(client, "wine"),
+      "/bottle": new DenormRestDao(client, "bottle"),
+      "/friend": new DenormRestDao(client, "friend"),
+      "/grape": new DenormRestDao(client, "grape"),
+      "/review": new DenormRestDao(client, "review"),
+      "/qgrape": new DenormRestDao(client, "q_grape"),
+      "/freview": new DenormRestDao(client, "f_review"),
+      "/history": new DenormRestDao(client, "history_entry"),
+      "/tasting": new DenormRestDao(client, "tasting"),
+      "/tasting-action": new DenormRestDao(client, "tasting_action"),
+      "/history-x-friend": new DenormRestDao(client, "history_x_friend"),
+      "/tasting-x-friend": new DenormRestDao(client, "tasting_x_friend"),
+    };
+  } else {
+    return {
+      "/county": new SupabaseRestDao(client, "county"),
+      "/wine": new SupabaseRestDao(client, "wine"),
+      "/bottle": new SupabaseRestDao(client, "bottle"),
+      "/friend": new SupabaseRestDao(client, "friend"),
+      "/grape": new SupabaseRestDao(client, "grape"),
+      "/review": new SupabaseRestDao(client, "review"),
+      "/qgrape": new SupabaseRestDao(client, "q_grape"),
+      "/freview": new SupabaseRestDao(client, "f_review"),
+      "/history": new SupabaseRestDao(client, "history_entry"),
+      "/tasting": new SupabaseRestDao(client, "tasting"),
+      "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
+      "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
+      "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
+    };
+  }
+}
+
+async function getAccountDao(): Promise<{ accountDao: AccountDao, mapper: DaoMapper }> {
+  if (DEVELOPMENT) {
+    const client = new Client({
+      user,
+      hostname,
+      database,
+      port,
+      password,
+      tls: {
+        caCertificates: [
+          await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
+        ],
+      },
+    });
+    
+    await initTables(
+      client,
+      [
+        Account,
+        Bottle,
+        County,
+        FReview,
+        Friend,
+        Grape,
+        HistoryEntry,
+        HistoryXFriend,
+        QGrape,
+        Review,
+        TastingAction,
+        TastingXFriend,
+        Tasting,
+        Wine,
+      ],
+    );
+    return { accountDao:  new DenormAccountDao(client, 'account'), mapper: getRouteDaoMapper(client) }
+  } else {
+    const client = createClient('', '')
+    return { accountDao: new SupabaseAccountDao(client), mapper: getRouteDaoMapper(client) }
+  }
 }
 
 declare global {
