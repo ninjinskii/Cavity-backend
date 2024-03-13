@@ -1,4 +1,4 @@
-import { Client, Dao, Delete, Insert, Select, SupabaseClient, Where } from "../../deps.ts";
+import { SupabaseClient } from "../../deps.ts";
 
 export interface RestDao<T> {
   selectByAccountId(accountId: number): Promise<T[]>;
@@ -15,7 +15,7 @@ export class SupabaseRestDao<T> implements RestDao<T> {
       .select()
       .eq('account_id', accountId);
 
-    if (response.error || !response.data) {
+    if (response.error) {
       throw response.error
     }
 
@@ -27,7 +27,7 @@ export class SupabaseRestDao<T> implements RestDao<T> {
       .from(this.table)
       .insert(objects);
 
-    if (response.error || !response.data) {
+    if (response.error) {
       throw response.error
     }
   }
@@ -38,29 +38,8 @@ export class SupabaseRestDao<T> implements RestDao<T> {
       .delete()
       .eq('account_id', accountId)
 
-    if (response.error || !response.data) {
+    if (response.error) {
       throw response.error
     }
   }
-}
-
-export class DenormRestDao<T> extends Dao implements RestDao<T> {
-  constructor(postgresClient: Client, table: string) {
-    super(postgresClient, table)
-  }
-
-  @Select(new Where({ account_id: "°1" }))
-  selectByAccountId(_accountId: number): Promise<T[]> {
-    throw new Error('');
-  }
-
-  @Insert()
-  insert(_objects: T[]): Promise<void> {
-    throw new Error('');
-  }
-
-  @Delete(new Where({ account_id: "°1" }))
-  deleteAllForAccount(_accountId: number): Promise<void> {
-    throw new Error('');
-  }  
 }

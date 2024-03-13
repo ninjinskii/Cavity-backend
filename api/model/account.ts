@@ -1,15 +1,10 @@
-import { Entity, Field, Nullable, PrimaryKey, SizedField } from "../../deps.ts";
-
-@Entity("account")
 export class Account {
   constructor(
-    @PrimaryKey("SERIAL") public id: number,
-    @SizedField("VARCHAR", 255) public email: string,
-    @Field("VARCHAR") public password: string,
-    @Field("INT", Nullable.YES, "registration_code") public registrationCode:
-      | number
-      | null,
-    @SizedField("VARCHAR", 300, Nullable.YES, "reset_token") public resetToken: string | null,
+    public id: number,
+    public email: string,
+    public password: string,
+    public registrationCode: number | null,
+    public resetToken: string | null,
   ) {
   }
 

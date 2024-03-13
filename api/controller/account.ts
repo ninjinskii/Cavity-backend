@@ -94,7 +94,7 @@ export class AccountController extends Controller {
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
-      // await sendMail(account.email, subject, content);
+      await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
       logger.error(error);
@@ -189,7 +189,8 @@ export class AccountController extends Controller {
       });
 
       json(ctx, { token });
-    } catch (_error) {
+    } catch (error) {
+      logger.error(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -219,7 +220,8 @@ export class AccountController extends Controller {
       await sendMail(email, subject, content, true);
 
       success(ctx);
-    } catch (_error) {
+    } catch (error) {
+      logger.error(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

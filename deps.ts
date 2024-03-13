@@ -29,21 +29,4 @@ export {
   describe,
   it,
 } from "https://deno.land/std@0.196.0/testing/bdd.ts";
-export {
-  Client,
-  Dao,
-  Delete,
-  Entity,
-  Field,
-  initTables,
-  Insert,
-  Nullable,
-  PrimaryKey,
-  Query,
-  Select,
-  SizedField,
-  transaction,
-  Update,
-  Where,
-} from "https://raw.githubusercontent.com/ninjinskii/denorm/2.0.6/mod.ts";
 export { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";

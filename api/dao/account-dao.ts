@@ -36,7 +36,7 @@ export class SupabaseAccountDao implements AccountDao {
     const response = await this.supabaseClient
       .from('account')
       .select('email, registrationCode:registration_code')
-      .eq('id', id); // TODO: vérifier que la conversion int -> string foncitonne bien
+      .eq('id', id);
 
     return this.processSupabaseResponse(response)
   }

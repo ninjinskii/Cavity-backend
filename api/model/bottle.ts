@@ -1,30 +1,23 @@
-import { Entity, Field, Nullable, PrimaryKey } from "../../deps.ts";
-
-@Entity("bottle")
 export class Bottle {
   constructor(
-    @PrimaryKey("SERIAL") public _id: number,
-    @Field("INT", Nullable.NO, "account_id") public accountId: number,
-    @Field("INT") public id: number,
-    @Field("INT", Nullable.NO, "wine_id") public wineId: number,
-    @Field("INT") public vintage: number,
-    @Field("INT", Nullable.YES) public apogee: number,
-    @Field("INT", Nullable.NO, "is_favorite") public isFavorite: number,
-    @Field("FLOAT4") public price: number,
-    @Field("VARCHAR") public currency: string,
-    @Field("VARCHAR", Nullable.NO, "other_info") public otherInfo: string,
-    @Field("VARCHAR", Nullable.NO, "buy_location") public buyLocation: string,
-    @Field("BIGINT", Nullable.NO, "buy_date") public buyDate: number,
-    @Field(
-      "VARCHAR",
-      Nullable.NO,
-      "tasting_taste_comment",
-    ) public tastingTasteComment: string,
-    @Field("VARCHAR", Nullable.NO, "bottle_size") public bottleSize: string,
-    @Field("INT") public consumed: number,
-    @Field("INT", Nullable.YES, "tasting_id") public tastingId: number | null,
-    @Field("BOOL", Nullable.NO, "is_selected") public isSelected: boolean,
-    @Field("VARCHAR", Nullable.NO, "pdf_path") public pdfPath: string,
+    public _id: number,
+    public accountId: number,
+    public id: number,
+    public wineId: number,
+    public vintage: number,
+    public apogee: number,
+    public isFavorite: number,
+    public price: number,
+    public currency: string,
+    public otherInfo: string,
+    public buyLocation: string,
+    public buyDate: number,
+    public tastingTasteComment: string,
+    public bottleSize: string,
+    public consumed: number,
+    public tastingId: number | null,
+    public isSelected: boolean,
+    public pdfPath: string,
   ) {
   }
 }

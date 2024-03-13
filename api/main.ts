@@ -1,27 +1,12 @@
-import { Application, logger, Router, createClient, Client, initTables } from "../deps.ts";
+import { Application, logger, Router, createClient, SupabaseClient } from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import { AccountController } from "./controller/account.ts";
-import { Account } from "./model/account.ts";
-import { Bottle } from "./model/bottle.ts";
-import { County } from "./model/county.ts";
-import { FReview } from "./model/f-review.ts";
-import { Friend } from "./model/friend.ts";
-import { Grape } from "./model/grape.ts";
-import { HistoryEntry } from "./model/history-entry.ts";
-import { HistoryXFriend } from "./model/history-x-friend.ts";
-import { QGrape } from "./model/q-grape.ts";
-import { Review } from "./model/review.ts";
-import { TastingAction } from "./model/tasting-action.ts";
-import { TastingXFriend } from "./model/tasting-x-friend.ts";
-import { Tasting } from "./model/tasting.ts";
-import { Wine } from "./model/wine.ts";
 import { JwtServiceImpl } from "./service/jwt-service.ts";
 import { SupabaseAccountDao } from "./dao/account-dao.ts";
-import { DenormRestDao, SupabaseRestDao } from "./dao/rest-dao.ts";
-import { DenormAccountDao } from "./dao/account-dao.ts";
+import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
 
@@ -87,7 +72,7 @@ function applyBigIntSerializer() {
   };
 }
 
-function getRouteDaoMapper(client: any) {
+function getRouteDaoMapper(client: SupabaseClient) {
   return {
     "/county": new SupabaseRestDao(client, "county"),
     "/wine": new SupabaseRestDao(client, "wine"),
@@ -103,25 +88,6 @@ function getRouteDaoMapper(client: any) {
     "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
     "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
   };
-
-  // if (DEVELOPMENT) {
-    // Utiliser supabase en local
-    // return {
-    //   "/county": new DenormRestDao(client, "county"),
-    //   "/wine": new DenormRestDao(client, "wine"),
-    //   "/bottle": new DenormRestDao(client, "bottle"),
-    //   "/friend": new DenormRestDao(client, "friend"),
-    //   "/grape": new DenormRestDao(client, "grape"),
-    //   "/review": new DenormRestDao(client, "review"),
-    //   "/qgrape": new DenormRestDao(client, "q_grape"),
-    //   "/freview": new DenormRestDao(client, "f_review"),
-    //   "/history": new DenormRestDao(client, "history_entry"),
-    //   "/tasting": new DenormRestDao(client, "tasting"),
-    //   "/tasting-action": new DenormRestDao(client, "tasting_action"),
-    //   "/history-x-friend": new DenormRestDao(client, "history_x_friend"),
-    //   "/tasting-x-friend": new DenormRestDao(client, "tasting_x_friend"),
-    // };
-  // }
 }
 
 function getAccountDao(): { accountDao: AccountDao, mapper: DaoMapper } {
