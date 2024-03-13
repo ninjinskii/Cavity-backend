@@ -54,7 +54,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-const { accountDao, mapper } = await getAccountDao()
+const { accountDao, mapper } = getAccountDao()
 
 const accountController = new AccountController({
   router,
@@ -88,80 +88,45 @@ function applyBigIntSerializer() {
 }
 
 function getRouteDaoMapper(client: any) {
-  if (DEVELOPMENT) {
-    return {
-      "/county": new DenormRestDao(client, "county"),
-      "/wine": new DenormRestDao(client, "wine"),
-      "/bottle": new DenormRestDao(client, "bottle"),
-      "/friend": new DenormRestDao(client, "friend"),
-      "/grape": new DenormRestDao(client, "grape"),
-      "/review": new DenormRestDao(client, "review"),
-      "/qgrape": new DenormRestDao(client, "q_grape"),
-      "/freview": new DenormRestDao(client, "f_review"),
-      "/history": new DenormRestDao(client, "history_entry"),
-      "/tasting": new DenormRestDao(client, "tasting"),
-      "/tasting-action": new DenormRestDao(client, "tasting_action"),
-      "/history-x-friend": new DenormRestDao(client, "history_x_friend"),
-      "/tasting-x-friend": new DenormRestDao(client, "tasting_x_friend"),
-    };
-  } else {
-    return {
-      "/county": new SupabaseRestDao(client, "county"),
-      "/wine": new SupabaseRestDao(client, "wine"),
-      "/bottle": new SupabaseRestDao(client, "bottle"),
-      "/friend": new SupabaseRestDao(client, "friend"),
-      "/grape": new SupabaseRestDao(client, "grape"),
-      "/review": new SupabaseRestDao(client, "review"),
-      "/qgrape": new SupabaseRestDao(client, "q_grape"),
-      "/freview": new SupabaseRestDao(client, "f_review"),
-      "/history": new SupabaseRestDao(client, "history_entry"),
-      "/tasting": new SupabaseRestDao(client, "tasting"),
-      "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
-      "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
-      "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
-    };
-  }
+  return {
+    "/county": new SupabaseRestDao(client, "county"),
+    "/wine": new SupabaseRestDao(client, "wine"),
+    "/bottle": new SupabaseRestDao(client, "bottle"),
+    "/friend": new SupabaseRestDao(client, "friend"),
+    "/grape": new SupabaseRestDao(client, "grape"),
+    "/review": new SupabaseRestDao(client, "review"),
+    "/qgrape": new SupabaseRestDao(client, "q_grape"),
+    "/freview": new SupabaseRestDao(client, "f_review"),
+    "/history": new SupabaseRestDao(client, "history_entry"),
+    "/tasting": new SupabaseRestDao(client, "tasting"),
+    "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
+    "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
+    "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
+  };
+
+  // if (DEVELOPMENT) {
+    // Utiliser supabase en local
+    // return {
+    //   "/county": new DenormRestDao(client, "county"),
+    //   "/wine": new DenormRestDao(client, "wine"),
+    //   "/bottle": new DenormRestDao(client, "bottle"),
+    //   "/friend": new DenormRestDao(client, "friend"),
+    //   "/grape": new DenormRestDao(client, "grape"),
+    //   "/review": new DenormRestDao(client, "review"),
+    //   "/qgrape": new DenormRestDao(client, "q_grape"),
+    //   "/freview": new DenormRestDao(client, "f_review"),
+    //   "/history": new DenormRestDao(client, "history_entry"),
+    //   "/tasting": new DenormRestDao(client, "tasting"),
+    //   "/tasting-action": new DenormRestDao(client, "tasting_action"),
+    //   "/history-x-friend": new DenormRestDao(client, "history_x_friend"),
+    //   "/tasting-x-friend": new DenormRestDao(client, "tasting_x_friend"),
+    // };
+  // }
 }
 
-async function getAccountDao(): Promise<{ accountDao: AccountDao, mapper: DaoMapper }> {
-  if (DEVELOPMENT) {
-    const client = new Client({
-      user,
-      hostname,
-      database,
-      port,
-      password,
-      tls: {
-        caCertificates: [
-          await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
-        ],
-      },
-    });
-    
-    await initTables(
-      client,
-      [
-        Account,
-        Bottle,
-        County,
-        FReview,
-        Friend,
-        Grape,
-        HistoryEntry,
-        HistoryXFriend,
-        QGrape,
-        Review,
-        TastingAction,
-        TastingXFriend,
-        Tasting,
-        Wine,
-      ],
-    );
-    return { accountDao:  new DenormAccountDao(client, 'account'), mapper: getRouteDaoMapper(client) }
-  } else {
-    const client = createClient('', '')
-    return { accountDao: new SupabaseAccountDao(client), mapper: getRouteDaoMapper(client) }
-  }
+function getAccountDao(): { accountDao: AccountDao, mapper: DaoMapper } {
+  const client = createClient('http://172.17.0.1:54321', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0')
+  return { accountDao: new SupabaseAccountDao(client), mapper: getRouteDaoMapper(client) }
 }
 
 declare global {

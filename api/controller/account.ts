@@ -87,12 +87,14 @@ export class AccountController extends Controller {
         resetToken: null,
       };
 
+      console.log(account.registrationCode)
+
       await this.accountDao.insert([account]);
 
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
-      await sendMail(account.email, subject, content);
+      // await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
       logger.error(error);

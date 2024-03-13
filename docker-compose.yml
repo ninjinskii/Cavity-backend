@@ -22,24 +22,24 @@ services:
       - DATABASE_URL=postgres,plout,db,5432,cavity
       - TOKEN_SECRET=mySuperSecret
       - SENDINBLUE_API_KEY=:D
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
 
-  db:
-    image: postgres:alpine
-    container_name: db.njk.localhost
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - default
-    environment:
-      - POSTGRES_DB=cavity
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=plout
-      - PGDATA=/var/lib/postgresql/data/cavity
-    volumes:
-      - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
-      - ./backup:/home
+  # db:
+  #   image: postgres:alpine
+  #   container_name: db.njk.localhost
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks:
+  #     - default
+  #   environment:
+  #     - POSTGRES_DB=cavity
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=plout
+  #     - PGDATA=/var/lib/postgresql/data/cavity
+  #   volumes:
+  #     - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
+  #     - ./backup:/home
 
 networks:
   proxy:

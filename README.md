@@ -3,9 +3,12 @@ A server for Cavity Android app to make backups of user's data
 
 ## Run the project locally
 Make sure [traefik](https://github.com/ninjinskii/traefik) is running.
+Install supabase CLI.
 
 ```bash
 cd Cavity-backend
+supabase init   # Only once
+supabase start
 docker-compose up -d
 ```
 
