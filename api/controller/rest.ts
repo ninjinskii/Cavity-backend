@@ -70,7 +70,7 @@ export class DataController extends Controller {
         return success(ctx);
       }
 
-      objects.forEach((object) => object.accountId = accountId);
+      objects.forEach((object) => object.account_id = accountId);
 
       try {
         // TODO: supabase-js does not support transactions yet
