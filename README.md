@@ -13,6 +13,12 @@ docker-compose up -d
 ```
 
 You can now acces the project at https://cavity.njk.localhost
+Supabase UI URL is displayed when running supabase start
+
+To create the DB schema, go to the supabase ui and copy and paste the `/supabase/schema.sql` in the SQL editor
+
+Make sure docker compose variables `SUPABASE_URL` & `SUPABASE_ANON_KEY` are filled with the values given by supabase start
+(Most of the time, http://172.17.0.1:54321 works the best)
 
 ## Make a request from another device
 You can use the api while serving it with a mobile device for example.
@@ -44,7 +50,7 @@ Things to do to prepare a release:
 docker-compose up -d
 docker-compose exec web deno test --allow-env
 ```
-
+Fv
 ## Backup the database
 [Go to supabase and run the "Before backup" SQL command (ALTER USER postgres with superuser).] - Seems not to be mandatory from now on
 Replace `[password]` with actual password in `backup/backup.sh` connection string. Then:

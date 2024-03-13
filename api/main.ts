@@ -14,8 +14,7 @@ applyBigIntSerializer();
 
 const app = new Application();
 const router = new Router();
-const { DATABASE_URL, TOKEN_SECRET, DEVELOPMENT } = Deno.env.toObject();
-const [user, password, hostname, port, database] = DATABASE_URL.split(",");
+const { TOKEN_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY } = Deno.env.toObject();
 
 const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
 
@@ -91,7 +90,7 @@ function getRouteDaoMapper(client: SupabaseClient) {
 }
 
 function getAccountDao(): { accountDao: AccountDao, mapper: DaoMapper } {
-  const client = createClient('http://172.17.0.1:54321', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0')
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   return { accountDao: new SupabaseAccountDao(client), mapper: getRouteDaoMapper(client) }
 }
 
