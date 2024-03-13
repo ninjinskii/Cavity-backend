@@ -1,6 +1,4 @@
-import { pascalCase } from "../../deps.ts";
-import { snakeCase } from "../../deps.ts";
-import { SupabaseClient } from "../../deps.ts";
+import { SupabaseClient, snakeCase , camelCase } from "../../deps.ts";
 
 export interface RestDao<T> {
   selectByAccountId(accountId: number): Promise<T[]>;
@@ -21,7 +19,7 @@ export class SupabaseRestDao<T> implements RestDao<T> {
       throw response.error
     }
 
-    return response.data.map(object => this.toPascaleCase(object))
+    return response.data.map(object => this.toCamelCase(object))
   }
 
   async insert(objects: T[]): Promise<void> {
@@ -57,12 +55,12 @@ export class SupabaseRestDao<T> implements RestDao<T> {
     return formatted
   }
 
-  private toPascaleCase<T>(object: T): T {
+  private toCamelCase<T>(object: T): T {
     // deno-lint-ignore no-explicit-any
     const formatted: any = {}
 
     for (const key in object) {
-      formatted[pascalCase(key)] = object[key]
+      formatted[camelCase(key)] = object[key]
     }
 
     return formatted
