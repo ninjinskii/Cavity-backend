@@ -86,10 +86,10 @@ describe("Data controller", () => {
         assertSpyCall(jwtSpy, 0, { args: ["zepuifgo"] });
         assertSpyCall(deleteSpy, 0, { args: [1] });
         assertSpyCall(insertSpy, 0, {
-          args: [[{ a: "a", b: "b", accountId: 1 }, {
+          args: [[{ a: "a", b: "b", account_id: 1 }, {
             a: "c",
             b: "d",
-            accountId: 1,
+            account_id: 1,
           }]],
         });
         assertStatusEquals(mockContext, 200);

@@ -87,8 +87,6 @@ export class AccountController extends Controller {
         resetToken: null,
       };
 
-      console.log(account.registrationCode)
-
       await this.accountDao.insert([account]);
 
       const subject = this.$t.emailSubject;
