@@ -1,3 +1,4 @@
+import { snakeCase } from "../../deps.ts";
 import { SupabaseClient } from "../../deps.ts";
 
 export interface RestDao<T> {
@@ -23,9 +24,10 @@ export class SupabaseRestDao<T> implements RestDao<T> {
   }
 
   async insert(objects: T[]): Promise<void> {
+    const formatted = objects.map(object => this.toSnakeCase(object))
     const response = await this.supabaseClient
       .from(this.table)
-      .insert(objects);
+      .insert(formatted);
 
     if (response.error) {
       throw response.error
@@ -41,5 +43,18 @@ export class SupabaseRestDao<T> implements RestDao<T> {
     if (response.error) {
       throw response.error
     }
+  }
+
+  // It has to be generic
+  // deno-lint-ignore no-explicit-any
+  private toSnakeCase(object: any): unknown {
+    // deno-lint-ignore no-explicit-any
+    const formatted: any = {}
+
+    for (const key in object) {
+      formatted[snakeCase(key)] = object[key]
+    }
+
+    return formatted
   }
 }
