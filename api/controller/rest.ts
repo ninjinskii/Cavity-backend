@@ -1,4 +1,4 @@
-import { Context, logger, Router } from "../../deps.ts";
+import { Context, logger, Router, Sentry } from "../../deps.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
@@ -48,7 +48,7 @@ export class DataController extends Controller {
         try {
           await dao.deleteAllForAccount(accountId);
         } catch (error) {
-          Sentry.captureException(error)
+          Sentry.captureException(error);
           return json(ctx, { message: this.$t.baseError }, 500);
         }
 
@@ -70,7 +70,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        Sentry.captureException(error)
+        Sentry.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -89,7 +89,7 @@ export class DataController extends Controller {
 
         json(ctx, objects);
       } catch (error) {
-        Sentry.captureException(error)
+        Sentry.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -105,7 +105,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        Sentry.captureException(error)
+        Sentry.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });

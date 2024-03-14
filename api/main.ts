@@ -1,4 +1,4 @@
-import { Application, logger, Router, createClient, SupabaseClient } from "../deps.ts";
+import { Application, logger, Router, createClient, SupabaseClient, Sentry } from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -9,7 +9,6 @@ import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
-import * as Sentry from "npm:@sentry/node";
 
 applyBigIntSerializer();
 

@@ -1,4 +1,4 @@
-import { Context, Router } from "../../deps.ts";
+import { Context, Router, Sentry } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
@@ -8,7 +8,6 @@ import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";
-import * as Sentry from "npm:@sentry/node";
 
 interface AccountControllerOptions {
   router: Router;

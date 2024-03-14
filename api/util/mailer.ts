@@ -1,4 +1,4 @@
-import * as Sentry from "npm:@sentry/node";
+import { Sentry } from "../../deps.ts";
 
 export default async function sendMail(
   to: string,
