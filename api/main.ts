@@ -9,7 +9,6 @@ import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
-import { SentryWrapper } from "./sentry.ts";
 import * as Sentry from "npm:@sentry/node";
 
 applyBigIntSerializer();
@@ -21,7 +20,7 @@ const SENTRY_DSN =
 Sentry.init({
   dsn: SENTRY_DSN,
   tracesSampleRate: SENTRY_SAMPLE_RATE,
-  release: "1.4.0",
+  release: "1.5.1",
   beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
     const { DEV_MODE } = Deno.env.toObject();
     const isProduction = DEV_MODE !== "1";
