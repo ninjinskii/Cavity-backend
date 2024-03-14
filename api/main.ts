@@ -25,12 +25,8 @@ Sentry.init({
     const { DEV_MODE } = Deno.env.toObject();
     const isProduction = DEV_MODE !== "1";
 
-    if (isProduction) {
-      return event;
-    }
-
     // Do not send the event to Sentry if the app is not in production
-    return null;
+    return isProduction ? event : null
   },
 });
 

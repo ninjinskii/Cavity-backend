@@ -282,8 +282,7 @@ export class AccountController extends Controller {
       await this.accountDao.recover(hash, token);
 
       success(ctx);
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (_error) {
       json(ctx, { message: this.$t.unauthorized }, 401);
     }
   }
