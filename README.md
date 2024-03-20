@@ -20,6 +20,9 @@ To create the DB schema, go to the supabase ui and copy and paste the `/supabase
 Make sure docker compose variables `SUPABASE_URL` & `SUPABASE_ANON_KEY` are filled with the values given by supabase start
 (Most of the time, http://172.17.0.1:54321 works the best)
 
+Warning: a test has been made to put the schema.sql inside seed.sql hoping for automatic schema pockup when setting up the project on a new machine
+It might not work
+
 ## Make a request from another device
 You can use the api while serving it with a mobile device for example.
 You first need to find out your ip on your local network:

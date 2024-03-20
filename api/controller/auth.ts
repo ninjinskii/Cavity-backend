@@ -23,7 +23,7 @@ export class AuthController extends Controller {
     this.jwtService = jwtService;
     this.accountDao = accountDao;
 
-    this.handleRequests()
+    this.handleRequests();
   }
 
   get default() {
@@ -68,7 +68,9 @@ export class AuthController extends Controller {
         },
       });
 
-      json(ctx, { token, email });
+      const { lastUser, lastUpdateTime } = account[0];
+
+      json(ctx, { token, email, lastUser, lastUpdateTime });
     } catch (error) {
       logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);

@@ -5,6 +5,8 @@ export class Account {
     public password: string,
     public registrationCode: number | null,
     public resetToken: string | null,
+    public lastUser: string | null,
+    public lastUpdateTime: number | null,
   ) {
   }
 

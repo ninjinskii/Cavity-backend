@@ -2,12 +2,12 @@ import {
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
-  SupabaseClient,
   Context,
   createMockContext,
   describe,
   it,
   spy,
+  SupabaseClient,
 } from "../../../deps.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
@@ -43,6 +43,8 @@ const fakeAccount: Account = {
   password: "shht",
   registrationCode: null,
   resetToken: null,
+  lastUpdateTime: null,
+  lastUser: null,
 };
 
 let mockContext: Context;
@@ -109,6 +111,8 @@ describe("Auth controller", () => {
         password: "shht",
         registrationCode: 123456,
         resetToken: null,
+        lastUpdateTime: null,
+        lastUser: null,
       };
       const selectAccountSpy = simpleStubAsync(
         accountDao,

@@ -92,14 +92,14 @@ export class AccountController extends Controller {
         resetToken: null,
       };
 
-      console.log(account.registrationCode)
+      console.log(account.registrationCode);
 
       await this.accountDao.insert([account]);
 
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
-      await sendMail(account.email, subject, content);
+      // await sendMail(account.email, subject, content);
       success(ctx);
     } catch (error) {
       logger.error(error);
@@ -115,21 +115,24 @@ export class AccountController extends Controller {
   }
 
   async getAccount(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
-      try {
-        const account = await this.accountDao.selectById(accountId);
+    await inAuthentication(
+      ctx,
+      this.jwtService,
+      this.$t,
+      async (accountId, token) => {
+        try {
+          const account = await this.accountDao.selectById(accountId);
 
-        if (!account.length) {
-          return json(ctx, { message: this.$t.notFound }, 404);
+          if (!account.length) {
+            return json(ctx, { message: this.$t.notFound }, 404);
+          }
+
+          json(ctx, { ...account[0], token });
+        } catch (_error) {
+          json(ctx, { message: this.$t.baseError }, 500);
         }
-
-        const result = account[0];
-
-        json(ctx, result);
-      } catch (_error) {
-        json(ctx, { message: this.$t.baseError }, 500);
-      }
-    });
+      },
+    );
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
@@ -193,7 +196,11 @@ export class AccountController extends Controller {
         payload: { account_id: account[0].id },
       });
 
-      json(ctx, { token });
+      const lightweigth: any = account[0];
+      delete lightweigth["id"];
+      delete lightweigth["registrationCode"];
+
+      json(ctx, { ...lightweigth, token, email: confirmDto.email });
     } catch (error) {
       logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
