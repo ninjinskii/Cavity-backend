@@ -23,6 +23,8 @@ export interface AccountDao {
     accounts: { email: string; password: string; registrationCode: number }[],
   ): Promise<void>;
 
+  updateLastUser(accountId: number, lastUser: string, lastUpdateTime: number): Promise<void>
+
   deleteByEmail(email: string): Promise<void>;
 
   deleteById(id: number): Promise<void>;
@@ -100,6 +102,15 @@ export class SupabaseAccountDao implements AccountDao {
     if (response.error) {
       throw response.error;
     }
+  }
+
+  async updateLastUser(accountId: number, lastUser: string, lastUpdateTime: number): Promise<void> {
+    const response = await this.supabaseClient
+      .from('account')
+      .update({ last_user: lastUser, last_update_time: lastUpdateTime })
+      .eq('id', accountId)
+
+    return this.processSupabaseResponse(response)
   }
 
   async deleteByEmail(email: string): Promise<void> {

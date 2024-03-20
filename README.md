@@ -28,6 +28,20 @@ You first need to find out your ip on your local network:
 hostname -I | awk '{print $1}'
 ```
 
+For Android, update network_security_config file to allow unsecured http to run on this ip:
+```xml
+<network-security-config>
+    <base-config>
+        ...
+    </base-config>
+
+    <!-- Test locally -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">[ip]</domain>
+    </domain-config>
+</network-security-config>
+```
+
 Access the app from http://ip:5000
 
 ## Dependency code has been changed ?

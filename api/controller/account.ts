@@ -26,7 +26,7 @@ export class AccountController extends Controller {
     this.jwtService = jwtService;
     this.accountDao = accountDao;
 
-    this.handleRequests()
+    this.handleRequests();
   }
 
   get default() {
@@ -49,6 +49,10 @@ export class AccountController extends Controller {
     return "/account/delete";
   }
 
+  get lastUser() {
+    return "/account/lastuser";
+  }
+
   handleRequests(): void {
     this.router
       .post(this.default, (ctx: Context) => this.postAccount(ctx))
@@ -61,7 +65,8 @@ export class AccountController extends Controller {
     this.router
       .post(this.confirm, (ctx: Context) => this.confirmAccount(ctx))
       .post(this.recover, (ctx: Context) => this.recoverAccount(ctx))
-      .post(this.changePassword, (ctx: Context) => this.resetPassword(ctx));
+      .post(this.changePassword, (ctx: Context) => this.resetPassword(ctx))
+      .post(this.lastUser, (ctx: Context) => this.updateLastUser(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -86,6 +91,8 @@ export class AccountController extends Controller {
         registrationCode: Account.generateRegistrationCode(),
         resetToken: null,
       };
+
+      console.log(account.registrationCode)
 
       await this.accountDao.insert([account]);
 
@@ -188,7 +195,7 @@ export class AccountController extends Controller {
 
       json(ctx, { token });
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -219,7 +226,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -250,6 +257,21 @@ export class AccountController extends Controller {
     } catch (_error) {
       json(ctx, { message: this.$t.unauthorized }, 401);
     }
+  }
+
+  async updateLastUser(ctx: Context): Promise<void> {
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+      const { lastUser } = await ctx.request.body().value;
+      const time = Date.now();
+
+      try {
+        await this.accountDao.updateLastUser(accountId, lastUser, time);
+        return success(ctx);
+      } catch (error) {
+        logger.error(error);
+        json(ctx, { message: this.$t.baseError }, 500);
+      }
+    });
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
