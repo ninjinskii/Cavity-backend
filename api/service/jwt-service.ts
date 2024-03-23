@@ -37,7 +37,7 @@ export interface JwtService {
 
 export class JwtServiceImpl implements JwtService {
   private jwtKey: CryptoKey;
-  private readonly DEFAULT_JWT_EXPIRATION_DELAY = 60 * 60 * 48; // 48h
+  private readonly DEFAULT_JWT_EXPIRATION_DELAY = 60 * 60 * 24 * 30 * 6; // ~ 6 months
 
   private constructor(jwtKey: CryptoKey) {
     this.jwtKey = jwtKey;
