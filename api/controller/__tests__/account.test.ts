@@ -1,9 +1,9 @@
 import {
   afterAll,
+  assertEquals,
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
-  SupabaseClient,
   Context,
   createMockContext,
   describe,
@@ -11,6 +11,7 @@ import {
   returnsNext,
   spy,
   stub,
+  SupabaseClient,
 } from "../../../deps.ts";
 import { AccountController } from "../account.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
@@ -40,18 +41,22 @@ const accountController = new AccountController({
   accountDao,
 });
 
-const fakeAccount: Account = {
-  id: 1,
-  email: "abc@abc.fr",
-  password: "shht",
-  registrationCode: 123456,
-  resetToken: null,
-};
+let fakeAccount: Account;
 
 let mockContext: Context;
 
 describe("Account controller", () => {
   beforeEach(() => {
+    fakeAccount = {
+      id: 1,
+      email: "abc@abc.fr",
+      password: "shht",
+      registrationCode: 123456,
+      resetToken: null,
+      lastUser: null,
+      lastUpdateTime: null,
+    };
+
     mockContext = createMockContext({
       headers: [["Authorization", "Bearer zepuifgo"]],
     });
@@ -68,7 +73,7 @@ describe("Account controller", () => {
         assertSpyCall(jwtSpy, 0, { args: ["zepuifgo"] });
         assertSpyCall(daoSpy, 0, { args: [1] });
         assertStatusEquals(mockContext, 200);
-        assertBodyEquals(mockContext, fakeAccount);
+        assertBodyEquals(mockContext, { ...fakeAccount, token: "zepuifgo" });
       });
     });
 
@@ -128,6 +133,7 @@ describe("Account controller", () => {
         fakeAccount,
       ]);
       const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
+      const fakeAccountId = fakeAccount.id
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
@@ -142,11 +148,11 @@ describe("Account controller", () => {
         assertSpyCall(jwtSpy, 0, {
           args: [{
             header: { alg: "HS512", typ: "JWT" },
-            payload: { account_id: fakeAccount.id },
+            payload: { account_id: fakeAccountId },
           }],
         });
         assertStatusEquals(mockContext, 200);
-        assertBodyEquals(mockContext, { token: "token" });
+        assertBodyEquals(mockContext, { ...fakeAccount, token: "token" });
       });
     });
 
@@ -178,6 +184,8 @@ describe("Account controller", () => {
         password: "shht",
         registrationCode: null, // registrationCode == null -> account is already confirmed
         resetToken: null,
+        lastUpdateTime: null,
+        lastUser: null,
       };
 
       const jwtSpy = spy(jwtService, "create");

@@ -3,7 +3,9 @@ CREATE TABLE public.account (
     email character varying(255) NOT NULL,
     password character varying(255),
     registration_code integer,
-    reset_token character varying
+    reset_token character varying,
+    last_user character varying,
+    last_update_time bigint
 );
 
 

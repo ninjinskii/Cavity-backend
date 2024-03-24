@@ -47,7 +47,7 @@ describe("inAuthentication", () => {
 
     spyContext([verifySpy], () => {
       assertSpyCall(verifySpy, 0, { args: ["zepuifgo"] });
-      assertSpyCall(callbackSpy, 0, { args: [1] });
+      assertSpyCall(callbackSpy, 0, { args: [1, "zepuifgo"] });
 
       // response should not be touched if everything is going ok
       assertStatusEquals(mockContext, 404);

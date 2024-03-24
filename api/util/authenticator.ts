@@ -7,7 +7,7 @@ export default async function inAuthentication(
   ctx: Context,
   jwtService: JwtService,
   t: Translatable,
-  block: (accountId: number) => Promise<void>,
+  block: (accountId: number, token: string) => Promise<void>,
 ): Promise<void> {
   const authorization = ctx.request.headers.get("Authorization");
 
@@ -26,7 +26,7 @@ export default async function inAuthentication(
 
     if (!isNaN(accountId)) {
       logger.info(`Authorized account ${accountId}`);
-      return await block(accountId);
+      return await block(accountId, token);
     } else {
       json(ctx, { message: t.unauthorized }, 401);
     }

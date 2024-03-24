@@ -26,7 +26,7 @@ export class AccountController extends Controller {
     this.jwtService = jwtService;
     this.accountDao = accountDao;
 
-    this.handleRequests()
+    this.handleRequests();
   }
 
   get default() {
@@ -49,6 +49,10 @@ export class AccountController extends Controller {
     return "/account/delete";
   }
 
+  get lastUser() {
+    return "/account/lastuser";
+  }
+
   handleRequests(): void {
     this.router
       .post(this.default, (ctx: Context) => this.postAccount(ctx))
@@ -61,7 +65,8 @@ export class AccountController extends Controller {
     this.router
       .post(this.confirm, (ctx: Context) => this.confirmAccount(ctx))
       .post(this.recover, (ctx: Context) => this.recoverAccount(ctx))
-      .post(this.changePassword, (ctx: Context) => this.resetPassword(ctx));
+      .post(this.changePassword, (ctx: Context) => this.resetPassword(ctx))
+      .post(this.lastUser, (ctx: Context) => this.updateLastUser(ctx));
   }
 
   async postAccount(ctx: Context): Promise<void> {
@@ -108,21 +113,24 @@ export class AccountController extends Controller {
   }
 
   async getAccount(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
-      try {
-        const account = await this.accountDao.selectById(accountId);
+    await inAuthentication(
+      ctx,
+      this.jwtService,
+      this.$t,
+      async (accountId, token) => {
+        try {
+          const account = await this.accountDao.selectById(accountId);
 
-        if (!account.length) {
-          return json(ctx, { message: this.$t.notFound }, 404);
+          if (!account.length) {
+            return json(ctx, { message: this.$t.notFound }, 404);
+          }
+
+          json(ctx, { ...account[0], token });
+        } catch (_error) {
+          json(ctx, { message: this.$t.baseError }, 500);
         }
-
-        const result = account[0];
-
-        json(ctx, result);
-      } catch (_error) {
-        json(ctx, { message: this.$t.baseError }, 500);
-      }
-    });
+      },
+    );
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
@@ -186,9 +194,14 @@ export class AccountController extends Controller {
         payload: { account_id: account[0].id },
       });
 
-      json(ctx, { token });
+      const lightweight: any = account[0];
+      delete lightweight["account_id"]
+      delete lightweight["id"];
+      delete lightweight["registrationCode"];
+
+      json(ctx, { ...lightweight, token, email: confirmDto.email });
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -219,7 +232,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (error) {
-      logger.error(error)
+      logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -250,6 +263,21 @@ export class AccountController extends Controller {
     } catch (_error) {
       json(ctx, { message: this.$t.unauthorized }, 401);
     }
+  }
+
+  async updateLastUser(ctx: Context): Promise<void> {
+    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+      const { lastUser } = await ctx.request.body().value;
+      const time = Date.now();
+
+      try {
+        await this.accountDao.updateLastUser(accountId, lastUser, time);
+        return success(ctx);
+      } catch (error) {
+        logger.error(error);
+        json(ctx, { message: this.$t.baseError }, 500);
+      }
+    });
   }
 
   private async isAccountUnique(email: string): Promise<boolean> {
