@@ -80,6 +80,8 @@ describe("Auth controller", () => {
         assertBodyEquals(mockContext, {
           token: "token",
           email: fakeAccount.email,
+          lastUpdateTime: null,
+          lastUser: null,
         });
       });
     });

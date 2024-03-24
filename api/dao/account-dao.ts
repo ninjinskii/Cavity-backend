@@ -68,7 +68,7 @@ export class SupabaseAccountDao implements AccountDao {
 
   async selectByEmail(
     email: string,
-  ): Promise<Pick<Account, "id" | "registrationCode">[]> {
+  ): Promise<Pick<Account, "id" | "registrationCode"| "lastUser" | "lastUpdateTime">[]> {
     const response = await this.supabaseClient
       .from("account")
       .select("id, registrationCode:registration_code")

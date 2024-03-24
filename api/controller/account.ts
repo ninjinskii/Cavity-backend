@@ -194,11 +194,12 @@ export class AccountController extends Controller {
         payload: { account_id: account[0].id },
       });
 
-      const lightweigth: any = account[0];
-      delete lightweigth["id"];
-      delete lightweigth["registrationCode"];
+      const lightweight: any = account[0];
+      delete lightweight["account_id"]
+      delete lightweight["id"];
+      delete lightweight["registrationCode"];
 
-      json(ctx, { ...lightweigth, token, email: confirmDto.email });
+      json(ctx, { ...lightweight, token, email: confirmDto.email });
     } catch (error) {
       logger.error(error);
       json(ctx, { message: this.$t.baseError }, 500);
