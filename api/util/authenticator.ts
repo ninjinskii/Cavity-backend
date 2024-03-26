@@ -1,6 +1,6 @@
 import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
-import { JwtService } from "../service/jwt-service.ts";
+import { JwtService } from "../infrastructure/jwt-service.ts";
 import { json } from "./api-response.ts";
 
 export default async function inAuthentication(

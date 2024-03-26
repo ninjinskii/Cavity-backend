@@ -11,7 +11,7 @@ import {
   stub,
 } from "../../../deps.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
-import { JwtServiceImpl } from "../../service/jwt-service.ts";
+import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { DataController } from "../rest.ts";
 import { SupabaseRestDao } from "../../dao/rest-dao.ts";
 import { returnsNext } from "https://deno.land/std@0.173.0/testing/mock.ts";

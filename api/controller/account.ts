@@ -1,12 +1,13 @@
 import { Context, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
-import { JwtService } from "../service/jwt-service.ts";
-import PasswordService from "../service/password-service.ts";
+import { JwtService } from "../infrastructure/jwt-service.ts";
+import PasswordService from "../infrastructure/password-service.ts";
 import { json, success } from "../util/api-response.ts";
 import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
+import { Environment } from "../infrastructure/environment.ts";
 
 interface AccountControllerOptions {
   router: Router;
@@ -97,7 +98,15 @@ export class AccountController extends Controller {
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
-      await sendMail(account.email, subject, content);
+      const isDev = Environment.isDevelopmentMode();
+
+      if (!isDev) {
+        await sendMail(account.email, subject, content);
+      } else {
+        logger.info(
+          `Created account in dev mode, registration code: ${account.registrationCode}`,
+        );
+      }
       success(ctx);
     } catch (error) {
       logger.error(error);
@@ -195,7 +204,7 @@ export class AccountController extends Controller {
       });
 
       const lightweight: any = account[0];
-      delete lightweight["account_id"]
+      delete lightweight["account_id"];
       delete lightweight["id"];
       delete lightweight["registrationCode"];
 
@@ -228,7 +237,16 @@ export class AccountController extends Controller {
         `${this.$t.emailContentRecover}<a href="https://cavity.fr/recover.html?token=${token}">Cavity</a>`;
 
       await this.accountDao.setPendingRecovery(email, token);
-      await sendMail(email, subject, content, true);
+
+      const isDev = Environment.isDevelopmentMode();
+
+      if (!isDev) {
+        await sendMail(email, subject, content, true);
+      } else {
+        logger.info(
+          `Trying to recover account in dev mode, recovery link: http://cavity.njk.localhost/recover.html?token=${token}`,
+        );
+      }
 
       success(ctx);
     } catch (error) {

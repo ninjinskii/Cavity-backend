@@ -16,9 +16,9 @@ import {
 import { AccountController } from "../account.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
-import { JwtServiceImpl } from "../../service/jwt-service.ts";
+import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { SupabaseAccountDao } from "../../dao/account-dao.ts";
-import PasswordService from "../../service/password-service.ts";
+import PasswordService from "../../infrastructure/password-service.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
@@ -28,6 +28,7 @@ import {
   simpleStubAsync,
   spyContext,
 } from "../../util/test-utils.ts";
+import { Environment } from "../../infrastructure/environment.ts";
 
 const $t = new EnTranslations();
 
@@ -44,6 +45,13 @@ const accountController = new AccountController({
 let fakeAccount: Account;
 
 let mockContext: Context;
+
+const alwaysFalse = Array.from({ length: 100 }, () => false);
+stub(
+  Environment,
+  "isDevelopmentMode",
+  returnsNext(alwaysFalse),
+);
 
 describe("Account controller", () => {
   beforeEach(() => {
@@ -133,7 +141,7 @@ describe("Account controller", () => {
         fakeAccount,
       ]);
       const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
-      const fakeAccountId = fakeAccount.id
+      const fakeAccountId = fakeAccount.id;
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",

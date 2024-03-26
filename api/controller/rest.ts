@@ -3,7 +3,7 @@ import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
-import { JwtService } from "../service/jwt-service.ts";
+import { JwtService } from "../infrastructure/jwt-service.ts";
 
 interface DataControllerOptions {
   router: Router;
@@ -20,23 +20,7 @@ export class DataController extends Controller {
     this.jwtService = jwtService;
     this.mapper = mapper;
 
-    // {
-    //   "/county": new SupabaseRestDao(this.client, "county"),
-    //   "/wine": new SupabaseRestDao(this.client, "wine"),
-    //   "/bottle": new SupabaseRestDao(this.client, "bottle"),
-    //   "/friend": new SupabaseRestDao(this.client, "friend"),
-    //   "/grape": new SupabaseRestDao(this.client, "grape"),
-    //   "/review": new SupabaseRestDao(this.client, "review"),
-    //   "/qgrape": new SupabaseRestDao(this.client, "q_grape"),
-    //   "/freview": new SupabaseRestDao(this.client, "f_review"),
-    //   "/history": new SupabaseRestDao(this.client, "history_entry"),
-    //   "/tasting": new SupabaseRestDao(this.client, "tasting"),
-    //   "/tasting-action": new SupabaseRestDao(this.client, "tasting_action"),
-    //   "/history-x-friend": new SupabaseRestDao(this.client, "history_x_friend"),
-    //   "/tasting-x-friend": new SupabaseRestDao(this.client, "tasting_x_friend"),
-    // };
-
-    this.handleRequests()
+    this.handleRequests();
   }
 
   handleRequests(): void {
@@ -83,7 +67,7 @@ export class DataController extends Controller {
         //   ? success(ctx)
         //   : json(ctx, { message: this.$t.missingParameters }, 400);
 
-        success(ctx)
+        success(ctx);
       } catch (error) {
         logger.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
