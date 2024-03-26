@@ -65,8 +65,7 @@ Things to do to prepare a release:
 
 ## Sentry
 Sentry is configured for this project.
-Note however that it should not work if the app is run inside a docker container 
-(which isn't a problem since we're deploying on Deno Deploy)
+Note however that it would not work in dev mode, nor in a dev container
 
 ## Run unit tests
 ```bash

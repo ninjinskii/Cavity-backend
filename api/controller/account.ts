@@ -1,4 +1,4 @@
-import { Context, Router, Sentry } from "../../deps.ts";
+import { Context, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
@@ -8,24 +8,28 @@ import inAuthentication from "../util/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface AccountControllerOptions {
   router: Router;
   jwtService: JwtService;
   accountDao: AccountDao;
+  errorReporter: ErrorReporter;
 }
 
 export class AccountController extends Controller {
   private jwtService: JwtService;
   private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
   private accountDao: AccountDao;
+  private errorReporter: ErrorReporter;
 
   constructor(
-    { router, jwtService, accountDao }: AccountControllerOptions,
+    { router, jwtService, accountDao, errorReporter }: AccountControllerOptions,
   ) {
     super(router);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
+    this.errorReporter = errorReporter;
 
     this.handleRequests();
   }
@@ -109,14 +113,14 @@ export class AccountController extends Controller {
       }
       success(ctx);
     } catch (error) {
-      Sentry.captureException(error)
+      this.errorReporter.captureException(error)
 
       try {
         // Mail sending has probably gone wrong. Remove the account.
         await this.accountDao.deleteByEmail(email);
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (error) {
-        Sentry.captureException(error)
+        this.errorReporter.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     }
@@ -137,7 +141,7 @@ export class AccountController extends Controller {
 
           json(ctx, { ...account[0], token });
         } catch (error) {
-          Sentry.captureException(error)
+          this.errorReporter.captureException(error)
           json(ctx, { message: this.$t.baseError }, 500);
         }
       },
@@ -173,7 +177,7 @@ export class AccountController extends Controller {
         await this.accountDao.deleteById(accountId);
         success(ctx);
       } catch (error) {
-        Sentry.captureException(error)
+        this.errorReporter.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -213,7 +217,7 @@ export class AccountController extends Controller {
 
       json(ctx, { ...lightweight, token, email: confirmDto.email });
     } catch (error) {
-      Sentry.captureException(error)
+      this.errorReporter.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -253,7 +257,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (error) {
-      Sentry.captureException(error)
+      this.errorReporter.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

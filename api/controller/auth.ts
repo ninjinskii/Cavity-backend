@@ -1,27 +1,31 @@
-import { Context, logger, Router, Sentry } from "../../deps.ts";
+import { Context, logger, Router } from "../../deps.ts";
 import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
 import PasswordService from "../infrastructure/password-service.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface AuthControllerOptions {
   router: Router;
   jwtService: JwtService;
   accountDao: AccountDao;
+  errorReporter: ErrorReporter;
 }
 
 export class AuthController extends Controller {
   private jwtService: JwtService;
   private accountDao: AccountDao;
+  private errorReporter: ErrorReporter;
 
   constructor(
-    { router, jwtService, accountDao }: AuthControllerOptions,
+    { router, jwtService, accountDao, errorReporter }: AuthControllerOptions,
   ) {
     super(router);
     this.jwtService = jwtService;
     this.accountDao = accountDao;
+    this.errorReporter = errorReporter;
 
     this.handleRequests();
   }
@@ -72,7 +76,7 @@ export class AuthController extends Controller {
 
       json(ctx, { token, email, lastUser, lastUpdateTime });
     } catch (error) {
-      Sentry.captureException(error);
+      this.errorReporter.captureException(error)
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

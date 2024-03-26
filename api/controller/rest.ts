@@ -1,25 +1,30 @@
-import { Context, logger, Router, Sentry } from "../../deps.ts";
+import { Context, logger, Router } from "../../deps.ts";
 import Controller from "./controller.ts";
 import inAuthentication from "../util/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
 import { JwtService } from "../infrastructure/jwt-service.ts";
-import * as Sentry from "npm:@sentry/node";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface DataControllerOptions {
   router: Router;
   jwtService: JwtService;
   mapper: DaoMapper;
+  errorReporter: ErrorReporter;
 }
 
 export class DataController extends Controller {
   private jwtService: JwtService;
   private mapper: DaoMapper;
+  private errorReporter: ErrorReporter;
 
-  constructor({ router, jwtService, mapper }: DataControllerOptions) {
+  constructor(
+    { router, jwtService, mapper, errorReporter }: DataControllerOptions,
+  ) {
     super(router);
     this.jwtService = jwtService;
     this.mapper = mapper;
+    this.errorReporter = errorReporter;
 
     this.handleRequests();
   }
@@ -48,7 +53,7 @@ export class DataController extends Controller {
         try {
           await dao.deleteAllForAccount(accountId);
         } catch (error) {
-          Sentry.captureException(error);
+          this.errorReporter.captureException(error)
           return json(ctx, { message: this.$t.baseError }, 500);
         }
 
@@ -70,7 +75,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        Sentry.captureException(error);
+        this.errorReporter.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -89,7 +94,7 @@ export class DataController extends Controller {
 
         json(ctx, objects);
       } catch (error) {
-        Sentry.captureException(error);
+        this.errorReporter.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -105,7 +110,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        Sentry.captureException(error);
+        this.errorReporter.captureException(error)
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });

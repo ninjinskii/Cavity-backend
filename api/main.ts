@@ -1,4 +1,4 @@
-import { Application, logger, Router, createClient, SupabaseClient, Sentry } from "../deps.ts";
+import { Application, logger, Router, createClient, SupabaseClient } from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -11,23 +11,6 @@ import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
 
 applyBigIntSerializer();
-
-const SENTRY_SAMPLE_RATE = 0.5;
-const SENTRY_DSN =
-  "https://510d13bb29e849568634a09f5f612234@o1364222.ingest.sentry.io/4504697605652480";
-
-Sentry.init({
-  dsn: SENTRY_DSN,
-  tracesSampleRate: SENTRY_SAMPLE_RATE,
-  release: "1.5.1",
-  beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
-    const { DEV_MODE } = Deno.env.toObject();
-    const isProduction = DEV_MODE !== "1";
-
-    // Do not send the event to Sentry if the app is not in production
-    return isProduction ? event : null
-  },
-});
 
 const app = new Application();
 const router = new Router();
