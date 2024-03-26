@@ -28,6 +28,7 @@ import {
   simpleStubAsync,
   spyContext,
 } from "../../util/test-utils.ts";
+import { Environment } from "../../infrastructure/environment.ts";
 
 const $t = new EnTranslations();
 
@@ -44,6 +45,13 @@ const accountController = new AccountController({
 let fakeAccount: Account;
 
 let mockContext: Context;
+
+const alwaysFalse = Array.from({ length: 100 }, () => false);
+stub(
+  Environment,
+  "isDevelopmentMode",
+  returnsNext(alwaysFalse),
+);
 
 describe("Account controller", () => {
   beforeEach(() => {
@@ -133,7 +141,7 @@ describe("Account controller", () => {
         fakeAccount,
       ]);
       const daoRegisterSpy = simpleStubAsync(accountDao, "register", undefined);
-      const fakeAccountId = fakeAccount.id
+      const fakeAccountId = fakeAccount.id;
 
       fakeRequestBody(mockContext, {
         email: "abc@abc.fr",
