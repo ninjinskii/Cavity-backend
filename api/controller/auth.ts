@@ -3,8 +3,8 @@ import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
-import { JwtService } from "../service/jwt-service.ts";
-import PasswordService from "../service/password-service.ts";
+import { JwtService } from "../infrastructure/jwt-service.ts";
+import PasswordService from "../infrastructure/password-service.ts";
 
 interface AuthControllerOptions {
   router: Router;

@@ -12,7 +12,7 @@ import {
   stub,
 } from "../../../deps.ts";
 import { FrTranslations } from "../../i18n/translatable.ts";
-import { JwtServiceImpl } from "../../service/jwt-service.ts";
+import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
