@@ -1,11 +1,11 @@
-import { Sentry } from "../../deps";
-import { Environment } from "./environment";
+import { Sentry } from "../../deps.ts";
+import { Environment } from "./environment.ts";
 
 export interface ErrorReporter {
-  captureException(exception: Error);
-  captureMessage(message: string);
-  setScopeTag(tag: string, value: string);
-  removeScopeTag(tag: string);
+  captureException(exception: Error): void;
+  captureMessage(message: string): void;
+  setScopeTag(tag: string, value: string): void;
+  removeScopeTag(tag: string): void;
   stopEvents(): boolean;
 }
 
@@ -54,5 +54,16 @@ export class SentryErrorReporter implements ErrorReporter {
 
   stopEvents(): boolean {
     return Environment.isDevelopmentMode();
+  }
+}
+
+export class FakeErrorReporter implements ErrorReporter {
+  captureException(_exception: Error) {}
+  captureMessage(_message: string) {}
+  setScopeTag(_tag: string, _value: string) {}
+  removeScopeTag(_tag: string) {}
+
+  stopEvents(): boolean {
+    return true;
   }
 }

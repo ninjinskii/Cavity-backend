@@ -1,4 +1,3 @@
-import inAuthentication from "../authenticator.ts";
 import {
   assertSpyCall,
   assertSpyCalls,
@@ -12,7 +11,9 @@ import {
   stub,
 } from "../../../deps.ts";
 import { FrTranslations } from "../../i18n/translatable.ts";
+import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
 import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
+import { BaseAuthenticator } from "../authenticator.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
@@ -22,10 +23,12 @@ import {
 
 const $t = new FrTranslations();
 const jwtService = await JwtServiceImpl.newInstance("secret");
+const errorReporter = new FakeErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 
 let mockContext: Context;
 
-describe("inAuthentication", () => {
+describe("authenticator#let", () => {
   beforeEach(() => {
     mockContext = createMockContext({
       headers: [["Authorization", "Bearer zepuifgo"]],
@@ -38,12 +41,7 @@ describe("inAuthentication", () => {
     });
     const callbackSpy = spy(() => Promise.resolve());
 
-    await inAuthentication(
-      mockContext,
-      jwtService,
-      $t,
-      callbackSpy,
-    );
+    await authenticator.let(mockContext, $t, callbackSpy);
 
     spyContext([verifySpy], () => {
       assertSpyCall(verifySpy, 0, { args: ["zepuifgo"] });
@@ -61,12 +59,7 @@ describe("inAuthentication", () => {
 
     mockContext = createMockContext({ headers: [["Authorization", "Bearer"]] });
 
-    await inAuthentication(
-      mockContext,
-      jwtService,
-      $t,
-      callbackSpy,
-    );
+    await authenticator.let(mockContext, $t, callbackSpy);
 
     spyContext([verifySpy], () => {
       assertSpyCalls(verifySpy, 0);
@@ -84,12 +77,7 @@ describe("inAuthentication", () => {
 
     mockContext = createMockContext();
 
-    await inAuthentication(
-      mockContext,
-      jwtService,
-      $t,
-      callbackSpy,
-    );
+    await authenticator.let(mockContext, $t, callbackSpy);
 
     spyContext([verifySpy], () => {
       assertSpyCalls(verifySpy, 0);
@@ -103,12 +91,7 @@ describe("inAuthentication", () => {
     const verifySpy = simpleStubAsync(jwtService, "verify", "a");
     const callbackSpy = spy(() => Promise.resolve());
 
-    await inAuthentication(
-      mockContext,
-      jwtService,
-      $t,
-      callbackSpy,
-    );
+    await authenticator.let(mockContext, $t, callbackSpy);
 
     spyContext([verifySpy], () => {
       assertSpyCalls(verifySpy, 1);
@@ -126,12 +109,7 @@ describe("inAuthentication", () => {
     );
     const callbackSpy = spy(() => Promise.resolve());
 
-    await inAuthentication(
-      mockContext,
-      jwtService,
-      $t,
-      callbackSpy,
-    );
+    await authenticator.let(mockContext, $t, callbackSpy);
 
     spyContext([verifySpy], () => {
       assertSpyCalls(verifySpy, 1);

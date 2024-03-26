@@ -1,44 +1,68 @@
 import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
 import { ErrorReporter } from "../infrastructure/error-reporter.ts";
-import { JwtService } from "../infrastructure/jwt-service.ts";
+import { JwtCreateOptions, JwtService } from "../infrastructure/jwt-service.ts";
 import { json } from "./api-response.ts";
 
-export default async function inAuthentication(
-  ctx: Context,
-  jwtService: JwtService,
-  t: Translatable,
-  errorReporter: ErrorReporter,
-  block: (accountId: number, token: string) => Promise<void>,
-): Promise<void> {
-  const authorization = ctx.request.headers.get("Authorization");
+export abstract class Authenticator {
+  protected jwtService: JwtService;
+  protected errorReporter: ErrorReporter;
 
-  if (!authorization || authorization.split(" ").length !== 2) {
-    return json(ctx, { message: t.unauthorized }, 401);
+  constructor(jwtService: JwtService, errorReporter: ErrorReporter) {
+    this.jwtService = jwtService;
+    this.errorReporter = errorReporter;
   }
 
-  const [_, token] = authorization!.split(" ");
+  abstract let(
+    ctx: Context,
+    t: Translatable,
+    block: (accountId: number, token: string) => Promise<void>,
+  ): Promise<void>;
 
-  try {
-    const { account_id } = await jwtService.verify(token) as {
-      account_id: string;
-    };
+  createToken(options: JwtCreateOptions) {
+    return this.jwtService.create(options);
+  }
 
-    const accountId = parseInt(account_id);
+  verifyToken<T>(token: string) {
+    return this.jwtService.verify<T>(token);
+  }
+}
 
-    if (!isNaN(accountId)) {
-      logger.info(`Authorized account ${accountId}`);
+export class BaseAuthenticator extends Authenticator {
+  async let(
+    ctx: Context,
+    t: Translatable,
+    block: (accountId: number, token: string) => Promise<void>,
+  ) {
+    const authorization = ctx.request.headers.get("Authorization");
 
-      errorReporter.setScopeTag("accountId", accountId.toString());
-      const result = await block(accountId, token);
-      errorReporter.removeScopeTag("accountId");
+    if (!authorization || authorization.split(" ").length !== 2) {
+      return json(ctx, { message: t.unauthorized }, 401);
+    }
 
-      return result;
-    } else {
+    const [_, token] = authorization!.split(" ");
+
+    try {
+      const { account_id } = await this.jwtService.verify<{
+        account_id: string;
+      }>(token);
+
+      const accountId = parseInt(account_id);
+
+      if (!isNaN(accountId)) {
+        logger.info(`Authorized account ${accountId}`);
+
+        this.errorReporter.setScopeTag("accountId", accountId.toString());
+        const result = await block(accountId, token);
+        this.errorReporter.removeScopeTag("accountId");
+
+        return result;
+      } else {
+        json(ctx, { message: t.unauthorized }, 401);
+      }
+    } catch (error) {
+      this.errorReporter.captureException(error);
       json(ctx, { message: t.unauthorized }, 401);
     }
-  } catch (error) {
-    errorReporter.captureException(error);
-    json(ctx, { message: t.unauthorized }, 401);
   }
 }

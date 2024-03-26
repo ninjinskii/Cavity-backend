@@ -2,19 +2,19 @@ import {
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
-  SupabaseClient,
   Context,
   createMockContext,
   describe,
   it,
+  returnsNext,
   spy,
   stub,
+  SupabaseClient,
 } from "../../../deps.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { DataController } from "../rest.ts";
 import { SupabaseRestDao } from "../../dao/rest-dao.ts";
-import { returnsNext } from "https://deno.land/std@0.173.0/testing/mock.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
@@ -24,6 +24,8 @@ import {
   simpleStubAsync,
   spyContext,
 } from "../../util/test-utils.ts";
+import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
+import { BaseAuthenticator } from "../../util/authenticator.ts";
 
 const $t = new EnTranslations();
 const client = {
@@ -51,11 +53,18 @@ const mapper = {
   "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
   "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
   "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
-}
+};
 
 const jwtService = await JwtServiceImpl.newInstance("secret");
+const errorReporter = new FakeErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const router = new FakeRouter();
-const restController = new DataController({ router, jwtService, mapper });
+const restController = new DataController({
+  router,
+  mapper,
+  errorReporter,
+  authenticator,
+});
 const restDao = new SupabaseRestDao(client, "");
 
 let mockContext: Context;

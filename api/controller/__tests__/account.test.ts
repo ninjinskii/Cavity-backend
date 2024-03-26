@@ -1,6 +1,5 @@
 import {
   afterAll,
-  assertEquals,
   assertSpyCall,
   assertSpyCalls,
   beforeEach,
@@ -29,17 +28,22 @@ import {
   spyContext,
 } from "../../util/test-utils.ts";
 import { Environment } from "../../infrastructure/environment.ts";
+import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
+import { BaseAuthenticator } from "../../util/authenticator.ts";
 
 const $t = new EnTranslations();
 
 const client = {} as SupabaseClient;
 const jwtService = await JwtServiceImpl.newInstance("secret");
+const errorReporter = new FakeErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const router = new FakeRouter();
 const accountDao = new SupabaseAccountDao(client);
 const accountController = new AccountController({
   router,
-  jwtService,
   accountDao,
+  errorReporter,
+  authenticator,
 });
 
 let fakeAccount: Account;
