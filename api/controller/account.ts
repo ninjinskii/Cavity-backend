@@ -99,7 +99,6 @@ export class AccountController extends Controller {
       const content = this.$t.emailContent + account.registrationCode;
 
       const isDev = Environment.isDevelopmentMode();
-      logger.error(`ISDEV: ${isDev}`)
 
       if (!isDev) {
         await sendMail(account.email, subject, content);
@@ -240,7 +239,6 @@ export class AccountController extends Controller {
       await this.accountDao.setPendingRecovery(email, token);
 
       const isDev = Environment.isDevelopmentMode();
-      logger.error(`ISDEV: ${isDev}`)
 
       if (!isDev) {
         await sendMail(email, subject, content, true);
