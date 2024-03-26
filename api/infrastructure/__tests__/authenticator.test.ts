@@ -11,15 +11,15 @@ import {
   stub,
 } from "../../../deps.ts";
 import { FrTranslations } from "../../i18n/translatable.ts";
-import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
-import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
+import { FakeErrorReporter } from "../error-reporter.ts";
+import { JwtServiceImpl } from "../jwt-service.ts";
 import { BaseAuthenticator } from "../authenticator.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
   simpleStubAsync,
   spyContext,
-} from "../test-utils.ts";
+} from "../../util/test-utils.ts";
 
 const $t = new FrTranslations();
 const jwtService = await JwtServiceImpl.newInstance("secret");

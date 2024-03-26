@@ -29,7 +29,7 @@ import {
 } from "../../util/test-utils.ts";
 import { Environment } from "../../infrastructure/environment.ts";
 import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
-import { BaseAuthenticator } from "../../util/authenticator.ts";
+import { BaseAuthenticator } from "../../infrastructure/authenticator.ts";
 
 const $t = new EnTranslations();
 

@@ -16,7 +16,7 @@ import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
 import { SentryErrorReporter } from "./infrastructure/error-reporter.ts";
-import { BaseAuthenticator } from "./util/authenticator.ts";
+import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 
 applyBigIntSerializer();
 

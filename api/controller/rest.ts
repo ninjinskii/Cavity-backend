@@ -1,6 +1,6 @@
 import { Context, logger, Router } from "../../deps.ts";
 import Controller from "./controller.ts";
-import { Authenticator } from "../util/authenticator.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
 import { ErrorReporter } from "../infrastructure/error-reporter.ts";

@@ -25,7 +25,7 @@ import {
   spyContext,
 } from "../../util/test-utils.ts";
 import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
-import { BaseAuthenticator } from "../../util/authenticator.ts";
+import { BaseAuthenticator } from "../../infrastructure/authenticator.ts";
 
 const $t = new EnTranslations();
 const client = {

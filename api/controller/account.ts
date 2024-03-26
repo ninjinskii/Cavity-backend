@@ -3,7 +3,7 @@ import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import PasswordService from "../infrastructure/password-service.ts";
 import { json, success } from "../util/api-response.ts";
-import { Authenticator } from "../util/authenticator.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";

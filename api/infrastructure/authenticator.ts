@@ -1,8 +1,8 @@
 import { Context, logger } from "../../deps.ts";
 import { Translatable } from "../i18n/translatable.ts";
-import { ErrorReporter } from "../infrastructure/error-reporter.ts";
-import { JwtCreateOptions, JwtService } from "../infrastructure/jwt-service.ts";
-import { json } from "./api-response.ts";
+import { ErrorReporter } from "./error-reporter.ts";
+import { JwtCreateOptions, JwtService } from "./jwt-service.ts";
+import { json } from "../util/api-response.ts";
 
 export abstract class Authenticator {
   protected jwtService: JwtService;

@@ -5,7 +5,7 @@ import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import PasswordService from "../infrastructure/password-service.ts";
 import { ErrorReporter } from "../infrastructure/error-reporter.ts";
-import { Authenticator } from "../util/authenticator.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 
 interface AuthControllerOptions {
   router: Router;
