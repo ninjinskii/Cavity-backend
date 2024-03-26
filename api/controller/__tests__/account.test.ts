@@ -16,9 +16,9 @@ import {
 import { AccountController } from "../account.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
-import { JwtServiceImpl } from "../../service/jwt-service.ts";
+import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { SupabaseAccountDao } from "../../dao/account-dao.ts";
-import PasswordService from "../../service/password-service.ts";
+import PasswordService from "../../infrastructure/password-service.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,

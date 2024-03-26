@@ -4,7 +4,7 @@ import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import { AccountController } from "./controller/account.ts";
-import { JwtServiceImpl } from "./service/jwt-service.ts";
+import { JwtServiceImpl } from "./infrastructure/jwt-service.ts";
 import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
