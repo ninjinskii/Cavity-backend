@@ -31,7 +31,7 @@ export interface JwtCreateOptions {
 }
 
 export interface JwtService {
-  verify(token: string): Promise<unknown>;
+  verify<T>(token: string): Promise<T>;
   create(options: JwtCreateOptions): Promise<string>;
 }
 
@@ -43,8 +43,8 @@ export class JwtServiceImpl implements JwtService {
     this.jwtKey = jwtKey;
   }
 
-  verify(token: string): Promise<unknown> {
-    return jwt.verify(token, this.jwtKey);
+  verify<T>(token: string): Promise<T> {
+    return jwt.verify(token, this.jwtKey) as unknown as Promise<T>;
   }
 
   create(

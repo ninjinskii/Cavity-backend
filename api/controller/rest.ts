@@ -1,24 +1,29 @@
 import { Context, logger, Router } from "../../deps.ts";
 import Controller from "./controller.ts";
-import inAuthentication from "../util/authenticator.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
-import { JwtService } from "../infrastructure/jwt-service.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface DataControllerOptions {
   router: Router;
-  jwtService: JwtService;
   mapper: DaoMapper;
+  errorReporter: ErrorReporter;
+  authenticator: Authenticator;
 }
 
 export class DataController extends Controller {
-  private jwtService: JwtService;
   private mapper: DaoMapper;
+  private errorReporter: ErrorReporter;
+  private authenticator: Authenticator;
 
-  constructor({ router, jwtService, mapper }: DataControllerOptions) {
+  constructor(
+    { router, mapper, errorReporter, authenticator }: DataControllerOptions,
+  ) {
     super(router);
-    this.jwtService = jwtService;
     this.mapper = mapper;
+    this.errorReporter = errorReporter;
+    this.authenticator = authenticator;
 
     this.handleRequests();
   }
@@ -33,7 +38,7 @@ export class DataController extends Controller {
   }
 
   async handlePost(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+    await this.authenticator.let(ctx, this.$t, async (accountId) => {
       logger.info(`POST: requested by ${accountId}`);
 
       const objects = await ctx.request.body().value;
@@ -47,7 +52,7 @@ export class DataController extends Controller {
         try {
           await dao.deleteAllForAccount(accountId);
         } catch (error) {
-          logger.error(error);
+          this.errorReporter.captureException(error);
           return json(ctx, { message: this.$t.baseError }, 500);
         }
 
@@ -69,14 +74,14 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        logger.error(error);
+        this.errorReporter.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
 
   async handleGet(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+    await this.authenticator.let(ctx, this.$t, async (accountId) => {
       logger.info(`GET: requested by ${accountId}`);
 
       try {
@@ -88,14 +93,14 @@ export class DataController extends Controller {
 
         json(ctx, objects);
       } catch (error) {
-        logger.error(error);
+        this.errorReporter.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
 
   async handleDelete(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+    await this.authenticator.let(ctx, this.$t, async (accountId) => {
       logger.info(`DELETE: requested by ${accountId}`);
 
       try {
@@ -104,7 +109,7 @@ export class DataController extends Controller {
 
         success(ctx);
       } catch (error) {
-        logger.error(error);
+        this.errorReporter.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });

@@ -58,9 +58,14 @@ docker-compose build --no-cache
 This project uses CI/CD. Workflows are triggered when pushing a tag, and deploy code to Deno Deploy.
 
 Things to do to prepare a release:
+  - Update sentry's release property to match upcoming `version name`
   - Merge target code into master branch
   - Create and push a tag named `version name`
   - (May not be needed) Go to deno deploy, and promote the deployment to production
+
+## Sentry
+Sentry is configured for this project.
+Note however that it would not work in dev mode, nor in a dev container
 
 ## Run unit tests
 ```bash

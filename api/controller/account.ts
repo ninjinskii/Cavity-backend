@@ -1,31 +1,35 @@
 import { Context, logger, Router } from "../../deps.ts";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
-import { JwtService } from "../infrastructure/jwt-service.ts";
 import PasswordService from "../infrastructure/password-service.ts";
 import { json, success } from "../util/api-response.ts";
-import inAuthentication from "../util/authenticator.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface AccountControllerOptions {
   router: Router;
-  jwtService: JwtService;
   accountDao: AccountDao;
+  errorReporter: ErrorReporter;
+  authenticator: Authenticator;
 }
 
 export class AccountController extends Controller {
-  private jwtService: JwtService;
   private securePwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/gm;
   private accountDao: AccountDao;
+  private errorReporter: ErrorReporter;
+  private authenticator: Authenticator;
 
   constructor(
-    { router, jwtService, accountDao }: AccountControllerOptions,
+    { router, accountDao, errorReporter, authenticator }:
+      AccountControllerOptions,
   ) {
     super(router);
-    this.jwtService = jwtService;
     this.accountDao = accountDao;
+    this.errorReporter = errorReporter;
+    this.authenticator = authenticator;
 
     this.handleRequests();
   }
@@ -101,7 +105,7 @@ export class AccountController extends Controller {
       const isDev = Environment.isDevelopmentMode();
 
       if (!isDev) {
-        await sendMail(account.email, subject, content);
+        await sendMail(account.email, subject, content, this.errorReporter);
       } else {
         logger.info(
           `Created account in dev mode, registration code: ${account.registrationCode}`,
@@ -109,42 +113,39 @@ export class AccountController extends Controller {
       }
       success(ctx);
     } catch (error) {
-      logger.error(error);
+      this.errorReporter.captureException(error);
 
       try {
         // Mail sending has probably gone wrong. Remove the account.
         await this.accountDao.deleteByEmail(email);
         json(ctx, { message: this.$t.invalidEmail }, 400);
-      } catch (_error) {
+      } catch (error) {
+        this.errorReporter.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     }
   }
 
   async getAccount(ctx: Context): Promise<void> {
-    await inAuthentication(
-      ctx,
-      this.jwtService,
-      this.$t,
-      async (accountId, token) => {
-        try {
-          const account = await this.accountDao.selectById(accountId);
+    await this.authenticator.let(ctx, this.$t, async (accountId, token) => {
+      try {
+        const account = await this.accountDao.selectById(accountId);
 
-          if (!account.length) {
-            return json(ctx, { message: this.$t.notFound }, 404);
-          }
-
-          json(ctx, { ...account[0], token });
-        } catch (_error) {
-          json(ctx, { message: this.$t.baseError }, 500);
+        if (!account.length) {
+          return json(ctx, { message: this.$t.notFound }, 404);
         }
-      },
-    );
+
+        json(ctx, { ...account[0], token });
+      } catch (error) {
+        this.errorReporter.captureException(error);
+        json(ctx, { message: this.$t.baseError }, 500);
+      }
+    });
   }
 
   async deleteAccount(ctx: Context): Promise<void> {
     // Decision have been made: to delete account, we need token + password
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+    await this.authenticator.let(ctx, this.$t, async (accountId) => {
       const { email, password } = await ctx.request.body().value as AccountDTO;
       const account = await this.accountDao.selectByEmailWithPassword(email);
 
@@ -170,7 +171,8 @@ export class AccountController extends Controller {
       try {
         await this.accountDao.deleteById(accountId);
         success(ctx);
-      } catch (_error) {
+      } catch (error) {
+        this.errorReporter.captureException(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -198,7 +200,7 @@ export class AccountController extends Controller {
 
       await this.accountDao.register(confirmDto.email);
 
-      const token = await this.jwtService.create({
+      const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
         payload: { account_id: account[0].id },
       });
@@ -210,7 +212,7 @@ export class AccountController extends Controller {
 
       json(ctx, { ...lightweight, token, email: confirmDto.email });
     } catch (error) {
-      logger.error(error);
+      this.errorReporter.captureException(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -225,7 +227,7 @@ export class AccountController extends Controller {
         return success(ctx);
       }
 
-      const token = await this.jwtService.create({
+      const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
         payload: {
           reset_password: true,
@@ -241,7 +243,7 @@ export class AccountController extends Controller {
       const isDev = Environment.isDevelopmentMode();
 
       if (!isDev) {
-        await sendMail(email, subject, content, true);
+        await sendMail(email, subject, content, this.errorReporter, true);
       } else {
         logger.info(
           `Trying to recover account in dev mode, recovery link: http://cavity.njk.localhost/recover.html?token=${token}`,
@@ -250,7 +252,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (error) {
-      logger.error(error);
+      this.errorReporter.captureException(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -259,9 +261,9 @@ export class AccountController extends Controller {
     const { token, password } = await ctx.request.body().value;
 
     try {
-      const { reset_password } = await this.jwtService.verify(token) as {
+      const { reset_password } = await this.authenticator.verifyToken<{
         reset_password: boolean;
-      };
+      }>(token);
 
       if (!reset_password) {
         return success(ctx);
@@ -284,7 +286,7 @@ export class AccountController extends Controller {
   }
 
   async updateLastUser(ctx: Context): Promise<void> {
-    await inAuthentication(ctx, this.jwtService, this.$t, async (accountId) => {
+    await this.authenticator.let(ctx, this.$t, async (accountId) => {
       const { lastUser } = await ctx.request.body().value;
       const time = Date.now();
 
