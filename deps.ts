@@ -30,5 +30,5 @@ export {
   describe,
   it,
 } from "https://deno.land/std@0.196.0/testing/bdd.ts";
-export { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
+export { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2.44.3";
 export * as Sentry from "https://deno.land/x/sentry@7.107.0/index.mjs";
