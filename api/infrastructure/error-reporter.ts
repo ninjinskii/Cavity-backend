@@ -57,6 +57,30 @@ export class SentryErrorReporter implements ErrorReporter {
   }
 }
 
+export class LogErrorReporter implements ErrorReporter {
+  private static instance: SentryErrorReporter | null = null;
+
+  captureException(exception: Error) {
+    console.error(exception)
+  }
+
+  captureMessage(message: string) {
+    console.info(message)
+  }
+
+  setScopeTag(tag: string, value: string) {
+    console.warn(`______________${tag}->${value}______________`)
+  }
+  
+  removeScopeTag(tag: string) {
+    console.warn(`______________${tag}->${[undefined]}______________`)
+  }
+
+  stopEvents(): boolean {
+    return false;
+  }
+}
+
 export class FakeErrorReporter implements ErrorReporter {
   captureException(_exception: Error) {}
   captureMessage(_message: string) {}

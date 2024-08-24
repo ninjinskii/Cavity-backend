@@ -15,7 +15,7 @@ import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
-import { SentryErrorReporter } from "./infrastructure/error-reporter.ts";
+import { LogErrorReporter } from "./infrastructure/error-reporter.ts";
 import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 
 applyBigIntSerializer();
@@ -25,7 +25,7 @@ const router = new Router();
 const { TOKEN_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY } = Deno.env.toObject();
 
 const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
-const errorReporter = SentryErrorReporter.getInstance();
+const errorReporter = new LogErrorReporter();
 const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 
 app.use(async (ctx, next) => {
