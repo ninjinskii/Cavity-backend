@@ -24,17 +24,22 @@ import {
   simpleStubAsync,
   spyContext,
 } from "../../util/test-utils.ts";
+import { FakeErrorReporter } from "../../infrastructure/error-reporter.ts";
+import { BaseAuthenticator } from "../../infrastructure/authenticator.ts";
 
 const $t = new EnTranslations();
 const client = {} as SupabaseClient;
 const jwtService = await JwtServiceImpl.newInstance("secret");
+const errorReporter = new FakeErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const router = new FakeRouter();
 const accountDao = new SupabaseAccountDao(client);
 
 const authController = new AuthController({
   router,
-  jwtService,
+  authenticator,
   accountDao,
+  errorReporter,
 });
 
 const fakeAccount: Account = {
