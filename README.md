@@ -58,6 +58,7 @@ Things to do to prepare a release:
   - (May not be needed) Go to deno deploy, and promote the deployment to production
 
 ## Sentry
+Checkout (issue)[https://github.com/getsentry/sentry-javascript/issues/10521]
 Sentry is configured for this project.
 Note however that it would not work in dev mode, nor in a dev container
 
