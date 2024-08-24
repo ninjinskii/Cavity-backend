@@ -3,25 +3,29 @@ import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
 import { AccountDao } from "../dao/account-dao.ts";
-import { JwtService } from "../infrastructure/jwt-service.ts";
 import PasswordService from "../infrastructure/password-service.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import { Authenticator } from "../infrastructure/authenticator.ts";
 
 interface AuthControllerOptions {
   router: Router;
-  jwtService: JwtService;
   accountDao: AccountDao;
+  errorReporter: ErrorReporter;
+  authenticator: Authenticator;
 }
 
 export class AuthController extends Controller {
-  private jwtService: JwtService;
   private accountDao: AccountDao;
+  private errorReporter: ErrorReporter;
+  private authenticator: Authenticator;
 
   constructor(
-    { router, jwtService, accountDao }: AuthControllerOptions,
+    { router, accountDao, errorReporter, authenticator }: AuthControllerOptions,
   ) {
     super(router);
-    this.jwtService = jwtService;
     this.accountDao = accountDao;
+    this.errorReporter = errorReporter;
+    this.authenticator = authenticator;
 
     this.handleRequests();
   }
@@ -61,7 +65,7 @@ export class AuthController extends Controller {
 
       logger.info(`User ${email} logged in (id: ${account[0].id})`);
 
-      const token = await this.jwtService.create({
+      const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
         payload: {
           account_id: account[0].id,
@@ -72,7 +76,7 @@ export class AuthController extends Controller {
 
       json(ctx, { token, email, lastUser, lastUpdateTime });
     } catch (error) {
-      logger.error(error);
+      this.errorReporter.captureException(error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

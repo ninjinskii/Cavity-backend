@@ -1,9 +1,10 @@
-import { logger } from "../../deps.ts";
+import { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 export default async function sendMail(
   to: string,
   subject: string,
   content: string,
+  errorReporter: ErrorReporter,
   html = false,
 ) {
   const { SENDINBLUE_API_KEY } = Deno.env.toObject();
@@ -32,7 +33,15 @@ export default async function sendMail(
   });
 
   if (response.status < 200 && response.status >= 300) {
-    logger.error(await response.json());
+    const errorResponse = await response.json();
+    errorReporter.captureMessage(
+      `Error occured while sending mail to ${to} with status code ${response.status} 
+      and response is: ${JSON.stringify(errorResponse)}`,
+    );
     throw new Error("Unable to send the mail");
+  } else {
+    errorReporter.captureMessage(
+      `Send mail to user ${to} with status code ${response.status}`,
+    );
   }
 }

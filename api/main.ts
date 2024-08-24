@@ -1,4 +1,10 @@
-import { Application, logger, Router, createClient, SupabaseClient } from "../deps.ts";
+import {
+  Application,
+  createClient,
+  logger,
+  Router,
+  SupabaseClient,
+} from "../deps.ts";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -9,6 +15,8 @@ import { SupabaseAccountDao } from "./dao/account-dao.ts";
 import { SupabaseRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
+import { LogErrorReporter } from "./infrastructure/error-reporter.ts";
+import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 
 applyBigIntSerializer();
 
@@ -17,6 +25,8 @@ const router = new Router();
 const { TOKEN_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY } = Deno.env.toObject();
 
 const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
+const errorReporter = new LogErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 
 app.use(async (ctx, next) => {
   const language = ctx.request.headers.get("Accept-Language");
@@ -38,19 +48,26 @@ app.use(async (ctx, next) => {
   }
 });
 
-const { accountDao, mapper } = getAccountDao()
+const { accountDao, mapper } = getAccountDao();
 
 const accountController = new AccountController({
   router,
-  jwtService,
   accountDao,
+  errorReporter,
+  authenticator,
 });
 const authController = new AuthController({
   router,
-  jwtService,
   accountDao,
+  errorReporter,
+  authenticator,
 });
-const dataController = new DataController({ router, jwtService, mapper });
+const dataController = new DataController({
+  router,
+  mapper,
+  errorReporter,
+  authenticator,
+});
 const manager = new ControllerManager();
 
 manager.addControllers(
@@ -89,9 +106,12 @@ function getRouteDaoMapper(client: SupabaseClient) {
   };
 }
 
-function getAccountDao(): { accountDao: AccountDao, mapper: DaoMapper } {
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  return { accountDao: new SupabaseAccountDao(client), mapper: getRouteDaoMapper(client) }
+function getAccountDao(): { accountDao: AccountDao; mapper: DaoMapper } {
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return {
+    accountDao: new SupabaseAccountDao(client),
+    mapper: getRouteDaoMapper(client),
+  };
 }
 
 declare global {
