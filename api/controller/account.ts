@@ -75,8 +75,10 @@ export class AccountController extends Controller {
   }
 
   async postAccount(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.request.body().value as AccountDTO;
-    const securePassword = (password as string).match(this.securePwdRegex);
+    const accountDto = await ctx.request.body().value as AccountDTO;
+    const email = accountDto.email.trim();
+    const password = accountDto.password;
+    const securePassword = password.match(this.securePwdRegex);
     const isSecure = securePassword?.length;
 
     if (!isSecure) {
@@ -146,7 +148,9 @@ export class AccountController extends Controller {
   async deleteAccount(ctx: Context): Promise<void> {
     // Decision have been made: to delete account, we need token + password
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      const { email, password } = await ctx.request.body().value as AccountDTO;
+      const accountDto = await ctx.request.body().value as AccountDTO;
+      const email = accountDto.email.trim();
+      const password = accountDto.password;
       const account = await this.accountDao.selectByEmailWithPassword(email);
 
       if (account.length === 0) {
@@ -180,9 +184,11 @@ export class AccountController extends Controller {
 
   async confirmAccount(ctx: Context): Promise<void> {
     const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
+    const email = confirmDto.email.trim();
+    const registrationCode = confirmDto.registrationCode;
 
     try {
-      const account = await this.accountDao.selectByEmail(confirmDto.email);
+      const account = await this.accountDao.selectByEmail(email);
 
       if (account.length === 0) {
         return json(ctx, { message: this.$t.wrongAccount }, 400);
@@ -192,13 +198,13 @@ export class AccountController extends Controller {
         return json(ctx, { message: this.$t.alreadyConfirmed }, 400);
       }
 
-      const code = parseInt(confirmDto.registrationCode);
+      const code = parseInt(registrationCode);
 
       if (isNaN(code) || account[0].registrationCode !== code) {
         return json(ctx, { message: this.$t.wrongRegistrationCode }, 400);
       }
 
-      await this.accountDao.register(confirmDto.email);
+      await this.accountDao.register(email);
 
       const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
@@ -210,7 +216,7 @@ export class AccountController extends Controller {
       delete lightweight["id"];
       delete lightweight["registrationCode"];
 
-      json(ctx, { ...lightweight, token, email: confirmDto.email });
+      json(ctx, { ...lightweight, token, email });
     } catch (error) {
       this.errorReporter.captureException(error);
       json(ctx, { message: this.$t.baseError }, 500);
@@ -219,10 +225,11 @@ export class AccountController extends Controller {
 
   async recoverAccount(ctx: Context): Promise<void> {
     try {
-      const { email } = await ctx.request.body().value;
+      const body = await ctx.request.body().value;
+      const email = (body.email || "").trim();
       const subject = this.$t.emailSubjectRecover;
 
-      if ((await this.accountDao.selectByEmail(email)).length === 0) {
+      if (await this.isAccountUnique(email)) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
         return success(ctx);
       }

@@ -68,9 +68,7 @@ describe("Auth controller", () => {
       const selectAccountSpy = simpleStubAsync(
         accountDao,
         "selectByEmailWithPassword",
-        [
-          fakeAccount,
-        ],
+        [fakeAccount],
       );
       const passwordSpy = simpleStub(PasswordService, "compare", true);
       const jwtSpy = simpleStubAsync(jwtService, "create", "token");
@@ -179,6 +177,31 @@ describe("Auth controller", () => {
         assertSpyCalls(jwtSpy, 0);
         assertStatusEquals(mockContext, 500);
         assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+
+    it("should trim given emails but not passwords", async () => {
+      const passwordWithSpaces = "shht ";
+      fakeRequestBody(mockContext, {
+        email: " abc@abc.fr  \n",
+        password: passwordWithSpaces,
+      });
+
+      const selectAccountSpy = simpleStubAsync(
+        accountDao,
+        "selectByEmailWithPassword",
+        [fakeAccount],
+      );
+      const passwordSpy = simpleStub(PasswordService, "compare", true);
+      const jwtSpy = simpleStubAsync(jwtService, "create", "token");
+
+      await authController.login(mockContext);
+
+      spyContext([selectAccountSpy, passwordSpy, jwtSpy], () => {
+        assertSpyCall(selectAccountSpy, 0, { args: ["abc@abc.fr"] });
+        assertSpyCall(passwordSpy, 0, {
+          args: [passwordWithSpaces, fakeAccount.password],
+        });
       });
     });
   });

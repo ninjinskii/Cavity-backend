@@ -39,7 +39,9 @@ export class AuthController extends Controller {
   }
 
   async login(ctx: Context): Promise<void> {
-    const { email, password } = await ctx.request.body().value as AccountDTO;
+    const accountDto = await ctx.request.body().value as AccountDTO;
+    const email = accountDto.email.trim();
+    const password = accountDto.password;
 
     try {
       const account = await this.accountDao.selectByEmailWithPassword(email);
@@ -60,7 +62,11 @@ export class AuthController extends Controller {
       }
 
       if (!isAuthenticated) {
-        logger.info(`User ${email} has tried to login with wrong credentials (id: ${account[0].id})`)
+        logger.info(
+          `User ${email} has tried to login with wrong credentials (id: ${
+            account[0].id
+          })`,
+        );
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
