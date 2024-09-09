@@ -56,6 +56,7 @@ export class AuthController extends Controller {
       }
 
       if (!isAuthenticated) {
+        logger.info(`User ${email} has tried to login with wrong credentials (id: ${account[0].id})`)
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
