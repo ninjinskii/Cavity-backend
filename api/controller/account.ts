@@ -75,7 +75,7 @@ export class AccountController extends Controller {
   }
 
   async postAccount(ctx: Context): Promise<void> {
-    const accountDto = await ctx.request.body().value as AccountDTO;
+    const accountDto = await ctx.request.body.json() as AccountDTO;
     const email = accountDto.email.trim();
     const password = accountDto.password;
     const securePassword = password.match(this.securePwdRegex);
@@ -148,7 +148,7 @@ export class AccountController extends Controller {
   async deleteAccount(ctx: Context): Promise<void> {
     // Decision have been made: to delete account, we need token + password
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      const accountDto = await ctx.request.body().value as AccountDTO;
+      const accountDto = await ctx.request.body.json() as AccountDTO;
       const email = accountDto.email.trim();
       const password = accountDto.password;
       const account = await this.accountDao.selectByEmailWithPassword(email);
@@ -183,7 +183,7 @@ export class AccountController extends Controller {
   }
 
   async confirmAccount(ctx: Context): Promise<void> {
-    const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
+    const confirmDto = await ctx.request.body.json() as ConfirmAccountDTO;
     const email = confirmDto.email.trim();
     const registrationCode = confirmDto.registrationCode;
 
@@ -225,7 +225,7 @@ export class AccountController extends Controller {
 
   async recoverAccount(ctx: Context): Promise<void> {
     try {
-      const body = await ctx.request.body().value;
+      const body = await ctx.request.body.json();
       const email = (body.email || "").trim();
       const subject = this.$t.emailSubjectRecover;
 
@@ -265,7 +265,7 @@ export class AccountController extends Controller {
   }
 
   async resetPassword(ctx: Context) {
-    const { token, password } = await ctx.request.body().value;
+    const { token, password } = await ctx.request.body.json();
 
     try {
       const { reset_password } = await this.authenticator.verifyToken<{
@@ -294,7 +294,7 @@ export class AccountController extends Controller {
 
   async updateLastUser(ctx: Context): Promise<void> {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      const { lastUser } = await ctx.request.body().value;
+      const { lastUser } = await ctx.request.body.json();
       const time = Date.now();
 
       try {

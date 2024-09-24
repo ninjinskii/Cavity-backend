@@ -39,7 +39,7 @@ export class AuthController extends Controller {
   }
 
   async login(ctx: Context): Promise<void> {
-    const accountDto = await ctx.request.body().value as AccountDTO;
+    const accountDto = await ctx.request.body.json() as AccountDTO;
     const email = accountDto.email.trim();
     const password = accountDto.password;
 

@@ -5,7 +5,6 @@ export {
   Status,
   testing,
 } from "https://deno.land/x/oak@v17.0.0/mod.ts";
-export type { BodyJson } from "https://deno.land/x/oak@v17.0.0/mod.ts";
 export { createMockContext } from "https://deno.land/x/oak@v17.0.0/testing.ts";
 export * as jwt from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 export * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
