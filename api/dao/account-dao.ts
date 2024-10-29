@@ -13,7 +13,9 @@ export interface AccountDao {
 
   selectByEmail(
     email: string,
-  ): Promise<Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]>;
+  ): Promise<
+    Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]
+  >;
 
   selectByEmailWithPassword(
     email: string,
@@ -45,6 +47,57 @@ export interface AccountDao {
   deleteById(id: number): Promise<void>;
 }
 
+export class PostgresClientAccountDao implements AccountDao {
+  selectById(id: number): Promise<
+    Pick<
+      Account,
+      "email" | "registrationCode" | "lastUser" | "lastUpdateTime"
+    >[]
+  > {
+    throw new Error("Method not implemented.");
+  }
+  selectByEmail(email: string): Promise<
+    Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]
+  > {
+    throw new Error("Method not implemented.");
+  }
+  selectByEmailWithPassword(email: string): Promise<
+    Pick<
+      Account,
+      "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime"
+    >[]
+  > {
+    throw new Error("Method not implemented.");
+  }
+  register(email: string): Promise<never> {
+    throw new Error("Method not implemented.");
+  }
+  setPendingRecovery(email: string, token: string): Promise<never> {
+    throw new Error("Method not implemented.");
+  }
+  recover(password: string, token: string): Promise<never> {
+    throw new Error("Method not implemented.");
+  }
+  insert(
+    accounts: { email: string; password: string; registrationCode: number }[],
+  ): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  updateLastUser(
+    accountId: number,
+    lastUser: string,
+    lastUpdateTime: number,
+  ): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  deleteByEmail(email: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  deleteById(id: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+}
+
 export class SupabaseAccountDao implements AccountDao {
   constructor(private supabaseClient: SupabaseClient) {}
 
@@ -68,7 +121,9 @@ export class SupabaseAccountDao implements AccountDao {
 
   async selectByEmail(
     email: string,
-  ): Promise<Pick<Account, "id" | "registrationCode"| "lastUser" | "lastUpdateTime">[]> {
+  ): Promise<
+    Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]
+  > {
     const response = await this.supabaseClient
       .from("account")
       .select("id, registrationCode:registration_code")

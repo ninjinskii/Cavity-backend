@@ -11,7 +11,7 @@ export { getQuery } from "https://deno.land/x/oak@v10.6.0/helpers.ts";
 export * as jwt from "https://deno.land/x/djwt@v2.7/mod.ts";
 export * as bcrypt from "https://deno.land/x/bcrypt@v0.4.0/mod.ts";
 export * as logger from "https://deno.land/std@0.141.0/log/mod.ts";
-export { snakeCase, camelCase } from "https://deno.land/x/case@2.2.0/mod.ts";
+export { camelCase, snakeCase } from "https://deno.land/x/case@2.2.0/mod.ts";
 export {
   assertSpyCall,
   assertSpyCalls,
@@ -31,4 +31,5 @@ export {
   it,
 } from "https://deno.land/std@0.196.0/testing/bdd.ts";
 export { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2.44.3";
+export { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 export * as Sentry from "https://deno.land/x/sentry@7.107.0/index.mjs";
