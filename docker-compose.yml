@@ -17,11 +17,27 @@ services:
     ports:
       - 5000:5000
     environment:
+      - DATABASE_URL=postgres,plout,db,5432,cavity
       - TOKEN_SECRET=mySuperSecret
-      - SUPABASE_URL=http://172.17.0.1:54321
-      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
       - SENDINBLUE_API_KEY=:D
       - DEVELOPMENT_MODE=1
+    depends_on:
+      - db
+
+  db:
+    image: postgres:alpine
+    container_name: db.njk.localhost
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - default
+    environment:
+      - POSTGRES_DB=cavity
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=plout
+      - PGDATA=/var/lib/postgresql/data/cavity
+    volumes:
+      - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
 
 networks:
   proxy:
