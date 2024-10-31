@@ -1,8 +1,8 @@
-import { Sentry } from "../../deps.ts";
 import { Environment } from "./environment.ts";
+import * as Sentry from "@sentry/bun";
 
 export interface ErrorReporter {
-  captureException(exception: Error): void;
+  captureException(exception: unknown): void;
   captureMessage(message: string): void;
   setScopeTag(tag: string, value: string): void;
   removeScopeTag(tag: string): void;
@@ -29,7 +29,7 @@ export class SentryErrorReporter implements ErrorReporter {
       dsn: this.SENTRY_DSN,
       tracesSampleRate: this.SENTRY_SAMPLE_RATE,
       release: "1.6.0",
-      beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
+      beforeSendTransaction: (event: any, _hint?: Sentry.EventHint) => {
         // Do not send the event to Sentry if the app is not in production
         return this.stopEvents() ? null : event;
       },
@@ -58,8 +58,6 @@ export class SentryErrorReporter implements ErrorReporter {
 }
 
 export class LogErrorReporter implements ErrorReporter {
-  private static instance: SentryErrorReporter | null = null;
-
   captureException(exception: Error) {
     console.error(exception)
   }

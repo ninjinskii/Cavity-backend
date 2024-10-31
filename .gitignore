@@ -2,3 +2,4 @@ data/
 api/pw.txt
 .vscode
 backup/backup.sql
+node_modules

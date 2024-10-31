@@ -1,4 +1,5 @@
-import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import { Environment } from "../infrastructure/environment.ts";
+import type { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 export default async function sendMail(
   to: string,
@@ -7,7 +8,6 @@ export default async function sendMail(
   errorReporter: ErrorReporter,
   html = false,
 ) {
-  const { SENDINBLUE_API_KEY } = Deno.env.toObject();
 
   const mail = {
     sender: {
@@ -23,7 +23,7 @@ export default async function sendMail(
   const headers = new Headers({
     "Accept": "application/json",
     "Content-Type": "application/json",
-    "api-key": SENDINBLUE_API_KEY,
+    "api-key": Environment.getSendInBlueApiKey(),
   });
 
   const response = await fetch("https://api.sendinblue.com/v3/smtp/email", {

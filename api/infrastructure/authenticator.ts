@@ -1,7 +1,7 @@
-import { Context, logger } from "../../deps.ts";
-import { Translatable } from "../i18n/translatable.ts";
-import { ErrorReporter } from "./error-reporter.ts";
-import { JwtCreateOptions, JwtService } from "./jwt-service.ts";
+import { Context } from "@oak/oak";
+import type { Translatable } from "../i18n/translatable.ts";
+import type { ErrorReporter } from "./error-reporter.ts";
+import type { JwtCreateOptions, JwtService } from "./jwt-service.ts";
 import { json } from "../util/api-response.ts";
 
 export abstract class Authenticator {
@@ -50,7 +50,7 @@ export class BaseAuthenticator extends Authenticator {
       const accountId = parseInt(account_id);
 
       if (!isNaN(accountId)) {
-        logger.info(`Authorized account ${accountId}`);
+        console.info(`Authorized account ${accountId}`);
 
         this.errorReporter.setScopeTag("accountId", accountId.toString());
         const result = await block(accountId, token);

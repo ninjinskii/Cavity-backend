@@ -1,9 +1,9 @@
-import { Context, logger, Router } from "../../deps.ts";
+import { Context, Router } from "@oak/oak";
 import Controller from "./controller.ts";
 import { Authenticator } from "../infrastructure/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
-import { RestDao } from "../dao/rest-dao.ts";
-import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import type { RestDao } from "../dao/rest-dao.ts";
+import type { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface DataControllerOptions {
   router: Router;
@@ -39,9 +39,9 @@ export class DataController extends Controller {
 
   async handlePost(ctx: Context): Promise<void> {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      logger.info(`POST: requested by ${accountId}`);
+      console.info(`POST: requested by ${accountId}`);
 
-      const objects = await ctx.request.body().value;
+      const objects = await ctx.request.body.json();
       const dao = this.getDao(ctx);
 
       if (!(objects instanceof Array)) {
@@ -82,7 +82,7 @@ export class DataController extends Controller {
 
   async handleGet(ctx: Context): Promise<void> {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      logger.info(`GET: requested by ${accountId}`);
+      console.info(`GET: requested by ${accountId}`);
 
       try {
         const dao = this.getDao(ctx);
@@ -101,7 +101,7 @@ export class DataController extends Controller {
 
   async handleDelete(ctx: Context): Promise<void> {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      logger.info(`DELETE: requested by ${accountId}`);
+      console.info(`DELETE: requested by ${accountId}`);
 
       try {
         const dao = this.getDao(ctx);

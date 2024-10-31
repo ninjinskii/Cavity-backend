@@ -1,13 +1,13 @@
-import { Context, logger, Router } from "../../deps.ts";
-import { AccountDao } from "../dao/account-dao.ts";
-import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
+import { Context, Router } from "@oak/oak";
+import type { AccountDao } from "../dao/account-dao.ts";
+import { Account, type AccountDTO, type ConfirmAccountDTO } from "../model/account.ts";
 import PasswordService from "../infrastructure/password-service.ts";
 import { json, success } from "../util/api-response.ts";
 import { Authenticator } from "../infrastructure/authenticator.ts";
 import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";
-import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import type { ErrorReporter } from "../infrastructure/error-reporter.ts";
 
 interface AccountControllerOptions {
   router: Router;
@@ -75,7 +75,7 @@ export class AccountController extends Controller {
   }
 
   async postAccount(ctx: Context): Promise<void> {
-    const accountDto = await ctx.request.body().value as AccountDTO;
+    const accountDto = await ctx.request.body.json() as AccountDTO;
     const email = accountDto.email.trim();
     const password = accountDto.password;
     const securePassword = password.match(this.securePwdRegex);
@@ -109,7 +109,7 @@ export class AccountController extends Controller {
       if (!isDev) {
         await sendMail(account.email, subject, content, this.errorReporter);
       } else {
-        logger.info(
+        console.info(
           `Created account in dev mode, registration code: ${account.registrationCode}`,
         );
       }
@@ -148,7 +148,7 @@ export class AccountController extends Controller {
   async deleteAccount(ctx: Context): Promise<void> {
     // Decision have been made: to delete account, we need token + password
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      const accountDto = await ctx.request.body().value as AccountDTO;
+      const accountDto = await ctx.request.body.json() as AccountDTO;
       const email = accountDto.email.trim();
       const password = accountDto.password;
       const account = await this.accountDao.selectByEmailWithPassword(email);
@@ -183,7 +183,7 @@ export class AccountController extends Controller {
   }
 
   async confirmAccount(ctx: Context): Promise<void> {
-    const confirmDto = await ctx.request.body().value as ConfirmAccountDTO;
+    const confirmDto = await ctx.request.body.json() as ConfirmAccountDTO;
     const email = confirmDto.email.trim();
     const registrationCode = confirmDto.registrationCode;
 
@@ -225,7 +225,7 @@ export class AccountController extends Controller {
 
   async recoverAccount(ctx: Context): Promise<void> {
     try {
-      const body = await ctx.request.body().value;
+      const body = await ctx.request.body.json();
       const email = (body.email || "").trim();
       const subject = this.$t.emailSubjectRecover;
 
@@ -252,7 +252,7 @@ export class AccountController extends Controller {
       if (!isDev) {
         await sendMail(email, subject, content, this.errorReporter, true);
       } else {
-        logger.info(
+        console.info(
           `Trying to recover account in dev mode, recovery link: http://cavity.njk.localhost/recover.html?token=${token}`,
         );
       }
@@ -265,7 +265,7 @@ export class AccountController extends Controller {
   }
 
   async resetPassword(ctx: Context) {
-    const { token, password } = await ctx.request.body().value;
+    const { token, password } = await ctx.request.body.json();
 
     try {
       const { reset_password } = await this.authenticator.verifyToken<{
@@ -294,14 +294,14 @@ export class AccountController extends Controller {
 
   async updateLastUser(ctx: Context): Promise<void> {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
-      const { lastUser } = await ctx.request.body().value;
+      const { lastUser } = await ctx.request.body.json();
       const time = Date.now();
 
       try {
         await this.accountDao.updateLastUser(accountId, lastUser, time);
         return success(ctx);
       } catch (error) {
-        logger.error(error);
+        console.error(error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });

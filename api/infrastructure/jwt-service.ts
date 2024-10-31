@@ -1,4 +1,4 @@
-import { jwt } from "../../deps.ts";
+import jwt from "jsonwebtoken";
 
 type Algorithm =
   | "HS256"
@@ -44,7 +44,7 @@ export class JwtServiceImpl implements JwtService {
   }
 
   verify<T>(token: string): Promise<T> {
-    return jwt.verify(token, this.jwtKey) as unknown as Promise<T>;
+    return Promise.resolve(jwt.verify(token, this.jwtKey.toString())) as unknown as Promise<T>;
   }
 
   create(
@@ -57,15 +57,16 @@ export class JwtServiceImpl implements JwtService {
         : this.toTimestampDate(this.DEFAULT_JWT_EXPIRATION_DELAY),
     } as { [key: string]: unknown };
 
-    return jwt.create(
-      header,
-      payloadWithExpDate,
-      this.jwtKey,
-    );
+    return Promise.resolve(jwt.sign(
+      { ...header, ...payloadWithExpDate},
+      this.jwtKey.toString(),
+    ));
   }
 
   private toTimestampDate(durationInMinutes: number): number {
-    return jwt.getNumericDate(durationInMinutes);
+    return durationInMinutes;
+    // TODO: replace helper from ol lib with actual code -> https://deno.land/x/djwt@v3.0.2#getnumericdate
+    // return jwt.getNumericDate(durationInMinutes);
   }
 
   static async newInstance(secret: string): Promise<JwtServiceImpl> {

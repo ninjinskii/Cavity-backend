@@ -1,4 +1,4 @@
-import { Translatable } from "../i18n/translatable.ts";
+import { type Translatable } from "../i18n/translatable.ts";
 import Controller from "./controller.ts";
 
 export default class ControllerManager {

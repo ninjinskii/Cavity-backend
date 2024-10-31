@@ -1,10 +1,10 @@
-import { Context, logger, Router } from "../../deps.ts";
-import { AccountDTO } from "../model/account.ts";
+import { Context, Router } from "@oak/oak";
+import type { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
-import { AccountDao } from "../dao/account-dao.ts";
+import type { AccountDao } from "../dao/account-dao.ts";
 import PasswordService from "../infrastructure/password-service.ts";
-import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import type { ErrorReporter } from "../infrastructure/error-reporter.ts";
 import { Authenticator } from "../infrastructure/authenticator.ts";
 
 interface AuthControllerOptions {
@@ -39,7 +39,7 @@ export class AuthController extends Controller {
   }
 
   async login(ctx: Context): Promise<void> {
-    const accountDto = await ctx.request.body().value as AccountDTO;
+    const accountDto = await ctx.request.body.json() as AccountDTO;
     const email = accountDto.email.trim();
     const password = accountDto.password;
 
@@ -62,7 +62,7 @@ export class AuthController extends Controller {
       }
 
       if (!isAuthenticated) {
-        logger.info(
+        console.info(
           `User ${email} has tried to login with wrong credentials (id: ${
             account[0].id
           })`,
@@ -70,7 +70,7 @@ export class AuthController extends Controller {
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
 
-      logger.info(`User ${email} logged in (id: ${account[0].id})`);
+      console.info(`User ${email} logged in (id: ${account[0].id})`);
 
       const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },

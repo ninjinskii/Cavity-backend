@@ -1,0 +1,13 @@
+{
+  "name": "cavity-backend",
+  "version": "2.0.0",
+  "dependencies": { "@oak/oak": "npm:@jsr/oak__oak", "@sentry/bun": "^8.36.0", "@types/jsonwebtoken": "^9.0.7", "jsonwebtoken": "^9.0.2" },
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

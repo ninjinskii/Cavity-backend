@@ -1,16 +1,15 @@
-FROM denoland/deno:debian-1.44.4
-
-EXPOSE 5000
-
+FROM oven/bun
 WORKDIR /app
 
-USER deno
+# Copy the lock and package file
+COPY bun.lockb . 
+COPY package.json . 
 
-COPY deps.ts .
-RUN deno cache deps.ts
+# Install dependencies
+RUN bun install --frozen-lockfile
 
-ADD . .
+# Copy your source code
+# If only files in the src folder changed, this is the only step that gets executed!
+COPY api ./api 
 
-RUN deno cache ./api/main.ts
-
-CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--allow-sys", "--watch", "./api/main.ts", "./api/main.ts"]
+CMD ["bun", "api/index.ts"]
