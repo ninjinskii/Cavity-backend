@@ -41,7 +41,7 @@ export class DataController extends Controller {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
       logger.info(`POST: requested by ${accountId}`);
 
-      const objects = await ctx.request.body().value;
+      const objects = await ctx.request.body.json();
       const dao = this.getDao(ctx);
 
       if (!(objects instanceof Array)) {

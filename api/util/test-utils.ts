@@ -1,6 +1,5 @@
 import {
   assertEquals,
-  BodyJson,
   Context,
   returnsNext,
   Router,
@@ -41,10 +40,15 @@ export function fakeRequestBody(
   mockContext: Context,
   body: unknown,
 ): Stub {
+  Object.assign(mockContext, {
+    ...mockContext,
+    request: { ...mockContext.request, body: { json() {} } },
+  });
+
   return stub(
-    mockContext.request,
-    "body",
-    returnsNext([{ value: Promise.resolve(body), type: "json" } as BodyJson]),
+    mockContext.request.body,
+    "json",
+    returnsNext([Promise.resolve(body)]),
   );
 }
 
