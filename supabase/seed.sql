@@ -55,7 +55,9 @@ CREATE TABLE public.bottle (
     consumed integer,
     tasting_id integer,
     is_selected boolean DEFAULT false NOT NULL,
-    pdf_path character varying(255) DEFAULT ''::character varying NOT NULL
+    pdf_path character varying(255) DEFAULT ''::character varying NOT NULL,
+    alcohol double precision DEFAULT NULL,
+    storage_location text DEFAULT '' NOT NULL,
 );
 
 

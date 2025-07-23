@@ -18,6 +18,8 @@ export class Bottle {
     public tastingId: number | null,
     public isSelected: boolean,
     public pdfPath: string,
+    public alcohol: number,
+    public storageLocation: string | null,
   ) {
   }
 }
