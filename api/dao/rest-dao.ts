@@ -7,7 +7,7 @@ export interface RestDao<T> {
 }
 
 export class PostgresClientRestDao<T> implements RestDao<T> {
-  constructor(private client: Client, private table: string) {}
+  constructor(private client: Client, private table: string) { }
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const { rows } = await this.client.queryObject<T>({
@@ -20,8 +20,10 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
   }
 
   insert(objects: T[]): Promise<void> {
+    const { statement, actualValues } = this.toSqlInsert(objects);
     return this.client.queryObject<T>({
-      text: `INSERT INTO ${this.table} ${this.toSqlInsert(objects)};`,
+      text: `INSERT INTO ${this.table} ${statement};`,
+      args: actualValues,
     }) as Promise<unknown> as Promise<void>;
   }
 
@@ -43,19 +45,32 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
     return formatted;
   }
 
-  public toSqlInsert(objects: unknown[]): string {
+  private toSqlInsert(objects: unknown[]): { statement: string, actualValues: unknown[] } {
     const example = this.toSnakeCase(objects[0]) as object;
     const fields = Object.keys(example).join(", ");
-    const values = objects.map((object) =>
-      Object.values(object as object).join(", ")
-    ).join("), (");
 
-    return `(${fields}) VALUES (${values})`;
+    const values: any[] = [];
+    const preparedValuesArray: any[] = [];
+    let preparedArgsCounter = 1;
+
+    for (const object of objects) {
+      const objectPreparedValuesArray = [];
+
+      for (const value of Object.values(object)) {
+        objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
+        values.push(value);
+      }
+
+      preparedValuesArray.push(`(${objectPreparedValuesArray.join(", ")})`);
+    }
+
+    const preparedValues = preparedValuesArray.join(", ");
+    return { statement: `(${fields}) VALUES ${preparedValues}`, actualValues: values };
   }
 }
 
 export class SupabaseRestDao<T> implements RestDao<T> {
-  constructor(private supabaseClient: SupabaseClient, private table: string) {}
+  constructor(private supabaseClient: SupabaseClient, private table: string) { }
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const response = await this.supabaseClient

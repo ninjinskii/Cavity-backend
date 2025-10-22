@@ -55,7 +55,7 @@ export interface AccountDao {
 export class PostgresClientAccountDao implements AccountDao {
   private readonly table = "account";
 
-  constructor(private client: Client) {}
+  constructor(private client: Client) { }
 
   async selectById(id: number): Promise<AccountWithEmail[]> {
     const fields = ["email", "registration_code", "last_user", "last_update_time"]
@@ -122,8 +122,10 @@ export class PostgresClientAccountDao implements AccountDao {
   insert(
     accounts: { email: string; password: string; registrationCode: number }[],
   ): Promise<void> {
+    const { statement, actualValues } = this.toSqlInsert(accounts);
     return this.client.queryObject({
-      text: `INSERT INTO ${this.table} ${this.toSqlInsert(accounts)};`,
+      text: `INSERT INTO ${this.table} ${statement};`,
+      args: actualValues,
     }) as Promise<never>;
   }
 
@@ -135,7 +137,7 @@ export class PostgresClientAccountDao implements AccountDao {
     const column1 = "last_user";
     const column2 = "last_update_time";
 
-    return this.client.queryObject({ 
+    return this.client.queryObject({
       args: [lastUser, lastUpdateTime, accountId],
       text: `UPDATE ${this.table} SET ${column1} = $1, ${column2} = $2 WHERE id = $3;`
     }) as Promise<never>
@@ -166,19 +168,32 @@ export class PostgresClientAccountDao implements AccountDao {
     return formatted;
   }
 
-  private toSqlInsert(objects: unknown[]): string {
+  private toSqlInsert(objects: unknown[]): { statement: string, actualValues: unknown[] } {
     const example = this.toSnakeCase(objects[0]) as object;
     const fields = Object.keys(example).join(", ");
-    const values = objects.map((object) =>
-      Object.values(object as object).join(", ")
-    ).join("), (");
 
-    return `(${fields}) VALUES (${values})`;
+    const values: any[] = [];
+    const preparedValuesArray: any[] = [];
+    let preparedArgsCounter = 1;
+
+    for (const object of objects) {
+      const objectPreparedValuesArray = [];
+
+      for (const value of Object.values(object)) {
+        objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
+        values.push(value);
+      }
+
+      preparedValuesArray.push(`(${objectPreparedValuesArray.join(", ")})`);
+    }
+
+    const preparedValues = preparedValuesArray.join(", ");
+    return { statement: `(${fields}) VALUES ${preparedValues}`, actualValues: values };
   }
 }
 
 export class SupabaseAccountDao implements AccountDao {
-  constructor(private supabaseClient: SupabaseClient) {}
+  constructor(private supabaseClient: SupabaseClient) { }
 
   async selectById(
     id: number,

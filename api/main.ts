@@ -34,11 +34,11 @@ const client = new Client({
   database,
   port,
   password,
-  tls: {
-    caCertificates: [
-      await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
-    ],
-  },
+  //tls: {
+  // caCertificates: [
+  // await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
+  //],
+  //},
 });
 
 app.use(async (ctx, next) => {
@@ -96,7 +96,7 @@ await app.listen({ port: 5000 });
 logger.info(`Deno version: ${Deno.version.deno}`);
 
 function applyBigIntSerializer() {
-  BigInt.prototype.toJSON = function () {
+  BigInt.prototype.toJSON = function() {
     return parseInt(this.toString());
   };
 }
