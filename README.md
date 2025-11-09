@@ -70,14 +70,7 @@ docker-compose exec web deno test --allow-env
 
 ## Backup the database
 ```bash
-# Add postgrsql apt repo
-sudo apt install -y postgresql-common
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-
-# Install pg dump
-sudo apt install -y postgresql-client-16
-
-pg_dump -h aws-0-eu-central-1.pooler.supabase.com -p 6543 -d postgres -U postgres.pyjhfmsgwwdcdcmyiffc > ./backup.sql
+dc exec db pg_dump postgresql://postgres.pyjhfmsgwwdcdcmyiffc:<PASSWORD>@aws-0-eu-central-1.pooler.supabase.com:5432/postgres > ./backup.sql
 ```
 
 To restore it use:

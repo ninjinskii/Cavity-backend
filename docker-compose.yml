@@ -38,6 +38,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/cavity
     volumes:
       - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
+
 networks:
   proxy:
     external: true
