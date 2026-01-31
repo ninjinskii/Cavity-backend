@@ -1,9 +1,6 @@
-import {
-  Application,
-  Client,
-  logger,
-  Router,
-} from "../deps.ts";
+import { Application, Context, Next, Router } from "@oak/oak";
+import { Client } from "postgres";
+import * as logger from "@std/log";
 import { AuthController } from "./controller/auth.ts";
 import { DataController } from "./controller/rest.ts";
 import ControllerManager from "./controller/manager.ts";
@@ -68,7 +65,6 @@ manager.addControllers(
   dataController,
 );
 
-
 const app = new Application();
 app.use(createLanguageMiddleware(manager));
 app.use(router.routes());
@@ -78,17 +74,15 @@ logger.info(`Deno version: ${Deno.version.deno}`);
 await app.listen({ port: 5000 });
 
 function applyBigIntSerializer() {
-  BigInt.prototype.toJSON = function() {
+  BigInt.prototype.toJSON = function () {
     return parseInt(this.toString());
   };
 }
 
 function createLanguageMiddleware(manager: ControllerManager) {
-  return async (ctx: any, next: any) => {
+  return async (ctx: Context, next: Next) => {
     const language = ctx.request.headers.get("Accept-Language");
-    const $t = language?.includes("fr-")
-      ? new FrTranslations()
-      : new EnTranslations();
+    const $t = language?.includes("fr-") ? new FrTranslations() : new EnTranslations();
 
     manager.updateControllersTranslator($t);
 

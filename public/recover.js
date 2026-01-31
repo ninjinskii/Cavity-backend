@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-window
 function checkPassword() {
   const pwdEl = document.getElementById("pwd");
   const pwdConfEl = document.getElementById("pwdconf");
@@ -37,7 +38,7 @@ function submit() {
             .read()
             .then((bytes) => {
               const message = JSON.parse(
-                String.fromCharCode(...bytes.value)
+                String.fromCharCode(...bytes.value),
               ).message;
 
               alert.innerHTML = decodeURIComponent(escape(message));

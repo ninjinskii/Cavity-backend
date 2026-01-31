@@ -1,4 +1,4 @@
-import { Sentry } from "../../deps.ts";
+import * as Sentry from "sentry";
 import { Environment } from "./environment.ts";
 
 export interface ErrorReporter {
@@ -61,19 +61,19 @@ export class LogErrorReporter implements ErrorReporter {
   private static instance: SentryErrorReporter | null = null;
 
   captureException(exception: Error) {
-    console.error(exception)
+    console.error(exception);
   }
 
   captureMessage(message: string) {
-    console.info(message)
+    console.info(message);
   }
 
   setScopeTag(tag: string, value: string) {
-    console.warn(`______________${tag}->${value}______________`)
+    console.warn(`______________${tag}->${value}______________`);
   }
-  
+
   removeScopeTag(tag: string) {
-    console.warn(`______________${tag}->${[undefined]}______________`)
+    console.warn(`______________${tag}->${[undefined]}______________`);
   }
 
   stopEvents(): boolean {

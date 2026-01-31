@@ -1,15 +1,8 @@
-import {
-  assertSpyCall,
-  assertSpyCalls,
-  beforeEach,
-  Context,
-  createMockContext,
-  describe,
-  it,
-  returnsNext,
-  spy,
-  stub,
-} from "../../../deps.ts";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCall, assertSpyCalls, returnsNext, spy, stub } from "@std/testing/mock";
+import { Context, testing } from "@oak/oak";
+
+const { createMockContext } = testing;
 import { FrTranslations } from "../../i18n/translatable.ts";
 import { FakeErrorReporter } from "../error-reporter.ts";
 import { JwtServiceImpl } from "../jwt-service.ts";

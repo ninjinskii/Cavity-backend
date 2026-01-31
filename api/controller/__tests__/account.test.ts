@@ -1,17 +1,9 @@
-import {
-  afterAll,
-  assertSpyCall,
-  assertSpyCalls,
-  beforeEach,
-  Context,
-  createMockContext,
-  describe,
-  it,
-  returnsNext,
-  spy,
-  stub,
-  SupabaseClient,
-} from "../../../deps.ts";
+import { afterAll, beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCall, assertSpyCalls, returnsNext, spy, stub } from "@std/testing/mock";
+import { Context, testing } from "@oak/oak";
+import { SupabaseClient } from "supabase";
+
+const { createMockContext } = testing;
 import { AccountController } from "../account.ts";
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
@@ -164,7 +156,14 @@ describe("Account controller", () => {
           }],
         });
         assertStatusEquals(mockContext, 200);
-        assertBodyEquals(mockContext, { ...fakeAccount, token: "token" });
+        assertBodyEquals(mockContext, {
+          email: fakeAccount.email,
+          password: fakeAccount.password,
+          resetToken: fakeAccount.resetToken,
+          lastUser: fakeAccount.lastUser,
+          lastUpdateTime: fakeAccount.lastUpdateTime,
+          token: "token",
+        });
       });
     });
 
@@ -193,7 +192,14 @@ describe("Account controller", () => {
           }],
         });
         assertStatusEquals(mockContext, 200);
-        assertBodyEquals(mockContext, { ...fakeAccount, token: "token" });
+        assertBodyEquals(mockContext, {
+          email: fakeAccount.email,
+          password: fakeAccount.password,
+          resetToken: fakeAccount.resetToken,
+          lastUser: fakeAccount.lastUser,
+          lastUpdateTime: fakeAccount.lastUpdateTime,
+          token: "token",
+        });
       });
     });
 

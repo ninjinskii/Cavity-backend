@@ -1,4 +1,5 @@
-import { Context, logger, Router } from "../../deps.ts";
+import { Context, Router } from "@oak/oak";
+import * as logger from "@std/log";
 import { AccountDTO } from "../model/account.ts";
 import Controller from "./controller.ts";
 import { json } from "../util/api-response.ts";
@@ -63,9 +64,7 @@ export class AuthController extends Controller {
 
       if (!isAuthenticated) {
         logger.info(
-          `User ${email} has tried to login with wrong credentials (id: ${
-            account[0].id
-          })`,
+          `User ${email} has tried to login with wrong credentials (id: ${account[0].id})`,
         );
         return json(ctx, { message: this.$t.wrongCredentials }, 400);
       }
@@ -83,7 +82,7 @@ export class AuthController extends Controller {
 
       json(ctx, { token, email, lastUser, lastUpdateTime });
     } catch (error) {
-      this.errorReporter.captureException(error);
+      this.errorReporter.captureException(error as Error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

@@ -1,4 +1,5 @@
-import { Context, logger, Router } from "../../deps.ts";
+import { Context, Router } from "@oak/oak";
+import * as logger from "@std/log";
 import Controller from "./controller.ts";
 import { Authenticator } from "../infrastructure/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
@@ -44,6 +45,10 @@ export class DataController extends Controller {
       const objects = await ctx.request.body.json();
       const dao = this.getDao(ctx);
 
+      if (!dao) {
+        return json(ctx, { message: this.$t.notFound }, 404);
+      }
+
       if (!(objects instanceof Array)) {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
@@ -54,7 +59,7 @@ export class DataController extends Controller {
         await dao.replaceAllForAccount(accountId, objects);
         success(ctx);
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -66,6 +71,11 @@ export class DataController extends Controller {
 
       try {
         const dao = this.getDao(ctx);
+
+        if (!dao) {
+          return json(ctx, { message: this.$t.notFound }, 404);
+        }
+
         // We just use this to delete a property on a unknown type. If it doesnt exists nothing changes
         // deno-lint-ignore no-explicit-any
         const objects = await dao.selectByAccountId(accountId) as any[];
@@ -73,7 +83,7 @@ export class DataController extends Controller {
 
         json(ctx, objects);
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -85,17 +95,22 @@ export class DataController extends Controller {
 
       try {
         const dao = this.getDao(ctx);
+
+        if (!dao) {
+          return json(ctx, { message: this.$t.notFound }, 404);
+        }
+
         await dao.deleteAllForAccount(accountId);
 
         success(ctx);
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
   }
 
-  private getDao(ctx: Context): RestDao<unknown> {
+  private getDao(ctx: Context): RestDao<unknown> | undefined {
     const tableName = "/" + ctx.request.url.pathname.split("/").pop() || "";
     return this.mapper[tableName];
   }

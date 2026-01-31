@@ -1,14 +1,9 @@
-import {
-  assertSpyCall,
-  assertSpyCalls,
-  beforeEach,
-  Context,
-  createMockContext,
-  describe,
-  it,
-  spy,
-  SupabaseClient,
-} from "../../../deps.ts";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCall, assertSpyCalls, spy } from "@std/testing/mock";
+import { Context, testing } from "@oak/oak";
+import { SupabaseClient } from "supabase";
+
+const { createMockContext } = testing;
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { Account } from "../../model/account.ts";
 import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";

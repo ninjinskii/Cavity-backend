@@ -1,4 +1,5 @@
-import { Context, logger } from "../../deps.ts";
+import { Context } from "@oak/oak";
+import * as logger from "@std/log";
 import { Translatable } from "../i18n/translatable.ts";
 import { ErrorReporter } from "./error-reporter.ts";
 import { JwtCreateOptions, JwtService } from "./jwt-service.ts";
@@ -61,7 +62,7 @@ export class BaseAuthenticator extends Authenticator {
         json(ctx, { message: t.unauthorized }, 401);
       }
     } catch (error) {
-      this.errorReporter.captureException(error);
+      this.errorReporter.captureException(error as Error);
       json(ctx, { message: t.unauthorized }, 401);
     }
   }

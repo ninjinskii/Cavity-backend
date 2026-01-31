@@ -1,4 +1,5 @@
-import { Context, logger, Router } from "../../deps.ts";
+import { Context, Router } from "@oak/oak";
+import * as logger from "@std/log";
 import { AccountDao } from "../dao/account-dao.ts";
 import { Account, AccountDTO, ConfirmAccountDTO } from "../model/account.ts";
 import PasswordService from "../infrastructure/password-service.ts";
@@ -23,8 +24,7 @@ export class AccountController extends Controller {
   private authenticator: Authenticator;
 
   constructor(
-    { router, accountDao, errorReporter, authenticator }:
-      AccountControllerOptions,
+    { router, accountDao, errorReporter, authenticator }: AccountControllerOptions,
   ) {
     super(router);
     this.accountDao = accountDao;
@@ -115,14 +115,14 @@ export class AccountController extends Controller {
       }
       success(ctx);
     } catch (error) {
-      this.errorReporter.captureException(error);
+      this.errorReporter.captureException(error as Error);
 
       try {
         // Mail sending has probably gone wrong. Remove the account.
         await this.accountDao.deleteByEmail(email);
         json(ctx, { message: this.$t.invalidEmail }, 400);
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     }
@@ -139,7 +139,7 @@ export class AccountController extends Controller {
 
         json(ctx, { ...account[0], token });
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -176,7 +176,7 @@ export class AccountController extends Controller {
         await this.accountDao.deleteById(accountId);
         success(ctx);
       } catch (error) {
-        this.errorReporter.captureException(error);
+        this.errorReporter.captureException(error as Error);
         json(ctx, { message: this.$t.baseError }, 500);
       }
     });
@@ -211,14 +211,13 @@ export class AccountController extends Controller {
         payload: { account_id: account[0].id },
       });
 
-      const lightweight: any = account[0];
-      delete lightweight["account_id"];
+      const lightweight: Record<string, unknown> = { ...account[0] };
       delete lightweight["id"];
       delete lightweight["registrationCode"];
 
       json(ctx, { ...lightweight, token, email });
     } catch (error) {
-      this.errorReporter.captureException(error);
+      this.errorReporter.captureException(error as Error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }
@@ -259,7 +258,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (error) {
-      this.errorReporter.captureException(error);
+      this.errorReporter.captureException(error as Error);
       json(ctx, { message: this.$t.baseError }, 500);
     }
   }

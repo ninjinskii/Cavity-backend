@@ -1,4 +1,4 @@
-import { jwt } from "../../deps.ts";
+import * as jwt from "djwt";
 
 type Algorithm =
   | "HS256"

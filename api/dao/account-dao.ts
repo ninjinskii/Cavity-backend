@@ -1,10 +1,14 @@
-import { Client, SupabaseClient, snakeCase } from "../../deps.ts";
+import { Client } from "postgres";
+import { SupabaseClient } from "supabase";
+import { snakeCase } from "case";
 import { Account } from "../model/account.ts";
 
 type AccountWithEmail = Pick<Account, "email" | "registrationCode" | "lastUser" | "lastUpdateTime">;
 type AccountWithId = Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">;
-type AccountWithPassword = Pick<Account, "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime">;
-
+type AccountWithPassword = Pick<
+  Account,
+  "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime"
+>;
 
 export interface AccountDao {
   selectById(
@@ -55,10 +59,10 @@ export interface AccountDao {
 export class PostgresClientAccountDao implements AccountDao {
   private readonly table = "account";
 
-  constructor(private client: Client) { }
+  constructor(private client: Client) {}
 
   async selectById(id: number): Promise<AccountWithEmail[]> {
-    const fields = ["email", "registration_code", "last_user", "last_update_time"]
+    const fields = ["email", "registration_code", "last_user", "last_update_time"];
     const { rows } = await this.client.queryObject<AccountWithEmail>({
       args: [id],
       camelCase: true,
@@ -69,29 +73,29 @@ export class PostgresClientAccountDao implements AccountDao {
   }
 
   async selectByEmail(email: string): Promise<AccountWithId[]> {
-    const fields = ["id", "registration_code", "last_user", "last_update_time"]
+    const fields = ["id", "registration_code", "last_user", "last_update_time"];
     const { rows } = await this.client.queryObject<AccountWithId>({
       args: [email],
       camelCase: true,
-      text: `SELECT ${fields.join(', ')} FROM ${this.table} WHERE email = $1;`,
+      text: `SELECT ${fields.join(", ")} FROM ${this.table} WHERE email = $1;`,
     });
 
     return rows;
   }
 
   async selectByEmailWithPassword(email: string): Promise<AccountWithPassword[]> {
-    const fields = ["id", "registration_code", "password", "last_user", "last_update_time"]
+    const fields = ["id", "registration_code", "password", "last_user", "last_update_time"];
     const { rows } = await this.client.queryObject<AccountWithPassword>({
       args: [email],
       camelCase: true,
-      text: `SELECT ${fields.join(', ')} FROM ${this.table} WHERE email = $1;`,
+      text: `SELECT ${fields.join(", ")} FROM ${this.table} WHERE email = $1;`,
     });
 
     return rows;
   }
 
   register(email: string): Promise<never> {
-    const column = "registration_code"
+    const column = "registration_code";
     return this.client.queryObject({
       args: [email],
       camelCase: true,
@@ -139,8 +143,8 @@ export class PostgresClientAccountDao implements AccountDao {
 
     return this.client.queryObject({
       args: [lastUser, lastUpdateTime, accountId],
-      text: `UPDATE ${this.table} SET ${column1} = $1, ${column2} = $2 WHERE id = $3;`
-    }) as Promise<never>
+      text: `UPDATE ${this.table} SET ${column1} = $1, ${column2} = $2 WHERE id = $3;`,
+    }) as Promise<never>;
   }
 
   deleteByEmail(email: string): Promise<void> {
@@ -168,7 +172,7 @@ export class PostgresClientAccountDao implements AccountDao {
     return formatted;
   }
 
-  private toSqlInsert(objects: unknown[]): { statement: string, actualValues: unknown[] } {
+  private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
     const example = this.toSnakeCase(objects[0]) as object;
     const fields = Object.keys(example).join(", ");
 
@@ -194,7 +198,7 @@ export class PostgresClientAccountDao implements AccountDao {
 }
 
 export class SupabaseAccountDao implements AccountDao {
-  constructor(private supabaseClient: SupabaseClient) { }
+  constructor(private supabaseClient: SupabaseClient) {}
 
   async selectById(
     id: number,

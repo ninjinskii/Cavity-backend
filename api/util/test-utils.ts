@@ -1,12 +1,7 @@
-import {
-  assertEquals,
-  Context,
-  returnsNext,
-  Router,
-  Spy,
-  Stub,
-  stub,
-} from "../../deps.ts";
+import { assertEquals } from "@std/assert";
+import { Context } from "@oak/oak";
+import { returnsNext, type Spy, type Stub, stub } from "@std/testing/mock";
+import { Router } from "@oak/oak";
 
 export function spyContext(spies: Spy[], block: () => void): void {
   try {
@@ -61,15 +56,15 @@ export function assertStatusEquals(mockContext: Context, status: number) {
 }
 
 export class FakeRouter extends Router {
-  post() {
+  override post() {
     return this;
   }
 
-  delete() {
+  override delete() {
     return this;
   }
 
-  get() {
+  override get() {
     return this;
   }
 }

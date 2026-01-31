@@ -1,4 +1,4 @@
-import { Context, Status } from "../../deps.ts";
+import { Context, Status } from "@oak/oak";
 
 export function json(
   ctx: Context,

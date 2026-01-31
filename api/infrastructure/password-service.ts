@@ -1,4 +1,4 @@
-import { bcrypt } from "../../deps.ts";
+import * as bcrypt from "bcrypt";
 
 export default class PasswordService {
   // Using hashSync() instead of hash() because hash() is causing a crash on Deno deploy

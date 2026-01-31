@@ -1,4 +1,4 @@
-import { Router } from "../../deps.ts";
+import { Router } from "@oak/oak";
 import { EnTranslations, Translatable } from "../i18n/translatable.ts";
 
 export default abstract class Controller {

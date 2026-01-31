@@ -1,16 +1,18 @@
-FROM denoland/deno:debian-1.46.3
+FROM denoland/deno:debian-2.6.7
 
 EXPOSE 5000
-
 WORKDIR /app
 
-USER deno
+# Copier les fichiers de configuration et lock avant le code
+COPY deno.json deno.lock* ./
 
-COPY deps.ts .
-RUN deno cache deps.ts
+# Installer les dépendances
+RUN deno install
 
+# Copier le reste du code
 ADD . .
 
+# Cache final du point d'entrée
 RUN deno cache ./api/main.ts
 
-CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--allow-sys", "--watch", "./api/main.ts", "./api/main.ts"]
+CMD ["task", "dev"]

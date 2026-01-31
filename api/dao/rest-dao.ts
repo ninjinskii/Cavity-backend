@@ -1,4 +1,6 @@
-import { camelCase, Client, snakeCase, SupabaseClient } from "../../deps.ts";
+import { camelCase, snakeCase } from "case";
+import { Client } from "postgres";
+import { SupabaseClient } from "supabase";
 
 export interface RestDao<T> {
   selectByAccountId(accountId: number): Promise<T[]>;
@@ -8,7 +10,7 @@ export interface RestDao<T> {
 }
 
 export class PostgresClientRestDao<T> implements RestDao<T> {
-  constructor(private client: Client, private table: string) { }
+  constructor(private client: Client, private table: string) {}
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const { rows } = await this.client.queryObject<T>({
@@ -71,12 +73,12 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
     return formatted;
   }
 
-  private toSqlInsert(objects: unknown[]): { statement: string, actualValues: unknown[] } {
+  private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
     const example = this.toSnakeCase(objects[0]) as object;
     const fields = Object.keys(example).join(", ");
 
-    const values: any[] = [];
-    const preparedValuesArray: any[] = [];
+    const values: unknown[] = [];
+    const preparedValuesArray: string[] = [];
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
@@ -97,7 +99,7 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
 }
 
 export class SupabaseRestDao<T> implements RestDao<T> {
-  constructor(private supabaseClient: SupabaseClient, private table: string) { }
+  constructor(private supabaseClient: SupabaseClient, private table: string) {}
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const response = await this.supabaseClient

@@ -1,4 +1,7 @@
-import { assertEquals, Client, describe, it, stub, returnsNext } from "../../../deps.ts";
+import { assertEquals } from "@std/assert";
+import { describe, it } from "@std/testing/bdd";
+import { returnsNext, stub } from "@std/testing/mock";
+import { Client, Transaction } from "postgres";
 import { PostgresClientRestDao } from "../rest-dao.ts";
 import { simpleStubAsync, spyContext } from "../../util/test-utils.ts";
 
@@ -12,7 +15,7 @@ describe("PostgresClientRestDao", () => {
         { id: 1, name: "Château Margaux", accountId: 1 },
         { id: 2, name: "Penfolds Grange", accountId: 1 },
       ];
-      
+
       const clientSpy = simpleStubAsync(client, "queryObject", {
         rows: mockWines,
       });
@@ -61,7 +64,7 @@ describe("PostgresClientRestDao", () => {
       const createTransactionSpy = stub(
         client,
         "createTransaction",
-        returnsNext([mockTransaction as any]),
+        returnsNext([mockTransaction as unknown as Transaction]),
       );
 
       await dao.replaceAllForAccount(1, winesData);
@@ -74,7 +77,7 @@ describe("PostgresClientRestDao", () => {
 
     it("should delete all data when empty array is provided", async () => {
       const dao = new PostgresClientRestDao(client, "wine");
-      const emptyData: any[] = [];
+      const emptyData: unknown[] = [];
 
       const mockTransaction = {
         begin: () => Promise.resolve(),
@@ -86,11 +89,10 @@ describe("PostgresClientRestDao", () => {
       const createTransactionSpy = stub(
         client,
         "createTransaction",
-        returnsNext([mockTransaction as any]),
+        returnsNext([mockTransaction as unknown as Transaction]),
       );
 
       await dao.replaceAllForAccount(1, emptyData);
-
       spyContext([createTransactionSpy], () => {
         // Vérifie que la transaction a été créée et que tout s'est bien passé
         assertEquals(createTransactionSpy.calls.length, 1);
@@ -117,12 +119,12 @@ describe("PostgresClientRestDao", () => {
       const createTransactionSpy = stub(
         client,
         "createTransaction",
-        returnsNext([mockTransaction as any]),
+        returnsNext([mockTransaction as unknown as Transaction]),
       );
 
       try {
         await dao.replaceAllForAccount(1, winesData);
-      } catch (error) {
+      } catch (_error) {
         // L'erreur est attendue
       }
 
@@ -135,7 +137,7 @@ describe("PostgresClientRestDao", () => {
   describe("deleteAllForAccount", () => {
     it("should delete all records for an account", async () => {
       const dao = new PostgresClientRestDao(client, "wine");
-      
+
       const clientSpy = simpleStubAsync(client, "queryObject", {});
 
       await dao.deleteAllForAccount(1);

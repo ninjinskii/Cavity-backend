@@ -1,16 +1,9 @@
-import {
-  assertSpyCall,
-  assertSpyCalls,
-  beforeEach,
-  Context,
-  createMockContext,
-  describe,
-  it,
-  returnsNext,
-  spy,
-  stub,
-  SupabaseClient,
-} from "../../../deps.ts";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCall, assertSpyCalls, returnsNext, spy, stub } from "@std/testing/mock";
+import { Context, testing } from "@oak/oak";
+import { SupabaseClient } from "supabase";
+
+const { createMockContext } = testing;
 import { EnTranslations } from "../../i18n/translatable.ts";
 import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { DataController } from "../rest.ts";
@@ -188,32 +181,24 @@ describe("Data controller", () => {
       });
     });
 
-    // TODO: supabase-js does not support transactions yet
-    // it("should fail if transaction error occured", async () => {
-    //   fakeRequestBody(mockContext, [{ a: "a", b: "b" }, { a: "c", b: "d" }]);
+    it("should return 404 if route does not exist in mapper", async () => {
+      fakeRequestBody(mockContext, [{ a: "a" }]);
+      restController["getDao"] = () => undefined;
 
-    //   const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
-    //   const deleteSpy = simpleStubAsync(
-    //     restDao,
-    //     "deleteAllForAccount",
-    //     undefined,
-    //   );
-    //   const insertSpy = stub(
-    //     restDao,
-    //     "insert",
-    //     returnsNext([Promise.reject("Fail for test purposes")]),
-    //   );
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const deleteSpy = spy(restDao, "deleteAllForAccount");
+      const insertSpy = spy(restDao, "insert");
 
-    //   await restController.handlePost(mockContext);
+      await restController.handlePost(mockContext);
 
-    //   spyContext([jwtSpy, deleteSpy, insertSpy], () => {
-    //     assertSpyCalls(jwtSpy, 1);
-    //     assertSpyCalls(deleteSpy, 1);
-    //     assertSpyCalls(insertSpy, 1);
-    //     assertStatusEquals(mockContext, 400); // Not sure why 400 here
-    //     assertBodyEquals(mockContext, { message: $t.missingParameters });
-    //   });
-    // });
+      spyContext([jwtSpy, deleteSpy, insertSpy], () => {
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(deleteSpy, 0);
+        assertSpyCalls(insertSpy, 0);
+        assertStatusEquals(mockContext, 404);
+        assertBodyEquals(mockContext, { message: $t.notFound });
+      });
+    });
   });
 
   describe("handleGet", () => {
@@ -265,6 +250,22 @@ describe("Data controller", () => {
         assertSpyCalls(selectSpy, 1);
         assertStatusEquals(mockContext, 500);
         assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+
+    it("should return 404 if route does not exist in mapper", async () => {
+      restController["getDao"] = () => undefined;
+
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const selectSpy = spy(restDao, "selectByAccountId");
+
+      await restController.handleGet(mockContext);
+
+      spyContext([jwtSpy, selectSpy], () => {
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(selectSpy, 0);
+        assertStatusEquals(mockContext, 404);
+        assertBodyEquals(mockContext, { message: $t.notFound });
       });
     });
   });
@@ -319,6 +320,22 @@ describe("Data controller", () => {
         assertSpyCalls(deleteSpy, 1);
         assertStatusEquals(mockContext, 500);
         assertBodyEquals(mockContext, { message: $t.baseError });
+      });
+    });
+
+    it("should return 404 if route does not exist in mapper", async () => {
+      restController["getDao"] = () => undefined;
+
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const deleteSpy = spy(restDao, "deleteAllForAccount");
+
+      await restController.handleDelete(mockContext);
+
+      spyContext([jwtSpy, deleteSpy], () => {
+        assertSpyCalls(jwtSpy, 1);
+        assertSpyCalls(deleteSpy, 0);
+        assertStatusEquals(mockContext, 404);
+        assertBodyEquals(mockContext, { message: $t.notFound });
       });
     });
   });
