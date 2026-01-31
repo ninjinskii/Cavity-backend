@@ -4,6 +4,7 @@ export interface RestDao<T> {
   selectByAccountId(accountId: number): Promise<T[]>;
   insert(objects: T[]): Promise<void>;
   deleteAllForAccount(accountId: number): Promise<void>;
+  replaceAllForAccount(accountId: number, objects: T[]): Promise<void>;
 }
 
 export class PostgresClientRestDao<T> implements RestDao<T> {
@@ -34,6 +35,31 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
     }) as Promise<unknown> as Promise<void>;
   }
 
+  async replaceAllForAccount(accountId: number, objects: T[]): Promise<void> {
+    const transaction = this.client.createTransaction("replace_all");
+
+    try {
+      await transaction.begin();
+      await transaction.queryObject({
+        args: [accountId],
+        text: `DELETE FROM ${this.table} WHERE account_id = $1;`,
+      });
+
+      if (objects.length > 0) {
+        const { statement, actualValues } = this.toSqlInsert(objects);
+        await transaction.queryObject({
+          text: `INSERT INTO ${this.table} ${statement};`,
+          args: actualValues,
+        });
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   private toSnakeCase<T>(object: T): T {
     // deno-lint-ignore no-explicit-any
     const formatted: any = {};
@@ -54,9 +80,10 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
+      const snakeCasedObject = this.toSnakeCase(object) as object;
       const objectPreparedValuesArray = [];
 
-      for (const value of Object.values(object)) {
+      for (const value of Object.values(snakeCasedObject)) {
         objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
         values.push(value);
       }
@@ -104,6 +131,15 @@ export class SupabaseRestDao<T> implements RestDao<T> {
 
     if (response.error) {
       throw response.error;
+    }
+  }
+
+  async replaceAllForAccount(accountId: number, objects: T[]): Promise<void> {
+    // Note: Supabase doesn't support transactions in client library
+    // This is best-effort only
+    await this.deleteAllForAccount(accountId);
+    if (objects.length > 0) {
+      await this.insert(objects);
     }
   }
 

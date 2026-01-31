@@ -62,7 +62,7 @@ export class PostgresClientAccountDao implements AccountDao {
     const { rows } = await this.client.queryObject<AccountWithEmail>({
       args: [id],
       camelCase: true,
-      text: `SELECT ${fields.join(", ")} FROM ${this.table} WHERE account_id = $1;`,
+      text: `SELECT ${fields.join(", ")} FROM ${this.table} WHERE id = $1;`,
     });
 
     return rows;
@@ -177,9 +177,10 @@ export class PostgresClientAccountDao implements AccountDao {
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
+      const snakeCasedObject = this.toSnakeCase(object) as object;
       const objectPreparedValuesArray = [];
 
-      for (const value of Object.values(object)) {
+      for (const value of Object.values(snakeCasedObject)) {
         objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
         values.push(value);
       }

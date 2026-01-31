@@ -48,30 +48,10 @@ export class DataController extends Controller {
         return json(ctx, { message: this.$t.missingParameters }, 400);
       }
 
-      if (objects.length === 0) {
-        try {
-          await dao.deleteAllForAccount(accountId);
-        } catch (error) {
-          this.errorReporter.captureException(error);
-          return json(ctx, { message: this.$t.baseError }, 500);
-        }
-
-        return success(ctx);
-      }
-
       objects.forEach((object) => object.account_id = accountId);
 
       try {
-        // TODO: supabase-js does not support transactions yet
-        // const ok = await transaction([dao], async () => {
-        await dao.deleteAllForAccount(accountId);
-        await dao.insert(objects);
-        // });
-
-        // ok
-        //   ? success(ctx)
-        //   : json(ctx, { message: this.$t.missingParameters }, 400);
-
+        await dao.replaceAllForAccount(accountId, objects);
         success(ctx);
       } catch (error) {
         this.errorReporter.captureException(error);
