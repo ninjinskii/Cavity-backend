@@ -17,6 +17,16 @@ Supabase UI URL is displayed when running supabase start
 Make sure docker compose variables `SUPABASE_URL` & `SUPABASE_ANON_KEY` are filled with the values given by supabase start
 (Most of the time, http://172.17.0.1:54321 works the best)
 
+## Initializing database
+May be necessary.
+```bash
+# First, remove all data
+sudo rm -rf /var/lib/postgresql/data/cavity
+
+# Then, inject schema:
+docker exec -i db.njk.localhost psql -U postgres -d cavity < schema.sql
+```
+
 ## Make a request from another device
 You can use the api while serving it with a mobile device for example.
 You first need to find out your ip on your local network:
@@ -64,20 +74,13 @@ Note however that it would not work in dev mode, nor in a dev container
 
 ## Run unit tests
 ```bash
-docker-compose up -d
-docker-compose exec web deno test --allow-env
+docker compose up -d
+docker compose exec web deno test --allow-env
 ```
 
 ## Backup the database
 ```bash
-# Add postgrsql apt repo
-sudo apt install -y postgresql-common
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-
-# Install pg dump
-sudo apt install -y postgresql-client-16
-
-pg_dump -h aws-0-eu-central-1.pooler.supabase.com -p 6543 -d postgres -U postgres.pyjhfmsgwwdcdcmyiffc > ./backup.sql
+dc exec db pg_dump postgresql://postgres.pyjhfmsgwwdcdcmyiffc:<PASSWORD>@aws-0-eu-central-1.pooler.supabase.com:5432/postgres > ./backup.sql
 ```
 
 To restore it use:
