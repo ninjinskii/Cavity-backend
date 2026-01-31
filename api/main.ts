@@ -19,14 +19,7 @@ import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 
 applyBigIntSerializer();
 
-const app = new Application();
-const router = new Router();
 const { TOKEN_SECRET, DATABASE_URL } = Deno.env.toObject();
-
-const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
-const errorReporter = new LogErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
-
 const [user, password, hostname, port, database] = DATABASE_URL.split(",");
 const client = new Client({
   user,
@@ -41,27 +34,11 @@ const client = new Client({
   //},
 });
 
-app.use(async (ctx, next) => {
-  const language = ctx.request.headers.get("Accept-Language");
-  const $t = language?.includes("fr-")
-    ? new FrTranslations()
-    : new EnTranslations();
-
-  manager.updateControllersTranslator($t);
-
-  try {
-    await ctx.send({
-      root: `${Deno.cwd()}/public`,
-      index: "index.html",
-    });
-  } finally {
-    // This is not unsafe
-    // deno-lint-ignore no-unsafe-finally
-    return next();
-  }
-});
-
-const { accountDao, mapper } = getAccountDao();
+const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
+const errorReporter = new LogErrorReporter();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter);
+const { accountDao, mapper } = createDaos();
+const router = new Router();
 
 const accountController = new AccountController({
   router,
@@ -69,31 +46,36 @@ const accountController = new AccountController({
   errorReporter,
   authenticator,
 });
+
 const authController = new AuthController({
   router,
   accountDao,
   errorReporter,
   authenticator,
 });
+
 const dataController = new DataController({
   router,
   mapper,
   errorReporter,
   authenticator,
 });
-const manager = new ControllerManager();
 
+const manager = new ControllerManager();
 manager.addControllers(
   accountController,
   authController,
   dataController,
 );
 
+
+const app = new Application();
+app.use(createLanguageMiddleware(manager));
 app.use(router.routes());
 app.use(router.allowedMethods());
-await app.listen({ port: 5000 });
 
 logger.info(`Deno version: ${Deno.version.deno}`);
+await app.listen({ port: 5000 });
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function() {
@@ -101,7 +83,29 @@ function applyBigIntSerializer() {
   };
 }
 
-function getRouteDaoMapper() {
+function createLanguageMiddleware(manager: ControllerManager) {
+  return async (ctx: any, next: any) => {
+    const language = ctx.request.headers.get("Accept-Language");
+    const $t = language?.includes("fr-")
+      ? new FrTranslations()
+      : new EnTranslations();
+
+    manager.updateControllersTranslator($t);
+
+    try {
+      await ctx.send({
+        root: `${Deno.cwd()}/public`,
+        index: "index.html",
+      });
+    } finally {
+      // This is not unsafe
+      // deno-lint-ignore no-unsafe-finally
+      return next();
+    }
+  };
+}
+
+function createRouteDaoMapper(): DaoMapper {
   return {
     "/county": new PostgresClientRestDao(client, "county"),
     "/wine": new PostgresClientRestDao(client, "wine"),
@@ -119,11 +123,10 @@ function getRouteDaoMapper() {
   };
 }
 
-function getAccountDao(): { accountDao: AccountDao; mapper: DaoMapper } {
-  // const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
   return {
     accountDao: new PostgresClientAccountDao(client),
-    mapper: getRouteDaoMapper(),
+    mapper: createRouteDaoMapper(),
   };
 }
 
