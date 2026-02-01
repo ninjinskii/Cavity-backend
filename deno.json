@@ -22,7 +22,7 @@
     "djwt": "https://deno.land/x/djwt@v3.0.2/mod.ts",
     "bcrypt": "https://deno.land/x/bcrypt@v0.4.1/mod.ts",
     "case": "https://deno.land/x/case@2.2.0/mod.ts",
-    "sentry": "https://deno.land/x/sentry@7.107.0/index.mjs"
+    "sentry": "https://deno.land/x/sentry@8.55.0/index.mjs"
   },
   "lint": {
     "rules": {
