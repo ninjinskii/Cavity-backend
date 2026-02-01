@@ -291,7 +291,7 @@ export class AccountController extends Controller {
 
       success(ctx);
     } catch (_error) {
-      json(ctx, { message: this.$t.unauthorized }, 401);
+      json(ctx, { message: this.$t.unauthorizedReset }, 401);
     }
   }
 
