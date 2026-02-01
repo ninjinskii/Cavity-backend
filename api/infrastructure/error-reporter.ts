@@ -58,7 +58,17 @@ export class SentryErrorReporter implements ErrorReporter {
 }
 
 export class LogErrorReporter implements ErrorReporter {
-  private static instance: SentryErrorReporter | null = null;
+  private static instance: LogErrorReporter | null = null;
+
+  private constructor() {}
+
+  public static getInstance() {
+    if (LogErrorReporter.instance === null) {
+      LogErrorReporter.instance = new LogErrorReporter();
+    }
+
+    return LogErrorReporter.instance;
+  }
 
   captureException(exception: Error) {
     console.error(exception);

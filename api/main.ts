@@ -11,16 +11,17 @@ import { PostgresClientAccountDao, SupabaseAccountDao } from "./dao/account-dao.
 import { createRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
-import { LogErrorReporter } from "./infrastructure/error-reporter.ts";
+import { LogErrorReporter, SentryErrorReporter } from "./infrastructure/error-reporter.ts";
 import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 import { Environment } from "./infrastructure/environment.ts";
 import { createClient, SupabaseClient } from "supabase";
 
 applyBigIntSerializer();
 
+const isDev = Environment.isDevelopmentMode();
 const postgresUrl = Environment.postgresDatabaseUrl();
 const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
-const errorReporter = new LogErrorReporter();
+const errorReporter = isDev ? LogErrorReporter.getInstance() : SentryErrorReporter.getInstance();
 const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const { accountDao, mapper } = createDaos();
 const router = new Router();
@@ -112,7 +113,7 @@ function createRouteDaoMapper(client: Client | SupabaseClient): DaoMapper {
 }
 
 function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
-  if (Environment.isDevelopmentMode()) {
+  if (isDev) {
     const [user, password, hostname, port, database] = postgresUrl.split(",");
     const postgresClient = new Client({
       user,
