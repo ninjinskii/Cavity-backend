@@ -17,13 +17,13 @@ export class Environment {
   }
 
   static supabaseKey(): string {
-    const { SUPABASE_KEY } = Deno.env.toObject();
+    const { SUPABASE_ANON_KEY } = Deno.env.toObject();
 
-    if (SUPABASE_KEY === "") {
+    if (SUPABASE_ANON_KEY === "") {
       logger.warn("Empty supabase key");
     }
 
-    return SUPABASE_KEY || "";
+    return SUPABASE_ANON_KEY || "";
   }
 
   static tokenSecret(): string {
