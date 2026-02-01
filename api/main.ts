@@ -7,31 +7,19 @@ import ControllerManager from "./controller/manager.ts";
 import { EnTranslations, FrTranslations } from "./i18n/translatable.ts";
 import { AccountController } from "./controller/account.ts";
 import { JwtServiceImpl } from "./infrastructure/jwt-service.ts";
-import { PostgresClientAccountDao } from "./dao/account-dao.ts";
-import { PostgresClientRestDao } from "./dao/rest-dao.ts";
+import { PostgresClientAccountDao, SupabaseAccountDao } from "./dao/account-dao.ts";
+import { createRestDao } from "./dao/rest-dao.ts";
 import { AccountDao } from "./dao/account-dao.ts";
 import { DaoMapper } from "./controller/rest.ts";
 import { LogErrorReporter } from "./infrastructure/error-reporter.ts";
 import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
+import { Environment } from "./infrastructure/environment.ts";
+import { createClient, SupabaseClient } from "supabase";
 
 applyBigIntSerializer();
 
-const { TOKEN_SECRET, DATABASE_URL } = Deno.env.toObject();
-const [user, password, hostname, port, database] = DATABASE_URL.split(",");
-const client = new Client({
-  user,
-  hostname,
-  database,
-  port,
-  password,
-  //tls: {
-  // caCertificates: [
-  // await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
-  //],
-  //},
-});
-
-const jwtService = await JwtServiceImpl.newInstance(TOKEN_SECRET);
+const postgresUrl = Environment.postgresDatabaseUrl();
+const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
 const errorReporter = new LogErrorReporter();
 const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const { accountDao, mapper } = createDaos();
@@ -99,23 +87,23 @@ function createLanguageMiddleware(manager: ControllerManager) {
   };
 }
 
-function createRouteDaoMapper(): DaoMapper {
+function createRouteDaoMapper(client: Client | SupabaseClient): DaoMapper {
   return {
-    "/county": new PostgresClientRestDao({ client, table: "county" }),
-    "/wine": new PostgresClientRestDao({ client, table: "wine" }),
-    "/bottle": new PostgresClientRestDao({ client, table: "bottle" }),
-    "/friend": new PostgresClientRestDao({ client, table: "friend" }),
-    "/grape": new PostgresClientRestDao({ client, table: "grape" }),
-    "/review": new PostgresClientRestDao({ client, table: "review" }),
-    "/qgrape": new PostgresClientRestDao({ client, table: "q_grape" }),
-    "/freview": new PostgresClientRestDao({ client, table: "f_review" }),
-    "/history": new PostgresClientRestDao({ client, table: "history_entry" }),
-    "/tasting": new PostgresClientRestDao({ client, table: "tasting" }),
-    "/tag": new PostgresClientRestDao({ client, table: "tag", ignoredFields: ["selected"] }),
-    "/tasting-action": new PostgresClientRestDao({ client, table: "tasting_action" }),
-    "/history-x-friend": new PostgresClientRestDao({ client, table: "history_x_friend" }),
-    "/tasting-x-friend": new PostgresClientRestDao({ client, table: "tasting_x_friend" }),
-    "/tag-x-bottle": new PostgresClientRestDao({
+    "/county": createRestDao({ client, table: "county" }),
+    "/wine": createRestDao({ client, table: "wine" }),
+    "/bottle": createRestDao({ client, table: "bottle" }),
+    "/friend": createRestDao({ client, table: "friend" }),
+    "/grape": createRestDao({ client, table: "grape" }),
+    "/review": createRestDao({ client, table: "review" }),
+    "/qgrape": createRestDao({ client, table: "q_grape" }),
+    "/freview": createRestDao({ client, table: "f_review" }),
+    "/history": createRestDao({ client, table: "history_entry" }),
+    "/tasting": createRestDao({ client, table: "tasting" }),
+    "/tag": createRestDao({ client, table: "tag", ignoredFields: ["selected"] }),
+    "/tasting-action": createRestDao({ client, table: "tasting_action" }),
+    "/history-x-friend": createRestDao({ client, table: "history_x_friend" }),
+    "/tasting-x-friend": createRestDao({ client, table: "tasting_x_friend" }),
+    "/tag-x-bottle": createRestDao({
       client,
       table: "tag_x_bottle",
       ignoredFields: ["selected"],
@@ -124,10 +112,35 @@ function createRouteDaoMapper(): DaoMapper {
 }
 
 function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
-  return {
-    accountDao: new PostgresClientAccountDao(client),
-    mapper: createRouteDaoMapper(),
-  };
+  if (Environment.isDevelopmentMode()) {
+    const [user, password, hostname, port, database] = postgresUrl.split(",");
+    const postgresClient = new Client({
+      user,
+      hostname,
+      database,
+      port,
+      password,
+      //tls: {
+      // caCertificates: [
+      // await Deno.readTextFile(new URL("../prod-ca-2021.crt", import.meta.url)),
+      //],
+      //},
+    });
+
+    return {
+      accountDao: new PostgresClientAccountDao(postgresClient),
+      mapper: createRouteDaoMapper(postgresClient),
+    };
+  } else {
+    const supabaseUrl = Environment.supabaseUrl();
+    const supabaseKey = Environment.supabaseKey();
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    return {
+      accountDao: new SupabaseAccountDao(supabaseClient),
+      mapper: createRouteDaoMapper(supabaseClient),
+    };
+  }
 }
 
 declare global {

@@ -33,19 +33,19 @@ const client = {
 } as unknown as SupabaseClient;
 
 const mapper = {
-  "/county": new SupabaseRestDao(client, "county"),
-  "/wine": new SupabaseRestDao(client, "wine"),
-  "/bottle": new SupabaseRestDao(client, "bottle"),
-  "/friend": new SupabaseRestDao(client, "friend"),
-  "/grape": new SupabaseRestDao(client, "grape"),
-  "/review": new SupabaseRestDao(client, "review"),
-  "/qgrape": new SupabaseRestDao(client, "q_grape"),
-  "/freview": new SupabaseRestDao(client, "f_review"),
-  "/history": new SupabaseRestDao(client, "history_entry"),
-  "/tasting": new SupabaseRestDao(client, "tasting"),
-  "/tasting-action": new SupabaseRestDao(client, "tasting_action"),
-  "/history-x-friend": new SupabaseRestDao(client, "history_x_friend"),
-  "/tasting-x-friend": new SupabaseRestDao(client, "tasting_x_friend"),
+  "/county": new SupabaseRestDao({ supabaseClient: client, table: "county" }),
+  "/wine": new SupabaseRestDao({ supabaseClient: client, table: "wine" }),
+  "/bottle": new SupabaseRestDao({ supabaseClient: client, table: "bottle" }),
+  "/friend": new SupabaseRestDao({ supabaseClient: client, table: "friend" }),
+  "/grape": new SupabaseRestDao({ supabaseClient: client, table: "grape" }),
+  "/review": new SupabaseRestDao({ supabaseClient: client, table: "review" }),
+  "/qgrape": new SupabaseRestDao({ supabaseClient: client, table: "q_grape" }),
+  "/freview": new SupabaseRestDao({ supabaseClient: client, table: "f_review" }),
+  "/history": new SupabaseRestDao({ supabaseClient: client, table: "history_entry" }),
+  "/tasting": new SupabaseRestDao({ supabaseClient: client, table: "tasting" }),
+  "/tasting-action": new SupabaseRestDao({ supabaseClient: client, table: "tasting_action" }),
+  "/history-x-friend": new SupabaseRestDao({ supabaseClient: client, table: "history_x_friend" }),
+  "/tasting-x-friend": new SupabaseRestDao({ supabaseClient: client, table: "tasting_x_friend" }),
 };
 
 const jwtService = await JwtServiceImpl.newInstance("secret");
@@ -58,7 +58,7 @@ const restController = new DataController({
   errorReporter,
   authenticator,
 });
-const restDao = new SupabaseRestDao(client, "");
+const restDao = new SupabaseRestDao({ supabaseClient: client, table: "" });
 
 let mockContext: Context;
 

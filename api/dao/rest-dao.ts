@@ -2,11 +2,33 @@ import { camelCase, snakeCase } from "case";
 import { Client } from "postgres";
 import { SupabaseClient } from "supabase";
 
+export interface RestDaoConfig {
+  client: Client | SupabaseClient;
+  table: string;
+  ignoredFields?: string[];
+}
+
 export interface RestDao<T> {
   selectByAccountId(accountId: number): Promise<T[]>;
   insert(objects: T[]): Promise<void>;
   deleteAllForAccount(accountId: number): Promise<void>;
   replaceAllForAccount(accountId: number, objects: T[]): Promise<void>;
+}
+
+export function createRestDao<T>(config: RestDaoConfig): RestDao<T> {
+  if (config.client instanceof Client) {
+    return new PostgresClientRestDao<T>({
+      client: config.client,
+      table: config.table,
+      ignoredFields: config.ignoredFields,
+    });
+  } else {
+    return new SupabaseRestDao<T>({
+      supabaseClient: config.client as SupabaseClient,
+      table: config.table,
+      ignoredFields: config.ignoredFields,
+    });
+  }
 }
 
 export interface PostgresClientRestDaoConfig {
@@ -119,8 +141,22 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
   }
 }
 
+export interface SupabaseRestDaoConfig {
+  supabaseClient: SupabaseClient;
+  table: string;
+  ignoredFields?: string[];
+}
+
 export class SupabaseRestDao<T> implements RestDao<T> {
-  constructor(private supabaseClient: SupabaseClient, private table: string) {}
+  private readonly supabaseClient: SupabaseClient;
+  private readonly table: string;
+  private readonly ignoredFields: string[];
+
+  constructor(config: SupabaseRestDaoConfig) {
+    this.supabaseClient = config.supabaseClient;
+    this.table = config.table;
+    this.ignoredFields = config.ignoredFields || [];
+  }
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const response = await this.supabaseClient
@@ -136,7 +172,7 @@ export class SupabaseRestDao<T> implements RestDao<T> {
   }
 
   async insert(objects: T[]): Promise<void> {
-    const formatted = objects.map((object) => this.toSnakeCase(object));
+    const formatted = objects.map((object) => this.filterIgnoredFields(this.toSnakeCase(object)));
     const response = await this.supabaseClient
       .from(this.table)
       .insert(formatted);
@@ -175,6 +211,19 @@ export class SupabaseRestDao<T> implements RestDao<T> {
     }
 
     return formatted;
+  }
+
+  private filterIgnoredFields<T>(object: T): T {
+    // deno-lint-ignore no-explicit-any
+    const filtered: any = {};
+
+    for (const key in object) {
+      if (!this.ignoredFields.includes(key)) {
+        filtered[key] = object[key];
+      }
+    }
+
+    return filtered;
   }
 
   private toCamelCase<T>(object: T): T {
