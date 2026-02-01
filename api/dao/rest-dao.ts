@@ -38,7 +38,9 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
   }
 
   async replaceAllForAccount(accountId: number, objects: T[]): Promise<void> {
-    const transaction = this.client.createTransaction("replace_all");
+    const transaction = this.client.createTransaction(
+      `replace_all_for_account_${accountId}_${this.table}`,
+    );
 
     try {
       await transaction.begin();
