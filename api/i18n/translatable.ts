@@ -34,7 +34,8 @@ export class FrTranslations implements Translatable {
   emailContentRecover = `Cliquez sur ce lien pour réinitialiser votre mot de passe: `;
   wrongCredentials = "Identifiants erronés.";
   unauthorized = "Session expirée.";
-  unauthorizedReset = "Impossible de vérifier le jeton de réinitialisation. Veuillez réouvrir le lien de réinitialisation qui vous a été transmis.";
+  unauthorizedReset =
+    "Impossible de vérifier le jeton de réinitialisation. Veuillez réouvrir le lien de réinitialisation qui vous a été transmis.";
   missingParameters = "Paramètres manquants.";
   confirmAccount = "Confirmez votre compte avant de vous connecter.";
   invalidEmail = "Email non valide.";
@@ -55,7 +56,8 @@ export class EnTranslations implements Translatable {
   emailContentRecover = `Follow this link to reset your password: `;
   wrongCredentials = "Wrong credentials.";
   unauthorized = "Session expired.";
-    unauthorizedReset = "Impossible de vérifier le jeton de réinitialisation. Veuillez réouvrir le lien de réinitialisation qui vous a été transmis.";
+  unauthorizedReset =
+    "Impossible de vérifier le jeton de réinitialisation. Veuillez réouvrir le lien de réinitialisation qui vous a été transmis.";
   missingParameters = "Missing parameters.";
   confirmAccount = "Confirm your account creation before logging in.";
   invalidEmail = "Invalid email.";

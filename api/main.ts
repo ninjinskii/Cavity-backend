@@ -101,19 +101,25 @@ function createLanguageMiddleware(manager: ControllerManager) {
 
 function createRouteDaoMapper(): DaoMapper {
   return {
-    "/county": new PostgresClientRestDao(client, "county"),
-    "/wine": new PostgresClientRestDao(client, "wine"),
-    "/bottle": new PostgresClientRestDao(client, "bottle"),
-    "/friend": new PostgresClientRestDao(client, "friend"),
-    "/grape": new PostgresClientRestDao(client, "grape"),
-    "/review": new PostgresClientRestDao(client, "review"),
-    "/qgrape": new PostgresClientRestDao(client, "q_grape"),
-    "/freview": new PostgresClientRestDao(client, "f_review"),
-    "/history": new PostgresClientRestDao(client, "history_entry"),
-    "/tasting": new PostgresClientRestDao(client, "tasting"),
-    "/tasting-action": new PostgresClientRestDao(client, "tasting_action"),
-    "/history-x-friend": new PostgresClientRestDao(client, "history_x_friend"),
-    "/tasting-x-friend": new PostgresClientRestDao(client, "tasting_x_friend"),
+    "/county": new PostgresClientRestDao({ client, table: "county" }),
+    "/wine": new PostgresClientRestDao({ client, table: "wine" }),
+    "/bottle": new PostgresClientRestDao({ client, table: "bottle" }),
+    "/friend": new PostgresClientRestDao({ client, table: "friend" }),
+    "/grape": new PostgresClientRestDao({ client, table: "grape" }),
+    "/review": new PostgresClientRestDao({ client, table: "review" }),
+    "/qgrape": new PostgresClientRestDao({ client, table: "q_grape" }),
+    "/freview": new PostgresClientRestDao({ client, table: "f_review" }),
+    "/history": new PostgresClientRestDao({ client, table: "history_entry" }),
+    "/tasting": new PostgresClientRestDao({ client, table: "tasting" }),
+    "/tag": new PostgresClientRestDao({ client, table: "tag", ignoredFields: ["selected"] }),
+    "/tasting-action": new PostgresClientRestDao({ client, table: "tasting_action" }),
+    "/history-x-friend": new PostgresClientRestDao({ client, table: "history_x_friend" }),
+    "/tasting-x-friend": new PostgresClientRestDao({ client, table: "tasting_x_friend" }),
+    "/tag-x-bottle": new PostgresClientRestDao({
+      client,
+      table: "tag_x_bottle",
+      ignoredFields: ["selected"],
+    }),
   };
 }
 

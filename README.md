@@ -30,6 +30,12 @@ May be necessary.
 # First, remove all data
 sudo rm -rf /var/lib/postgresql/data/cavity
 
+# Spin up containers in background
+docker compose up -d
+
+# Create database
+docker exec -i db.njk.localhost psql -U postgres -c "CREATE DATABASE cavity;"
+
 # Then, inject schema:
 docker exec -i db.njk.localhost psql -U postgres -d cavity < schema.sql
 ```

@@ -10,7 +10,7 @@ const client = {} as Client;
 describe("PostgresClientRestDao", () => {
   describe("selectByAccountId", () => {
     it("returns appropriate data", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
       const mockWines = [
         { id: 1, name: "Château Margaux", accountId: 1 },
         { id: 2, name: "Penfolds Grange", accountId: 1 },
@@ -30,7 +30,7 @@ describe("PostgresClientRestDao", () => {
 
   describe("insert", () => {
     it("should insert objects correctly", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
       const winesData = [
         { name: "Château Margaux", accountId: 1 },
         { name: "Penfolds Grange", accountId: 1 },
@@ -48,7 +48,7 @@ describe("PostgresClientRestDao", () => {
 
   describe("replaceAllForAccount", () => {
     it("should replace all data with new data", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
       const winesData = [
         { name: "Château Margaux", accountId: 1 },
         { name: "Penfolds Grange", accountId: 1 },
@@ -76,7 +76,7 @@ describe("PostgresClientRestDao", () => {
     });
 
     it("should delete all data when empty array is provided", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
       const emptyData: unknown[] = [];
 
       const mockTransaction = {
@@ -100,7 +100,7 @@ describe("PostgresClientRestDao", () => {
     });
 
     it("should rollback transaction when an error occurs", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
       const winesData = [
         { name: "Château Margaux", accountId: 1 },
       ];
@@ -136,7 +136,7 @@ describe("PostgresClientRestDao", () => {
 
   describe("deleteAllForAccount", () => {
     it("should delete all records for an account", async () => {
-      const dao = new PostgresClientRestDao(client, "wine");
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
 
       const clientSpy = simpleStubAsync(client, "queryObject", {});
 

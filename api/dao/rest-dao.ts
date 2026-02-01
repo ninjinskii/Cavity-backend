@@ -9,8 +9,22 @@ export interface RestDao<T> {
   replaceAllForAccount(accountId: number, objects: T[]): Promise<void>;
 }
 
+export interface PostgresClientRestDaoConfig {
+  client: Client;
+  table: string;
+  ignoredFields?: string[];
+}
+
 export class PostgresClientRestDao<T> implements RestDao<T> {
-  constructor(private client: Client, private table: string) {}
+  private readonly client: Client;
+  private readonly table: string;
+  private readonly ignoredFields: string[];
+
+  constructor(config: PostgresClientRestDaoConfig) {
+    this.client = config.client;
+    this.table = config.table;
+    this.ignoredFields = config.ignoredFields || [];
+  }
 
   async selectByAccountId(accountId: number): Promise<T[]> {
     const { rows } = await this.client.queryObject<T>({
@@ -77,19 +91,24 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
 
   private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
     const example = this.toSnakeCase(objects[0]) as object;
-    const fields = Object.keys(example).join(", ");
+
+    // Filter out ignored fields
+    const allFields = Object.keys(example);
+    const filteredFields = allFields.filter((field) => !this.ignoredFields.includes(field));
+    const fields = filteredFields.join(", ");
 
     const values: unknown[] = [];
     const preparedValuesArray: string[] = [];
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
-      const snakeCasedObject = this.toSnakeCase(object) as object;
+      const snakeCasedObject = this.toSnakeCase(object) as Record<string, unknown>;
       const objectPreparedValuesArray = [];
 
-      for (const value of Object.values(snakeCasedObject)) {
+      // Only use filtered fields
+      for (const field of filteredFields) {
         objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
-        values.push(value);
+        values.push(snakeCasedObject[field]);
       }
 
       preparedValuesArray.push(`(${objectPreparedValuesArray.join(", ")})`);
