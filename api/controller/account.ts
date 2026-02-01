@@ -266,6 +266,10 @@ export class AccountController extends Controller {
   async resetPassword(ctx: Context) {
     const { token, password } = await ctx.request.body.json();
 
+    if (!token) {
+      return json(ctx, { message: this.$t.unauthorizedReset }, 401);
+    }
+
     try {
       const { reset_password } = await this.authenticator.verifyToken<{
         reset_password: boolean;
