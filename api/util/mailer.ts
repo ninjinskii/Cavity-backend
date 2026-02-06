@@ -12,7 +12,7 @@ export default async function sendMail(
   const mail = {
     sender: {
       name: "Cavity",
-      email: "cavity.app@gmail.com",
+      email: "cavity.app@cavity.fr",
     },
     to: [{ email: to }],
     subject: subject,
