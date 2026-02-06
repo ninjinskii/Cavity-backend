@@ -26,19 +26,19 @@ export default async function sendMail(
     "api-key": SENDINBLUE_API_KEY,
   });
 
-  const response = await fetch("https://api.sendinblue.com/v3/smtp/email", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers,
     body: JSON.stringify(mail),
   });
 
-  if (response.status < 200 && response.status >= 300) {
+  if (response.status < 200 || response.status >= 300) {
     const errorResponse = await response.json();
     errorReporter.captureMessage(
       `Error occured while sending mail to ${to} with status code ${response.status} 
       and response is: ${JSON.stringify(errorResponse)}`,
     );
-    throw new Error("Unable to send the mail");
+    throw new Error(JSON.stringify(errorResponse));
   } else {
     errorReporter.captureMessage(
       `Send mail to user ${to} with status code ${response.status}`,
