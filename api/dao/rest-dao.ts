@@ -1,4 +1,5 @@
 import { camelCase, snakeCase } from "case";
+import * as logger from "@std/log";
 import { Client } from "postgres";
 import { SupabaseClient } from "supabase";
 
@@ -95,7 +96,12 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
 
       await transaction.commit();
     } catch (error) {
-      await transaction.rollback();
+      try {
+        await transaction.rollback();
+      } catch (error) {
+        logger.warn("Fail to rollback transaction with error:")
+        logger.error(error)
+      }
       throw error;
     }
   }

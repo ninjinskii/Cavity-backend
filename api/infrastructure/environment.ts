@@ -1,7 +1,7 @@
 import * as logger from "@std/log";
 
 export class Environment {
-  private TOKEN_SECRET_MIN_LENGTH = 100;
+  private static readonly TOKEN_SECRET_MIN_LENGTH = 100;
 
   static isDevelopmentMode(): boolean {
     const { DEVELOPMENT_MODE } = Deno.env.toObject();
@@ -31,8 +31,10 @@ export class Environment {
   static tokenSecret(): string {
     const { TOKEN_SECRET } = Deno.env.toObject();
 
-    if (TOKEN_SECRET === "" || TOKEN_SECRET.length < TOKEN_SECRET_MIN_LENGTH) {
-      throw new Error("JWT token secret env vrariable is empty or smaller than ${TOKEN_SECRET_MIN_LENGTH} chars")
+    if (TOKEN_SECRET === "" || TOKEN_SECRET.length < this.TOKEN_SECRET_MIN_LENGTH) {
+      throw new Error(
+        `JWT token secret env variable is empty or smaller than ${this.TOKEN_SECRET_MIN_LENGTH} chars`,
+      );
     }
 
     return TOKEN_SECRET || "";

@@ -53,10 +53,10 @@ CREATE TABLE public.bottle (
     is_favorite integer NOT NULL,
     price real NOT NULL,
     currency character varying(255),
-    other_info character varying(255) NOT NULL,
+    other_info text NOT NULL,
     buy_location character varying(255) NOT NULL,
     buy_date bigint NOT NULL,
-    tasting_taste_comment character varying(255) NOT NULL,
+    tasting_taste_comment text NOT NULL,
     bottle_size character varying(255) NOT NULL,
     consumed integer NOT NULL,
     tasting_id integer,
@@ -189,7 +189,7 @@ CREATE TABLE public.history_entry (
     date bigint NOT NULL,
     bottle_id integer NOT NULL,
     tasting_id integer,
-    comment character varying NOT NULL,
+    comment text NOT NULL,
     type integer,
     favorite integer
 );

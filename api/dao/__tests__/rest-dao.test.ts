@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { returnsNext, stub } from "@std/testing/mock";
 import { Client, Transaction } from "postgres";
@@ -95,6 +95,39 @@ describe("PostgresClientRestDao", () => {
       await dao.replaceAllForAccount(1, emptyData);
       spyContext([createTransactionSpy], () => {
         // Vérifie que la transaction a été créée et que tout s'est bien passé
+        assertEquals(createTransactionSpy.calls.length, 1);
+      });
+    });
+
+    it("should rethrow original error when rollback fails", async () => {
+      const dao = new PostgresClientRestDao({ client, table: "wine" });
+      const winesData = [
+        { name: "Château Margaux", accountId: 1 },
+      ];
+
+      const originalError = new Error("Database error");
+      const rollbackError = new Error("Rollback failed");
+
+      const mockTransaction = {
+        begin: () => Promise.resolve(),
+        queryObject: () => Promise.reject(originalError),
+        commit: () => Promise.resolve(),
+        rollback: () => Promise.reject(rollbackError),
+      };
+
+      const createTransactionSpy = stub(
+        client,
+        "createTransaction",
+        returnsNext([mockTransaction as unknown as Transaction]),
+      );
+
+      await assertRejects(
+        () => dao.replaceAllForAccount(1, winesData),
+        Error,
+        "Database error",
+      );
+
+      spyContext([createTransactionSpy], () => {
         assertEquals(createTransactionSpy.calls.length, 1);
       });
     });

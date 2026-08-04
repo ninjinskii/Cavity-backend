@@ -29,7 +29,7 @@ export class SentryErrorReporter implements ErrorReporter {
       dsn: this.SENTRY_DSN,
       tracesSampleRate: this.SENTRY_SAMPLE_RATE,
       release: "1.6.0",
-      beforeSend: (event: Sentry.Event, _hint?: Sentry.EventHint) => {
+      beforeSend: (event, _hint?) => {
         // Do not send the event to Sentry if the app is not in production
         return this.stopEvents() ? null : event;
       },
