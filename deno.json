@@ -39,5 +39,5 @@
   "lock": {
     "frozen": false
   },
-  "nodeModulesDir": "manual"
+  "nodeModulesDir": "auto"
 }
