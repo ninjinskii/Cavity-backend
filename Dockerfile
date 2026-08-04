@@ -1,6 +1,6 @@
 FROM denoland/deno:debian-2.6.7
 
-EXPOSE 5000
+EXPOSE 8000
 WORKDIR /app
 
 # Copier les fichiers de configuration et lock avant le code

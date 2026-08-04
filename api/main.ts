@@ -60,7 +60,11 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 logger.info(`Deno version: ${Deno.version.deno}`);
-await app.listen({ port: 5000 });
+
+Deno.serve(
+  { port: 8000 },
+  (request) => app.handle(request),
+);
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
