@@ -1,7 +1,7 @@
 import { Client } from "postgres";
 import { SupabaseClient } from "supabase";
-import { snakeCase } from "case";
 import { Account } from "../model/account.ts";
+import { toSnakeCase } from "../util/transform-data.ts";
 
 type AccountWithEmail = Pick<Account, "email" | "registrationCode" | "lastUser" | "lastUpdateTime">;
 type AccountWithId = Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">;
@@ -161,19 +161,8 @@ export class PostgresClientAccountDao implements AccountDao {
     }) as Promise<never>;
   }
 
-  private toSnakeCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[snakeCase(key)] = object[key];
-    }
-
-    return formatted;
-  }
-
   private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
-    const example = this.toSnakeCase(objects[0]) as object;
+    const example = toSnakeCase(objects[0]) as object;
     const fields = Object.keys(example).join(", ");
 
     const values: any[] = [];
@@ -181,7 +170,7 @@ export class PostgresClientAccountDao implements AccountDao {
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
-      const snakeCasedObject = this.toSnakeCase(object) as object;
+      const snakeCasedObject = toSnakeCase(object) as object;
       const objectPreparedValuesArray = [];
 
       for (const value of Object.values(snakeCasedObject)) {

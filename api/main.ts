@@ -15,6 +15,8 @@ import { LogErrorReporter, SentryErrorReporter } from "./infrastructure/error-re
 import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 import { Environment } from "./infrastructure/environment.ts";
 import { createClient, SupabaseClient } from "supabase";
+import { dataTables } from "./dao/table-config.ts";
+import { PostgresSyncDao, SupabaseSyncDao } from "./dao/sync-dao.ts";
 
 applyBigIntSerializer();
 
@@ -23,7 +25,7 @@ const postgresUrl = Environment.postgresDatabaseUrl();
 const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
 const errorReporter = isDev ? LogErrorReporter.getInstance() : SentryErrorReporter.getInstance();
 const authenticator = new BaseAuthenticator(jwtService, errorReporter);
-const { accountDao, mapper } = createDaos();
+const { accountDao, syncDao, mapper } = createDaos();
 const router = new Router();
 
 const accountController = new AccountController({
@@ -43,6 +45,7 @@ const authController = new AuthController({
 const dataController = new DataController({
   router,
   mapper,
+  syncDao,
   errorReporter,
   authenticator,
 });
@@ -92,31 +95,22 @@ function createLanguageMiddleware(manager: ControllerManager) {
   };
 }
 
-function createRouteDaoMapper(client: Client | SupabaseClient): DaoMapper {
-  return {
-    "/county": createRestDao({ client, table: "county" }),
-    "/wine": createRestDao({ client, table: "wine" }),
-    "/bottle": createRestDao({ client, table: "bottle" }),
-    "/friend": createRestDao({ client, table: "friend" }),
-    "/grape": createRestDao({ client, table: "grape" }),
-    "/review": createRestDao({ client, table: "review" }),
-    "/qgrape": createRestDao({ client, table: "q_grape" }),
-    "/freview": createRestDao({ client, table: "f_review" }),
-    "/history": createRestDao({ client, table: "history_entry" }),
-    "/tasting": createRestDao({ client, table: "tasting" }),
-    "/tag": createRestDao({ client, table: "tag", ignoredFields: ["selected"] }),
-    "/tasting-action": createRestDao({ client, table: "tasting_action" }),
-    "/history-x-friend": createRestDao({ client, table: "history_x_friend" }),
-    "/tasting-x-friend": createRestDao({ client, table: "tasting_x_friend" }),
-    "/tag-x-bottle": createRestDao({
-      client,
-      table: "tag_x_bottle",
-      ignoredFields: ["selected"],
-    }),
-  };
+function createRouteDaoMapper(
+  client: Client | SupabaseClient,
+): DaoMapper {
+  return Object.fromEntries(
+    dataTables.map((config) => [
+      config.route,
+      createRestDao({
+        client,
+        table: config.table,
+        ignoredFields: config.ignoredFields,
+      }),
+    ]),
+  );
 }
 
-function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
+function createDaos(): { accountDao: AccountDao; syncDao: AccountSyncDao; mapper: DaoMapper } {
   if (isDev) {
     const [user, password, hostname, port, database] = postgresUrl.split(",");
     const postgresClient = new Client({
@@ -134,6 +128,7 @@ function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
 
     return {
       accountDao: new PostgresClientAccountDao(postgresClient),
+      syncDao: new PostgresSyncDao(postgresClient, dataTables),
       mapper: createRouteDaoMapper(postgresClient),
     };
   } else {
@@ -143,6 +138,7 @@ function createDaos(): { accountDao: AccountDao; mapper: DaoMapper } {
 
     return {
       accountDao: new SupabaseAccountDao(supabaseClient),
+      syncDao: new SupabaseSyncDao(supabaseClient, dataTables),
       mapper: createRouteDaoMapper(supabaseClient),
     };
   }

@@ -1,7 +1,7 @@
-import { camelCase, snakeCase } from "case";
 import * as logger from "@std/log";
 import { Client } from "postgres";
 import { SupabaseClient } from "supabase";
+import { filterIgnoredFields, toCamelCase, toSnakeCase } from "../util/transform-data.ts";
 
 export interface RestDaoConfig {
   client: Client | SupabaseClient;
@@ -99,22 +99,11 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
       try {
         await transaction.rollback();
       } catch (error) {
-        logger.warn("Fail to rollback transaction with error:")
-        logger.error(error)
+        logger.warn("Fail to rollback transaction with error:");
+        logger.error(error);
       }
       throw error;
     }
-  }
-
-  private toSnakeCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[snakeCase(key)] = object[key];
-    }
-
-    return formatted;
   }
 
   private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
@@ -206,40 +195,5 @@ export class SupabaseRestDao<T> implements RestDao<T> {
     if (objects.length > 0) {
       await this.insert(objects);
     }
-  }
-
-  private toSnakeCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[snakeCase(key)] = object[key];
-    }
-
-    return formatted;
-  }
-
-  private filterIgnoredFields<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const filtered: any = {};
-
-    for (const key in object) {
-      if (!this.ignoredFields.includes(key)) {
-        filtered[key] = object[key];
-      }
-    }
-
-    return filtered;
-  }
-
-  private toCamelCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[camelCase(key)] = object[key];
-    }
-
-    return formatted;
   }
 }
