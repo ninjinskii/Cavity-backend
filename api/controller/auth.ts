@@ -75,6 +75,7 @@ export class AuthController extends Controller {
         header: { alg: "HS512", typ: "JWT" },
         payload: {
           account_id: account[0].id,
+          session_version: account[0].sessionVersion,
         },
       });
 

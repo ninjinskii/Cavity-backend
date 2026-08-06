@@ -7,6 +7,7 @@ export class Account {
     public resetToken: string | null,
     public lastUser: string | null,
     public lastUpdateTime: number | null,
+    public sessionVersion?: string,
   ) {
   }
 
@@ -14,6 +15,10 @@ export class Account {
     const max = 999999;
     const min = 100000;
     return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  static generateSessionVersion(): string {
+    return crypto.randomUUID();
   }
 }
 

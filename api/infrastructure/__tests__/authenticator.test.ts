@@ -17,12 +17,17 @@ import {
 const $t = new FrTranslations();
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const errorReporter = new FakeErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
+let currentSessionVersion = "test-session-version";
+const sessionVersionStore = {
+  selectSessionVersion: () => Promise.resolve(currentSessionVersion),
+};
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, sessionVersionStore);
 
 let mockContext: Context;
 
 describe("authenticator#let", () => {
   beforeEach(() => {
+    currentSessionVersion = "test-session-version";
     mockContext = createMockContext({
       headers: [["Authorization", "Bearer zepuifgo"]],
     });
@@ -91,6 +96,38 @@ describe("authenticator#let", () => {
       assertSpyCalls(callbackSpy, 0);
       assertStatusEquals(mockContext, 401);
       assertBodyEquals(mockContext, { message: $t.unauthorized });
+    });
+  });
+
+  it("should reject a token revoked by a session version change", async () => {
+    const verifySpy = simpleStubAsync(jwtService, "verify", {
+      account_id: "1",
+      session_version: "old-session-version",
+    });
+    const callbackSpy = spy(() => Promise.resolve());
+
+    await authenticator.let(mockContext, $t, callbackSpy);
+
+    spyContext([verifySpy], () => {
+      assertSpyCalls(callbackSpy, 0);
+      assertStatusEquals(mockContext, 401);
+      assertBodyEquals(mockContext, { message: $t.unauthorized });
+    });
+  });
+
+  it("should accept a legacy token until the account session is rotated", async () => {
+    currentSessionVersion = "legacy";
+    const verifySpy = stub(
+      jwtService,
+      "verify",
+      returnsNext([Promise.resolve({ account_id: "1" })]),
+    );
+    const callbackSpy = spy(() => Promise.resolve());
+
+    await authenticator.let(mockContext, $t, callbackSpy);
+
+    spyContext([verifySpy], () => {
+      assertSpyCalls(callbackSpy, 1);
     });
   });
 

@@ -22,8 +22,8 @@ const isDev = Environment.isDevelopmentMode();
 const postgresUrl = Environment.postgresDatabaseUrl();
 const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
 const errorReporter = isDev ? LogErrorReporter.getInstance() : SentryErrorReporter.getInstance();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const { accountDao, mapper } = createDaos();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, accountDao);
 const router = new Router();
 
 const accountController = new AccountController({

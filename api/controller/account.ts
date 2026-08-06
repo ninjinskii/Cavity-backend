@@ -97,6 +97,7 @@ export class AccountController extends Controller {
         password: hash,
         registrationCode: Account.generateRegistrationCode(),
         resetToken: null,
+        sessionVersion: Account.generateSessionVersion(),
       };
 
       await this.accountDao.insert([account]);
@@ -208,12 +209,16 @@ export class AccountController extends Controller {
 
       const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
-        payload: { account_id: account[0].id },
+        payload: {
+          account_id: account[0].id,
+          session_version: account[0].sessionVersion,
+        },
       });
 
       const lightweight: Record<string, unknown> = { ...account[0] };
       delete lightweight["id"];
       delete lightweight["registrationCode"];
+      delete lightweight["sessionVersion"];
 
       json(ctx, { ...lightweight, token, email });
     } catch (error) {
@@ -287,7 +292,7 @@ export class AccountController extends Controller {
       }
 
       const hash = PasswordService.encrypt(password);
-      await this.accountDao.recover(hash, token);
+      await this.accountDao.recover(hash, token, Account.generateSessionVersion());
 
       success(ctx);
     } catch (_error) {

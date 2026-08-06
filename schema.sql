@@ -21,6 +21,7 @@ CREATE TABLE public.account (
     password character varying(255) NOT NULL,
     registration_code integer,
     reset_token character varying(255),
+    session_version character varying(36) NOT NULL,
     last_user character varying(255),
     last_update_time bigint
 );

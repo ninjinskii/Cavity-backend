@@ -4,12 +4,20 @@ import { Translatable } from "../i18n/translatable.ts";
 import { ErrorReporter } from "./error-reporter.ts";
 import { JwtCreateOptions, JwtService } from "./jwt-service.ts";
 import { json } from "../util/api-response.ts";
+import { AccountDao } from "../dao/account-dao.ts";
+
+type SessionVersionStore = Pick<AccountDao, "selectSessionVersion">;
+const LEGACY_SESSION_VERSION = "legacy";
 
 export abstract class Authenticator {
   protected jwtService: JwtService;
   protected errorReporter: ErrorReporter;
 
-  constructor(jwtService: JwtService, errorReporter: ErrorReporter) {
+  constructor(
+    jwtService: JwtService,
+    errorReporter: ErrorReporter,
+    protected accountDao: SessionVersionStore,
+  ) {
     this.jwtService = jwtService;
     this.errorReporter = errorReporter;
   }
@@ -44,13 +52,22 @@ export class BaseAuthenticator extends Authenticator {
     const [_, token] = authorization!.split(" ");
 
     try {
-      const { account_id } = await this.jwtService.verify<{
-        account_id: string;
+      const { account_id, session_version } = await this.jwtService.verify<{
+        account_id: string | number;
+        session_version?: string;
       }>(token);
 
-      const accountId = parseInt(account_id);
+      const accountId = Number(account_id);
 
-      if (!isNaN(accountId)) {
+      if (Number.isSafeInteger(accountId)) {
+        const currentSessionVersion = await this.accountDao.selectSessionVersion(accountId);
+        const hasValidLegacySession = !session_version &&
+          currentSessionVersion === LEGACY_SESSION_VERSION;
+
+        if (!hasValidLegacySession && currentSessionVersion !== session_version) {
+          return json(ctx, { message: t.unauthorized }, 401);
+        }
+
         logger.info(`Authorized account ${accountId}`);
 
         this.errorReporter.setScopeTag("accountId", accountId.toString());

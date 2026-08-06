@@ -22,6 +22,7 @@ export interface JwtHeader {
 export interface JwtPayload {
   account_id?: number;
   reset_password?: boolean;
+  session_version?: string;
 }
 
 export interface JwtCreateOptions {

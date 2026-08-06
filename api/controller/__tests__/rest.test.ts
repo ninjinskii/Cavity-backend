@@ -50,7 +50,10 @@ const mapper = {
 
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const errorReporter = new FakeErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
+const sessionVersionStore = {
+  selectSessionVersion: () => Promise.resolve("test-session-version"),
+};
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, sessionVersionStore);
 const router = new FakeRouter();
 const restController = new DataController({
   router,
