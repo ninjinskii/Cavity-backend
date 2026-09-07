@@ -24,10 +24,18 @@ export function simpleStubAsync<T>(
   method: keyof T,
   returnNext: unknown,
 ) {
+  const result = method === "verify" &&
+      typeof returnNext === "object" &&
+      returnNext !== null &&
+      "account_id" in returnNext &&
+      !("session_version" in returnNext)
+    ? { ...returnNext, session_version: "test-session-version" }
+    : returnNext;
+
   return stub(
     object,
     method,
-    returnsNext([Promise.resolve(returnNext)] as never),
+    returnsNext([Promise.resolve(result)] as never),
   );
 }
 
@@ -65,6 +73,10 @@ export class FakeRouter extends Router {
   }
 
   override get() {
+    return this;
+  }
+
+  override put() {
     return this;
   }
 }

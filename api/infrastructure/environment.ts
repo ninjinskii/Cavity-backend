@@ -31,7 +31,10 @@ export class Environment {
   static tokenSecret(): string {
     const { TOKEN_SECRET } = Deno.env.toObject();
 
-    if ((TOKEN_SECRET === "" || TOKEN_SECRET.length < this.TOKEN_SECRET_MIN_LENGTH) && !Environment.isDevelopmentMode()) {
+    if (
+      (TOKEN_SECRET === "" || TOKEN_SECRET.length < this.TOKEN_SECRET_MIN_LENGTH) &&
+      !Environment.isDevelopmentMode()
+    ) {
       throw new Error(
         `JWT token secret env variable is empty or smaller than ${this.TOKEN_SECRET_MIN_LENGTH} chars`,
       );

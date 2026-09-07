@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "exports": "./api/main.ts",
   "tasks": {
-    "dev": "deno run --allow-net --allow-read --allow-env --allow-sys --watch ./api/main.ts",
-    "start": "deno run --allow-net --allow-read --allow-env --allow-sys ./api/main.ts",
-    "test": "deno test --allow-env",
+    "dev": "deno run --unstable-kv --allow-net --allow-read --allow-env --allow-sys --watch ./api/main.ts",
+    "start": "deno run --unstable-kv --allow-net --allow-read --allow-env --allow-sys ./api/main.ts",
+    "test": "deno test --unstable-kv --allow-env",
     "lint": "deno lint",
     "fmt": "deno fmt"
   },

@@ -1,7 +1,7 @@
-import { camelCase, snakeCase } from "case";
 import * as logger from "@std/log";
 import { Client } from "postgres";
 import { SupabaseClient } from "supabase";
+import { filterIgnoredFields, toCamelCase, toSnakeCase } from "../util/transform-data.ts";
 
 export interface RestDaoConfig {
   client: Client | SupabaseClient;
@@ -99,26 +99,15 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
       try {
         await transaction.rollback();
       } catch (error) {
-        logger.warn("Fail to rollback transaction with error:")
-        logger.error(error)
+        logger.warn("Fail to rollback transaction with error:");
+        logger.error(error);
       }
       throw error;
     }
   }
 
-  private toSnakeCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[snakeCase(key)] = object[key];
-    }
-
-    return formatted;
-  }
-
   private toSqlInsert(objects: unknown[]): { statement: string; actualValues: unknown[] } {
-    const example = this.toSnakeCase(objects[0]) as object;
+    const example = toSnakeCase(objects[0]) as object;
 
     // Filter out ignored fields
     const allFields = Object.keys(example);
@@ -130,7 +119,7 @@ export class PostgresClientRestDao<T> implements RestDao<T> {
     let preparedArgsCounter = 1;
 
     for (const object of objects) {
-      const snakeCasedObject = this.toSnakeCase(object) as Record<string, unknown>;
+      const snakeCasedObject = toSnakeCase(object) as Record<string, unknown>;
       const objectPreparedValuesArray = [];
 
       // Only use filtered fields
@@ -174,11 +163,13 @@ export class SupabaseRestDao<T> implements RestDao<T> {
       throw response.error;
     }
 
-    return response.data.map((object) => this.toCamelCase(object));
+    return response.data.map((object) => toCamelCase(object));
   }
 
   async insert(objects: T[]): Promise<void> {
-    const formatted = objects.map((object) => this.filterIgnoredFields(this.toSnakeCase(object)));
+    const formatted = objects.map((object) =>
+      filterIgnoredFields(toSnakeCase(object), this.ignoredFields)
+    );
     const response = await this.supabaseClient
       .from(this.table)
       .insert(formatted);
@@ -206,40 +197,5 @@ export class SupabaseRestDao<T> implements RestDao<T> {
     if (objects.length > 0) {
       await this.insert(objects);
     }
-  }
-
-  private toSnakeCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[snakeCase(key)] = object[key];
-    }
-
-    return formatted;
-  }
-
-  private filterIgnoredFields<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const filtered: any = {};
-
-    for (const key in object) {
-      if (!this.ignoredFields.includes(key)) {
-        filtered[key] = object[key];
-      }
-    }
-
-    return filtered;
-  }
-
-  private toCamelCase<T>(object: T): T {
-    // deno-lint-ignore no-explicit-any
-    const formatted: any = {};
-
-    for (const key in object) {
-      formatted[camelCase(key)] = object[key];
-    }
-
-    return formatted;
   }
 }

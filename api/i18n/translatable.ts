@@ -17,6 +17,7 @@ export interface Translatable {
   confirmAccount: string;
   invalidEmail: string;
   weakPassword: string;
+  tooManyRequests: string;
   // accountResgistrationFailed: string
 }
 
@@ -40,6 +41,7 @@ export class FrTranslations implements Translatable {
   confirmAccount = "Confirmez votre compte avant de vous connecter.";
   invalidEmail = "Email non valide.";
   weakPassword = "Mot de passe trop faible.";
+  tooManyRequests = "Trop de tentatives. Veuillez réessayer plus tard.";
 }
 
 export class EnTranslations implements Translatable {
@@ -62,4 +64,5 @@ export class EnTranslations implements Translatable {
   confirmAccount = "Confirm your account creation before logging in.";
   invalidEmail = "Invalid email.";
   weakPassword = "Password is too weak.";
+  tooManyRequests = "Too many attempts. Please try again later.";
 }

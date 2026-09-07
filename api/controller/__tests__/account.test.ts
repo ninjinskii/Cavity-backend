@@ -28,9 +28,10 @@ const $t = new EnTranslations();
 const client = {} as SupabaseClient;
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const errorReporter = new FakeErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const router = new FakeRouter();
 const accountDao = new SupabaseAccountDao(client);
+accountDao.selectSessionVersion = () => Promise.resolve("test-session-version");
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, accountDao);
 const accountController = new AccountController({
   router,
   accountDao,
@@ -59,6 +60,7 @@ describe("Account controller", () => {
       resetToken: null,
       lastUser: null,
       lastUpdateTime: null,
+      sessionVersion: "test-session-version",
     };
 
     mockContext = createMockContext({
@@ -152,7 +154,10 @@ describe("Account controller", () => {
         assertSpyCall(jwtSpy, 0, {
           args: [{
             header: { alg: "HS512", typ: "JWT" },
-            payload: { account_id: fakeAccountId },
+            payload: {
+              account_id: fakeAccountId,
+              session_version: "test-session-version",
+            },
           }],
         });
         assertStatusEquals(mockContext, 200);
@@ -188,7 +193,10 @@ describe("Account controller", () => {
         assertSpyCall(jwtSpy, 0, {
           args: [{
             header: { alg: "HS512", typ: "JWT" },
-            payload: { account_id: fakeAccountId },
+            payload: {
+              account_id: fakeAccountId,
+              session_version: "test-session-version",
+            },
           }],
         });
         assertStatusEquals(mockContext, 200);
@@ -233,6 +241,7 @@ describe("Account controller", () => {
         resetToken: null,
         lastUpdateTime: null,
         lastUser: null,
+        sessionVersion: "test-session-version",
       };
 
       const jwtSpy = spy(jwtService, "create");
@@ -307,7 +316,7 @@ describe("Account controller", () => {
       });
     });
 
-    it("should fail if database error occured", async () => {
+    it("should return a server error if confirming an account fails", async () => {
       const jwtSpy = spy(jwtService, "create");
       const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = stub(
@@ -353,6 +362,11 @@ describe("Account controller", () => {
     it("can create an account", async () => {
       const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
       const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const passwordSpy = simpleStub(
         PasswordService,
         "encrypt",
@@ -364,11 +378,12 @@ describe("Account controller", () => {
         registrationCode: 234567,
         password: "$2sQ0$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
         resetToken: null,
+        sessionVersion: "test-session-version",
       };
 
       await accountController.postAccount(mockContext);
 
-      spyContext([insertAccountSpy, codeSpy, passwordSpy], () => {
+      spyContext([insertAccountSpy, codeSpy, sessionVersionSpy, passwordSpy], () => {
         assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
         assertSpyCalls(codeSpy, 1);
         assertSpyCall(insertAccountSpy, 0, { args: [[expectedAccount]] });
@@ -381,6 +396,11 @@ describe("Account controller", () => {
       const spacePassword = "sHht..2D4! ";
       const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
       const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const passwordSpy = simpleStub(
         PasswordService,
         "encrypt",
@@ -397,11 +417,12 @@ describe("Account controller", () => {
         registrationCode: 234567,
         password: "$2sQ0$TZDo4Eg9SQCx./5XYqaBreHIfS0RfKg.Xxf9AptChuQMIgtHzpDiu",
         resetToken: null,
+        sessionVersion: "test-session-version",
       };
 
       await accountController.postAccount(mockContext);
 
-      spyContext([insertAccountSpy, codeSpy, passwordSpy], () => {
+      spyContext([insertAccountSpy, codeSpy, sessionVersionSpy, passwordSpy], () => {
         assertSpyCall(passwordSpy, 0, { args: [spacePassword] });
         assertSpyCalls(codeSpy, 1);
         assertSpyCall(insertAccountSpy, 0, { args: [[expectedAccount]] });
@@ -452,7 +473,7 @@ describe("Account controller", () => {
       });
     });
 
-    it("should fail if database error occured", async () => {
+    it("should return a server error if inserting an account fails", async () => {
       const insertAccountSpy = simpleStub(
         accountDao,
         "insert",
@@ -478,8 +499,9 @@ describe("Account controller", () => {
           assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
           assertSpyCalls(codeSpy, 1);
           assertSpyCalls(insertAccountSpy, 1);
-          assertStatusEquals(mockContext, 400);
-          assertBodyEquals(mockContext, { message: $t.invalidEmail });
+          assertSpyCalls(deleteAccountSpy, 0);
+          assertStatusEquals(mockContext, 500);
+          assertBodyEquals(mockContext, { message: $t.baseError });
         },
       );
     });
@@ -849,6 +871,11 @@ describe("Account controller", () => {
         "encrypt",
         "encryptedpassword",
       );
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const updateAccountSpy = simpleStub(
         accountDao,
         "recover",
@@ -857,11 +884,11 @@ describe("Account controller", () => {
 
       await accountController.resetPassword(mockContext);
 
-      spyContext([jwtSpy, passwordSpy, updateAccountSpy], () => {
+      spyContext([jwtSpy, passwordSpy, sessionVersionSpy, updateAccountSpy], () => {
         assertSpyCall(jwtSpy, 0, { args: ["token"] });
         assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
         assertSpyCall(updateAccountSpy, 0, {
-          args: ["encryptedpassword", "token"],
+          args: ["encryptedpassword", "token", "test-session-version"],
         });
         assertStatusEquals(mockContext, 200);
         assertBodyEquals(mockContext, { ok: true });
