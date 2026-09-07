@@ -15,6 +15,7 @@ import { LogErrorReporter, SentryErrorReporter } from "./infrastructure/error-re
 import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 import { Environment } from "./infrastructure/environment.ts";
 import { createClient, SupabaseClient } from "supabase";
+import { NoopRateLimiter, RateLimiter } from "./infrastructure/rate-limiter.ts";
 
 applyBigIntSerializer();
 
@@ -22,6 +23,7 @@ const isDev = Environment.isDevelopmentMode();
 const postgresUrl = Environment.postgresDatabaseUrl();
 const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
 const errorReporter = isDev ? LogErrorReporter.getInstance() : SentryErrorReporter.getInstance();
+const rateLimiter = await openRateLimiter();
 const { accountDao, mapper } = createDaos();
 const authenticator = new BaseAuthenticator(jwtService, errorReporter, accountDao);
 const router = new Router();
@@ -31,6 +33,7 @@ const accountController = new AccountController({
   accountDao,
   errorReporter,
   authenticator,
+  rateLimiter,
 });
 
 const authController = new AuthController({
@@ -38,6 +41,7 @@ const authController = new AuthController({
   accountDao,
   errorReporter,
   authenticator,
+  rateLimiter,
 });
 
 const dataController = new DataController({
@@ -70,6 +74,15 @@ function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
     return parseInt(this.toString());
   };
+}
+
+async function openRateLimiter(): Promise<RateLimiter> {
+  try {
+    return await RateLimiter.open();
+  } catch (error) {
+    logger.error(`Unable to open Deno KV rate limiter: ${error}`);
+    return new NoopRateLimiter();
+  }
 }
 
 function createLanguageMiddleware(manager: ControllerManager) {
