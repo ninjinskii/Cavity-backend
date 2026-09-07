@@ -5,7 +5,7 @@ import { Authenticator } from "../infrastructure/authenticator.ts";
 import { json, success } from "../util/api-response.ts";
 import { RestDao } from "../dao/rest-dao.ts";
 import { ErrorReporter } from "../infrastructure/error-reporter.ts";
-import { SyncAccountContent } from "../dao/sync-dao.ts";
+import { AccountSyncDao, SyncAccountContent } from "../dao/sync-dao.ts";
 import { syncTableMap } from "../dao/table-config.ts";
 
 interface DataControllerOptions {
@@ -54,7 +54,18 @@ export class DataController extends Controller {
     await this.authenticator.let(ctx, this.$t, async (accountId) => {
       logger.info(`PUT: on /sync requested by ${accountId}`);
 
-      const root = await ctx.request.body.json() as SyncAccountContent;
+      let root: unknown;
+
+      try {
+        root = await ctx.request.body.json();
+      } catch {
+        return json(ctx, { message: this.$t.missingParameters }, 400);
+      }
+
+      if (!root || typeof root !== "object" || Array.isArray(root)) {
+        return json(ctx, { message: this.$t.missingParameters }, 400);
+      }
+
       const cleaned: SyncAccountContent = {};
 
       for (const [name, objects] of Object.entries(root)) {
@@ -63,6 +74,13 @@ export class DataController extends Controller {
         if (!table) {
           logger.warn(`Unknown sync table ${name}`);
           continue;
+        }
+
+        if (
+          !Array.isArray(objects) ||
+          objects.some((object) => !object || typeof object !== "object" || Array.isArray(object))
+        ) {
+          return json(ctx, { message: this.$t.missingParameters }, 400);
         }
 
         cleaned[table] = objects.map((object) => ({

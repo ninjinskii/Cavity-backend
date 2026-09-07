@@ -9,12 +9,21 @@ import sendMail from "../util/mailer.ts";
 import Controller from "./controller.ts";
 import { Environment } from "../infrastructure/environment.ts";
 import { ErrorReporter } from "../infrastructure/error-reporter.ts";
+import {
+  checkRateLimit,
+  clientIp,
+  NoopRateLimiter,
+  normalizeIdentifier,
+  RateLimiter,
+  rateLimitResponse,
+} from "../infrastructure/rate-limiter.ts";
 
 interface AccountControllerOptions {
   router: Router;
   accountDao: AccountDao;
   errorReporter: ErrorReporter;
   authenticator: Authenticator;
+  rateLimiter?: RateLimiter;
 }
 
 export class AccountController extends Controller {
@@ -22,14 +31,16 @@ export class AccountController extends Controller {
   private accountDao: AccountDao;
   private errorReporter: ErrorReporter;
   private authenticator: Authenticator;
+  private rateLimiter: RateLimiter;
 
   constructor(
-    { router, accountDao, errorReporter, authenticator }: AccountControllerOptions,
+    { router, accountDao, errorReporter, authenticator, rateLimiter }: AccountControllerOptions,
   ) {
     super(router);
     this.accountDao = accountDao;
     this.errorReporter = errorReporter;
     this.authenticator = authenticator;
+    this.rateLimiter = rateLimiter ?? new NoopRateLimiter();
 
     this.handleRequests();
   }
@@ -78,6 +89,15 @@ export class AccountController extends Controller {
     const accountDto = await ctx.request.body.json() as AccountDTO;
     const email = accountDto.email.trim();
     const password = accountDto.password;
+    const limit = await checkRateLimit(
+      this.rateLimiter,
+      { name: "registration", limit: 5, windowMs: 60 * 60_000 },
+      clientIp(ctx.request.headers),
+      normalizeIdentifier(email),
+    );
+    if (!limit.allowed) {
+      return rateLimitResponse(ctx.response, limit.retryAfterSeconds, this.$t.tooManyRequests);
+    }
     const securePassword = password.match(this.securePwdRegex);
     const isSecure = securePassword?.length;
 
@@ -87,20 +107,34 @@ export class AccountController extends Controller {
 
     const hash = PasswordService.encrypt(password);
 
+    let account: {
+      email: string;
+      password: string;
+      registrationCode: number;
+      resetToken: null;
+      sessionVersion: string;
+    };
+
     try {
       if (!await this.isAccountUnique(email)) {
         return json(ctx, { message: this.$t.accountAlreadyExists }, 400);
       }
 
-      const account = {
+      account = {
         email,
         password: hash,
         registrationCode: Account.generateRegistrationCode(),
         resetToken: null,
+        sessionVersion: Account.generateSessionVersion(),
       };
 
       await this.accountDao.insert([account]);
+    } catch (error) {
+      this.errorReporter.captureException(error as Error);
+      return json(ctx, { message: this.$t.baseError }, 500);
+    }
 
+    try {
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
@@ -151,6 +185,15 @@ export class AccountController extends Controller {
       const accountDto = await ctx.request.body.json() as AccountDTO;
       const email = accountDto.email.trim();
       const password = accountDto.password;
+      const limit = await checkRateLimit(
+        this.rateLimiter,
+        { name: "account-delete", limit: 5, windowMs: 15 * 60_000 },
+        clientIp(ctx.request.headers),
+        normalizeIdentifier(email),
+      );
+      if (!limit.allowed) {
+        return rateLimitResponse(ctx.response, limit.retryAfterSeconds, this.$t.tooManyRequests);
+      }
       const account = await this.accountDao.selectByEmailWithPassword(email);
 
       if (account.length === 0) {
@@ -186,6 +229,15 @@ export class AccountController extends Controller {
     const confirmDto = await ctx.request.body.json() as ConfirmAccountDTO;
     const email = confirmDto.email.trim();
     const registrationCode = confirmDto.registrationCode;
+    const limit = await checkRateLimit(
+      this.rateLimiter,
+      { name: "confirmation", limit: 10, windowMs: 15 * 60_000 },
+      clientIp(ctx.request.headers),
+      normalizeIdentifier(email),
+    );
+    if (!limit.allowed) {
+      return rateLimitResponse(ctx.response, limit.retryAfterSeconds, this.$t.tooManyRequests);
+    }
 
     try {
       const account = await this.accountDao.selectByEmail(email);
@@ -208,12 +260,16 @@ export class AccountController extends Controller {
 
       const token = await this.authenticator.createToken({
         header: { alg: "HS512", typ: "JWT" },
-        payload: { account_id: account[0].id },
+        payload: {
+          account_id: account[0].id,
+          session_version: account[0].sessionVersion,
+        },
       });
 
       const lightweight: Record<string, unknown> = { ...account[0] };
       delete lightweight["id"];
       delete lightweight["registrationCode"];
+      delete lightweight["sessionVersion"];
 
       json(ctx, { ...lightweight, token, email });
     } catch (error) {
@@ -227,6 +283,15 @@ export class AccountController extends Controller {
       const body = await ctx.request.body.json();
       const email = (body.email || "").trim();
       const subject = this.$t.emailSubjectRecover;
+      const limit = await checkRateLimit(
+        this.rateLimiter,
+        { name: "recovery", limit: 3, windowMs: 60 * 60_000 },
+        clientIp(ctx.request.headers),
+        normalizeIdentifier(email),
+      );
+      if (!limit.allowed) {
+        return rateLimitResponse(ctx.response, limit.retryAfterSeconds, this.$t.tooManyRequests);
+      }
 
       if (await this.isAccountUnique(email)) {
         // We dirty lier. We do not want a hacker know that this particular address does not exists
@@ -270,6 +335,16 @@ export class AccountController extends Controller {
       return json(ctx, { message: this.$t.unauthorizedReset }, 401);
     }
 
+    const limit = await checkRateLimit(
+      this.rateLimiter,
+      { name: "password-reset", limit: 10, windowMs: 15 * 60_000 },
+      clientIp(ctx.request.headers),
+      token,
+    );
+    if (!limit.allowed) {
+      return rateLimitResponse(ctx.response, limit.retryAfterSeconds, this.$t.tooManyRequests);
+    }
+
     try {
       const { reset_password } = await this.authenticator.verifyToken<{
         reset_password: boolean;
@@ -287,7 +362,7 @@ export class AccountController extends Controller {
       }
 
       const hash = PasswordService.encrypt(password);
-      await this.accountDao.recover(hash, token);
+      await this.accountDao.recover(hash, token, Account.generateSessionVersion());
 
       success(ctx);
     } catch (_error) {

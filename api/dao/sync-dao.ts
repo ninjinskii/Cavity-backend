@@ -1,10 +1,13 @@
+import { Client } from "postgres";
+import { SupabaseClient } from "supabase";
 import { filterIgnoredFields, toSnakeCase } from "../util/transform-data.ts";
+import { TableConfig } from "./table-config.ts";
 
 export interface SyncAccountContent {
   [table: string]: unknown[];
 }
 
-abstract class AccountSyncDao {
+export abstract class AccountSyncDao {
   constructor(
     protected readonly tableConfigs: TableConfig[],
   ) {}
@@ -93,21 +96,4 @@ export class PostgresSyncDao extends AccountSyncDao {
       ],
     });
   }
-}
-
-export function createSyncDao(
-  client: Client | SupabaseClient,
-  tableConfigs: Record<string, SyncTableConfig>,
-): AccountSyncDao {
-  if (client instanceof Client) {
-    return new PostgresSyncDao(
-      client,
-      tableConfigs,
-    );
-  }
-
-  return new SupabaseSyncDao(
-    client as SupabaseClient,
-    tableConfigs,
-  );
 }

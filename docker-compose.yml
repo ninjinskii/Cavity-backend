@@ -15,6 +15,7 @@ services:
       - proxy
     volumes:
       - ./:/app
+      - deno-kv:/deno-dir/location_data
     ports:
       - 8000:8000
     environment:
@@ -43,3 +44,6 @@ services:
 networks:
   proxy:
     external: true
+
+volumes:
+  deno-kv:

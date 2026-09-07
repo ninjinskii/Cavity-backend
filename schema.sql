@@ -21,6 +21,7 @@ CREATE TABLE public.account (
     password character varying(255) NOT NULL,
     registration_code integer,
     reset_token character varying(255),
+    session_version character varying(36) NOT NULL,
     last_user character varying(255),
     last_update_time bigint
 );
@@ -729,6 +730,7 @@ CREATE OR REPLACE FUNCTION public.sync_account_content(
 )
 RETURNS void
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
     table_name text;
@@ -788,5 +790,22 @@ BEGIN
 
     END LOOP;
 
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.sync_account_content(integer, jsonb) FROM PUBLIC;
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON FUNCTION public.sync_account_content(integer, jsonb) FROM anon;
+    END IF;
+
+    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON FUNCTION public.sync_account_content(integer, jsonb) FROM authenticated;
+    END IF;
+
+    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN
+        GRANT EXECUTE ON FUNCTION public.sync_account_content(integer, jsonb) TO service_role;
+    END IF;
 END;
 $$;

@@ -8,6 +8,7 @@ import { EnTranslations } from "../../i18n/translatable.ts";
 import { JwtServiceImpl } from "../../infrastructure/jwt-service.ts";
 import { DataController } from "../rest.ts";
 import { SupabaseRestDao } from "../../dao/rest-dao.ts";
+import { AccountSyncDao } from "../../dao/sync-dao.ts";
 import {
   assertBodyEquals,
   assertStatusEquals,
@@ -50,11 +51,18 @@ const mapper = {
 
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const errorReporter = new FakeErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
+const sessionVersionStore = {
+  selectSessionVersion: () => Promise.resolve("test-session-version"),
+};
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, sessionVersionStore);
 const router = new FakeRouter();
+const syncDao = {
+  sync: () => Promise.resolve(),
+} as unknown as AccountSyncDao;
 const restController = new DataController({
   router,
   mapper,
+  syncDao,
   errorReporter,
   authenticator,
 });
@@ -197,6 +205,28 @@ describe("Data controller", () => {
         assertSpyCalls(insertSpy, 0);
         assertStatusEquals(mockContext, 404);
         assertBodyEquals(mockContext, { message: $t.notFound });
+      });
+    });
+  });
+
+  describe("syncAccount", () => {
+    it("syncs only the authenticated account's data", async () => {
+      fakeRequestBody(mockContext, {
+        county: [{ id: 7, name: "Bourgogne", prefOrder: 1, account_id: 999 }],
+      });
+
+      const jwtSpy = simpleStubAsync(jwtService, "verify", { account_id: "1" });
+      const syncSpy = simpleStubAsync(syncDao, "sync", undefined);
+
+      await restController.syncAccount(mockContext);
+
+      spyContext([jwtSpy, syncSpy], () => {
+        assertSpyCall(syncSpy, 0, {
+          args: [1, {
+            county: [{ id: 7, name: "Bourgogne", prefOrder: 1, account_id: 1 }],
+          }],
+        });
+        assertStatusEquals(mockContext, 200);
       });
     });
   });

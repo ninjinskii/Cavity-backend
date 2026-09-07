@@ -16,7 +16,8 @@ import { BaseAuthenticator } from "./infrastructure/authenticator.ts";
 import { Environment } from "./infrastructure/environment.ts";
 import { createClient, SupabaseClient } from "supabase";
 import { dataTables } from "./dao/table-config.ts";
-import { PostgresSyncDao, SupabaseSyncDao } from "./dao/sync-dao.ts";
+import { AccountSyncDao, PostgresSyncDao, SupabaseSyncDao } from "./dao/sync-dao.ts";
+import { NoopRateLimiter, RateLimiter } from "./infrastructure/rate-limiter.ts";
 
 applyBigIntSerializer();
 
@@ -24,8 +25,9 @@ const isDev = Environment.isDevelopmentMode();
 const postgresUrl = Environment.postgresDatabaseUrl();
 const jwtService = await JwtServiceImpl.newInstance(Environment.tokenSecret());
 const errorReporter = isDev ? LogErrorReporter.getInstance() : SentryErrorReporter.getInstance();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
+const rateLimiter = await openRateLimiter();
 const { accountDao, syncDao, mapper } = createDaos();
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, accountDao);
 const router = new Router();
 
 const accountController = new AccountController({
@@ -33,6 +35,7 @@ const accountController = new AccountController({
   accountDao,
   errorReporter,
   authenticator,
+  rateLimiter,
 });
 
 const authController = new AuthController({
@@ -40,6 +43,7 @@ const authController = new AuthController({
   accountDao,
   errorReporter,
   authenticator,
+  rateLimiter,
 });
 
 const dataController = new DataController({
@@ -66,13 +70,22 @@ logger.info(`Deno version: ${Deno.version.deno}`);
 
 Deno.serve(
   { port: 8000 },
-  (request) => app.handle(request),
+  async (request) => await app.handle(request) ?? new Response("Not found", { status: 404 }),
 );
 
 function applyBigIntSerializer() {
   BigInt.prototype.toJSON = function () {
     return parseInt(this.toString());
   };
+}
+
+async function openRateLimiter(): Promise<RateLimiter> {
+  try {
+    return await RateLimiter.open();
+  } catch (error) {
+    logger.error(`Unable to open Deno KV rate limiter: ${error}`);
+    return new NoopRateLimiter();
+  }
 }
 
 function createLanguageMiddleware(manager: ControllerManager) {

@@ -4,11 +4,13 @@ import { Account } from "../model/account.ts";
 import { toSnakeCase } from "../util/transform-data.ts";
 
 type AccountWithEmail = Pick<Account, "email" | "registrationCode" | "lastUser" | "lastUpdateTime">;
-type AccountWithId = Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">;
+type AccountWithId = Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime"> & {
+  sessionVersion: string;
+};
 type AccountWithPassword = Pick<
   Account,
   "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime"
->;
+> & { sessionVersion: string };
 
 export interface AccountDao {
   selectById(
@@ -22,27 +24,22 @@ export interface AccountDao {
 
   selectByEmail(
     email: string,
-  ): Promise<
-    Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]
-  >;
+  ): Promise<AccountWithId[]>;
 
   selectByEmailWithPassword(
     email: string,
-  ): Promise<
-    Pick<
-      Account,
-      "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime"
-    >[]
-  >;
+  ): Promise<AccountWithPassword[]>;
+
+  selectSessionVersion(id: number): Promise<string | null>;
 
   register(email: string): Promise<never>;
 
   setPendingRecovery(email: string, token: string): Promise<never>;
 
-  recover(password: string, token: string): Promise<never>;
+  recover(password: string, token: string, sessionVersion: string): Promise<never>;
 
   insert(
-    accounts: { email: string; password: string; registrationCode: number }[],
+    accounts: { email: string; password: string; registrationCode: number; sessionVersion: string }[],
   ): Promise<void>;
 
   updateLastUser(
@@ -73,7 +70,7 @@ export class PostgresClientAccountDao implements AccountDao {
   }
 
   async selectByEmail(email: string): Promise<AccountWithId[]> {
-    const fields = ["id", "registration_code", "last_user", "last_update_time"];
+    const fields = ["id", "registration_code", "last_user", "last_update_time", "session_version"];
     const { rows } = await this.client.queryObject<AccountWithId>({
       args: [email],
       camelCase: true,
@@ -84,7 +81,14 @@ export class PostgresClientAccountDao implements AccountDao {
   }
 
   async selectByEmailWithPassword(email: string): Promise<AccountWithPassword[]> {
-    const fields = ["id", "registration_code", "password", "last_user", "last_update_time"];
+    const fields = [
+      "id",
+      "registration_code",
+      "password",
+      "last_user",
+      "last_update_time",
+      "session_version",
+    ];
     const { rows } = await this.client.queryObject<AccountWithPassword>({
       args: [email],
       camelCase: true,
@@ -92,6 +96,16 @@ export class PostgresClientAccountDao implements AccountDao {
     });
 
     return rows;
+  }
+
+  async selectSessionVersion(id: number): Promise<string | null> {
+    const { rows } = await this.client.queryObject<{ sessionVersion: string }>({
+      args: [id],
+      camelCase: true,
+      text: `SELECT session_version FROM ${this.table} WHERE id = $1;`,
+    });
+
+    return rows[0]?.sessionVersion ?? null;
   }
 
   register(email: string): Promise<never> {
@@ -112,19 +126,18 @@ export class PostgresClientAccountDao implements AccountDao {
     }) as Promise<never>;
   }
 
-  recover(password: string, token: string): Promise<never> {
-    const column1 = "password";
-    const column2 = "reset_token";
-
+  recover(password: string, token: string, sessionVersion: string): Promise<never> {
     return this.client.queryObject({
-      args: [password, token],
+      args: [password, token, sessionVersion],
       camelCase: true,
-      text: `UPDATE ${this.table} SET ${column1} = $1, ${column2} = $2 WHERE ${column2} = $2;`,
+      text: `UPDATE ${this.table}
+             SET password = $1, reset_token = NULL, session_version = $3
+             WHERE reset_token = $2;`,
     }) as Promise<never>;
   }
 
   insert(
-    accounts: { email: string; password: string; registrationCode: number }[],
+    accounts: { email: string; password: string; registrationCode: number; sessionVersion: string }[],
   ): Promise<void> {
     const { statement, actualValues } = this.toSqlInsert(accounts);
     return this.client.queryObject({
@@ -207,35 +220,35 @@ export class SupabaseAccountDao implements AccountDao {
     return this.processSupabaseResponse(response);
   }
 
-  async selectByEmail(
-    email: string,
-  ): Promise<
-    Pick<Account, "id" | "registrationCode" | "lastUser" | "lastUpdateTime">[]
-  > {
+  async selectByEmail(email: string): Promise<AccountWithId[]> {
     const response = await this.supabaseClient
       .from("account")
-      .select("id, registrationCode:registration_code")
+      .select("id, registrationCode:registration_code, sessionVersion:session_version")
       .eq("email", email);
 
     return this.processSupabaseResponse(response);
   }
 
-  async selectByEmailWithPassword(
-    email: string,
-  ): Promise<
-    Pick<
-      Account,
-      "id" | "registrationCode" | "password" | "lastUser" | "lastUpdateTime"
-    >[]
-  > {
+  async selectByEmailWithPassword(email: string): Promise<AccountWithPassword[]> {
     const response = await this.supabaseClient
       .from("account")
       .select(
-        "id, registrationCode:registration_code, password, lastUser:last_user, lastUpdateTime:last_update_time",
+        "id, registrationCode:registration_code, password, lastUser:last_user, lastUpdateTime:last_update_time, sessionVersion:session_version",
       )
       .eq("email", email);
 
     return this.processSupabaseResponse(response);
+  }
+
+  async selectSessionVersion(id: number): Promise<string | null> {
+    const response = await this.supabaseClient
+      .from("account")
+      .select("sessionVersion:session_version")
+      .eq("id", id)
+      .maybeSingle();
+
+    const account = this.processSupabaseResponse<{ sessionVersion: string } | null>(response);
+    return account?.sessionVersion ?? null;
   }
 
   async register(email: string): Promise<never> {
@@ -256,22 +269,23 @@ export class SupabaseAccountDao implements AccountDao {
     return this.processSupabaseResponse(response);
   }
 
-  async recover(password: string, token: string): Promise<never> {
+  async recover(password: string, token: string, sessionVersion: string): Promise<never> {
     const response = await this.supabaseClient
       .from("account")
-      .update({ password, reset_token: null })
+      .update({ password, reset_token: null, session_version: sessionVersion })
       .eq("reset_token", token);
 
     return this.processSupabaseResponse(response);
   }
 
   async insert(
-    accounts: { email: string; password: string; registrationCode: number }[],
+    accounts: { email: string; password: string; registrationCode: number; sessionVersion: string }[],
   ): Promise<void> {
     const renamed = accounts.map((account) => ({
       email: account.email,
       password: account.password,
       registration_code: account.registrationCode,
+      session_version: account.sessionVersion,
     }));
 
     const response = await this.supabaseClient

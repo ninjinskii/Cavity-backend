@@ -26,9 +26,10 @@ const $t = new EnTranslations();
 const client = {} as SupabaseClient;
 const jwtService = await JwtServiceImpl.newInstance("secret");
 const errorReporter = new FakeErrorReporter();
-const authenticator = new BaseAuthenticator(jwtService, errorReporter);
 const router = new FakeRouter();
 const accountDao = new SupabaseAccountDao(client);
+accountDao.selectSessionVersion = () => Promise.resolve("test-session-version");
+const authenticator = new BaseAuthenticator(jwtService, errorReporter, accountDao);
 
 const authController = new AuthController({
   router,
@@ -45,6 +46,7 @@ const fakeAccount: Account = {
   resetToken: null,
   lastUpdateTime: null,
   lastUser: null,
+  sessionVersion: "test-session-version",
 };
 
 let mockContext: Context;
@@ -113,6 +115,7 @@ describe("Auth controller", () => {
         resetToken: null,
         lastUpdateTime: null,
         lastUser: null,
+        sessionVersion: "test-session-version",
       };
       const selectAccountSpy = simpleStubAsync(
         accountDao,

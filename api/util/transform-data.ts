@@ -1,4 +1,4 @@
-import { cameCase, snakeCase } from "case";
+import { camelCase, snakeCase } from "case";
 export function toSnakeCase<T>(object: T): T {
   // deno-lint-ignore no-explicit-any
   const formatted: any = {};
