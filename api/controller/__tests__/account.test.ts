@@ -316,7 +316,7 @@ describe("Account controller", () => {
       });
     });
 
-    it("should fail if database error occured", async () => {
+    it("should return a server error if confirming an account fails", async () => {
       const jwtSpy = spy(jwtService, "create");
       const daoRegisterSpy = spy(accountDao, "register");
       const daoSelectSpy = stub(
@@ -362,7 +362,11 @@ describe("Account controller", () => {
     it("can create an account", async () => {
       const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
       const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
-      const sessionVersionSpy = simpleStub(Account, "generateSessionVersion", "test-session-version");
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const passwordSpy = simpleStub(
         PasswordService,
         "encrypt",
@@ -392,7 +396,11 @@ describe("Account controller", () => {
       const spacePassword = "sHht..2D4! ";
       const insertAccountSpy = simpleStubAsync(accountDao, "insert", undefined);
       const codeSpy = simpleStub(Account, "generateRegistrationCode", 234567);
-      const sessionVersionSpy = simpleStub(Account, "generateSessionVersion", "test-session-version");
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const passwordSpy = simpleStub(
         PasswordService,
         "encrypt",
@@ -465,7 +473,7 @@ describe("Account controller", () => {
       });
     });
 
-    it("should fail if database error occured", async () => {
+    it("should return a server error if inserting an account fails", async () => {
       const insertAccountSpy = simpleStub(
         accountDao,
         "insert",
@@ -491,8 +499,9 @@ describe("Account controller", () => {
           assertSpyCall(passwordSpy, 0, { args: ["sHht..2D4!"] });
           assertSpyCalls(codeSpy, 1);
           assertSpyCalls(insertAccountSpy, 1);
-          assertStatusEquals(mockContext, 400);
-          assertBodyEquals(mockContext, { message: $t.invalidEmail });
+          assertSpyCalls(deleteAccountSpy, 0);
+          assertStatusEquals(mockContext, 500);
+          assertBodyEquals(mockContext, { message: $t.baseError });
         },
       );
     });
@@ -862,7 +871,11 @@ describe("Account controller", () => {
         "encrypt",
         "encryptedpassword",
       );
-      const sessionVersionSpy = simpleStub(Account, "generateSessionVersion", "test-session-version");
+      const sessionVersionSpy = simpleStub(
+        Account,
+        "generateSessionVersion",
+        "test-session-version",
+      );
       const updateAccountSpy = simpleStub(
         accountDao,
         "recover",

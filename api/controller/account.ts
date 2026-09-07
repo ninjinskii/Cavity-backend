@@ -107,12 +107,20 @@ export class AccountController extends Controller {
 
     const hash = PasswordService.encrypt(password);
 
+    let account: {
+      email: string;
+      password: string;
+      registrationCode: number;
+      resetToken: null;
+      sessionVersion: string;
+    };
+
     try {
       if (!await this.isAccountUnique(email)) {
         return json(ctx, { message: this.$t.accountAlreadyExists }, 400);
       }
 
-      const account = {
+      account = {
         email,
         password: hash,
         registrationCode: Account.generateRegistrationCode(),
@@ -121,7 +129,12 @@ export class AccountController extends Controller {
       };
 
       await this.accountDao.insert([account]);
+    } catch (error) {
+      this.errorReporter.captureException(error as Error);
+      return json(ctx, { message: this.$t.baseError }, 500);
+    }
 
+    try {
       const subject = this.$t.emailSubject;
       const content = this.$t.emailContent + account.registrationCode;
 
